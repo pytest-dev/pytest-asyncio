@@ -8,7 +8,7 @@ env:
 install:
     - pip install tox
 
-script: tox -e $TOX_ENV
+script: tox
 
 after_success:
     - pip install coveralls && cd tests && coveralls
