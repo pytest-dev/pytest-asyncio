@@ -4,3 +4,5 @@ env:
   - TOX_ENV=py33
 install:
   - pip install tox
+script:
+  - tox -e $TOX_ENV
