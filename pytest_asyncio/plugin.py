@@ -22,7 +22,8 @@ def pytest_configure(config):
 def pytest_pycollect_makeitem(collector, name, obj):
     if collector.funcnamefilter(name) and inspect.isgeneratorfunction(obj):
         item = pytest.Function(name, parent=collector)
-        if 'asyncio' in item.keywords or 'asyncio_process_pool' in item.keywords:
+        if ('asyncio' in item.keywords or
+           'asyncio_process_pool' in item.keywords):
             return list(collector._genfunctions(name, obj))
 
 
