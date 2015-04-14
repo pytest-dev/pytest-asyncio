@@ -25,7 +25,7 @@ setup(
     name='pytest-asyncio',
     version=find_version('pytest_asyncio', '__init__.py'),
     packages=find_packages(),
-    url='https://github.com/Tinche/pytest_asyncio',
+    url='https://github.com/Tinche/pytest-asyncio',
     license='Apache 2.0',
     author='Tin Tvrtkovic',
     author_email='tinchester@gmail.com',
