@@ -3,10 +3,10 @@ pytest-asyncio: pytest support for asyncio
 
 .. image:: https://img.shields.io/pypi/v/pytest-asyncio.svg
     :target: https://pypi.python.org/pypi/pytest-asyncio
-.. image:: https://travis-ci.org/Tinche/pytest-asyncio.svg?branch=master
-    :target: https://travis-ci.org/Tinche/pytest-asyncio
-.. image:: https://coveralls.io/repos/Tinche/pytest-asyncio/badge.svg?branch=master
-    :target: https://coveralls.io/r/Tinche/pytest-asyncio?branch=master
+.. image:: https://travis-ci.org/pytest-dev/pytest-asyncio.svg?branch=master
+    :target: https://travis-ci.org/pytest-dev/pytest-asyncio
+.. image:: https://coveralls.io/repos/pytest-dev/pytest-asyncio/badge.svg
+    :target: https://coveralls.io/r/pytest-dev/pytest-asyncio
 
 pytest-asyncio is an Apache2 licensed library, written in Python, for testing
 asyncio code with pytest.
