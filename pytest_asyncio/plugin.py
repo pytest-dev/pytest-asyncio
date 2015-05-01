@@ -27,40 +27,36 @@ def pytest_pycollect_makeitem(collector, name, obj):
             return list(collector._genfunctions(name, obj))
 
 
-def _argnames(func):
-    spec = inspect.getfullargspec(func)
-    if spec.defaults:
-        return spec.args[:-len(spec.defaults)]
-    return spec.args
-
-
 @pytest.mark.tryfirst
 def pytest_pyfunc_call(pyfuncitem):
-    """A hook wrapper."""
-    if 'asyncio_process_pool' in pyfuncitem.keywords:
-        event_loop = pyfuncitem.funcargs.get('event_loop_process_pool')
-        funcargs = dict((arg, pyfuncitem.funcargs[arg])
-                        for arg in _argnames(pyfuncitem.obj))
-        event_loop.run_until_complete(asyncio.async(pyfuncitem.obj(**funcargs)))
-        # prevent other pyfunc calls from executing
-        return True
-    elif 'asyncio' in pyfuncitem.keywords:
-        event_loop = pyfuncitem.funcargs.get('event_loop')
-        funcargs = dict((arg, pyfuncitem.funcargs[arg])
-                        for arg in _argnames(pyfuncitem.obj))
-        event_loop.run_until_complete(asyncio.async(pyfuncitem.obj(**funcargs)))
-        # prevent other pyfunc calls from executing
-        return True
+    """
+    Run asyncio marked test functions in an event loop instead of a normal
+    function call.
+    """
+    for marker_name, fixture_name in _markers_2_fixtures.items():
+        if marker_name in pyfuncitem.keywords:
+            event_loop = pyfuncitem.funcargs[fixture_name]
+            funcargs = pyfuncitem.funcargs
+            testargs = {arg: funcargs[arg]
+                        for arg in pyfuncitem._fixtureinfo.argnames}
+            event_loop.run_until_complete(
+                asyncio.async(pyfuncitem.obj(**testargs)))
+            return True
 
 
 def pytest_runtest_setup(item):
-    if 'asyncio' in item.keywords and 'event_loop' not in item.fixturenames:
-        # inject an event loop fixture for all async tests
-        item.fixturenames.append('event_loop')
+    for marker, fixture in _markers_2_fixtures.items():
+        if marker in item.keywords and fixture not in item.fixturenames:
+            # inject an event loop fixture for all async tests
+            item.fixturenames.append(fixture)
 
-    if ('asyncio_process_pool' in item.keywords and
-                'event_loop_process_pool' not in item.fixturenames):
-        item.fixturenames.append('event_loop_process_pool')
+
+# maps marker to the name of the event loop fixture that will be available
+# to marked test functions
+_markers_2_fixtures = {
+    'asyncio': 'event_loop',
+    'asyncio_process_pool': 'event_loop_process_pool',
+}
 
 
 @pytest.fixture

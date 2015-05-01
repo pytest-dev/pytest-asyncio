@@ -88,3 +88,14 @@ def test_unused_port_fixture(unused_tcp_port):
 
     server1.close()
     yield from server1.wait_closed()
+
+
+class Test:
+    """Test that asyncio marked functions work in test methods."""
+
+    @pytest.mark.asyncio
+    def test_asyncio_marker_method(self):
+        """Test the asyncio pytest marker in a Test class."""
+        url = 'http://httpbin.org/get'
+        resp = yield from simple_http_client(url)
+        assert b'HTTP/1.1 200 OK' in resp
