@@ -69,10 +69,7 @@ def event_loop(request):
     event_loop = policy.new_event_loop()
     policy.set_event_loop(event_loop)
 
-    def _close():
-        event_loop.close()
-
-    request.addfinalizer(_close)
+    request.addfinalizer(event_loop.close)
     return event_loop
 
 
@@ -90,5 +87,4 @@ def unused_tcp_port():
     """Find an unused localhost TCP port from 1024-65535 and return it."""
     with closing(socket.socket()) as sock:
         sock.bind(('127.0.0.1', 0))
-        port = sock.getsockname()[1]
-    return port
+        return sock.getsockname()[1]
