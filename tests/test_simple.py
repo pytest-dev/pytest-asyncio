@@ -1,7 +1,6 @@
 """Quick'n'dirty unit tests for provided fixtures and markers."""
 import asyncio
 import os
-import urllib
 import pytest
 
 
