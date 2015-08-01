@@ -71,6 +71,41 @@ def test_unused_port_fixture(unused_tcp_port, event_loop):
     yield from server1.wait_closed()
 
 
+@pytest.mark.asyncio
+def test_unused_port_factory_fixture(unused_tcp_port_factory, event_loop):
+    """Test the unused TCP port factory fixture."""
+
+    @asyncio.coroutine
+    def closer(_, writer):
+        writer.close()
+
+    port1, port2, port3 = (unused_tcp_port_factory(), unused_tcp_port_factory(),
+                           unused_tcp_port_factory())
+
+    server1 = yield from asyncio.start_server(closer, host='localhost',
+                                              port=port1,
+                                              loop=event_loop)
+    server2 = yield from asyncio.start_server(closer, host='localhost',
+                                              port=port2,
+                                              loop=event_loop)
+    server3 = yield from asyncio.start_server(closer, host='localhost',
+                                              port=port3,
+                                              loop=event_loop)
+
+    for port in port1, port2, port3:
+        with pytest.raises(IOError):
+            yield from asyncio.start_server(closer, host='localhost',
+                                            port=port,
+                                            loop=event_loop)
+
+    server1.close()
+    yield from server1.wait_closed()
+    server2.close()
+    yield from server2.wait_closed()
+    server3.close()
+    yield from server3.wait_closed()
+
+
 class Test:
     """Test that asyncio marked functions work in test methods."""
 
