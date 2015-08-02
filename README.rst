@@ -30,6 +30,7 @@ Features
 --------
 
 - fixtures for creating and injecting versions of the asyncio event loop
+- fixtures for injecting unused tcp ports
 - pytest markers for treating tests as asyncio coroutines
 
 
@@ -72,8 +73,19 @@ The ``event_loop_process_pool`` fixture is almost identical to the
 
 ``unused_tcp_port``
 ~~~~~~~~~~~~~~~~~~~
-Finds and yields an unused TCP port on the localhost interface. Useful for
+Finds and yields a single unused TCP port on the localhost interface. Useful for
 binding temporary test servers.
+
+``unused_tcp_port_factory``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+A callable which returns a different unused TCP port each invocation. Useful
+when several unused TCP ports are required in a test.
+
+.. code-block:: python
+
+    def a_test(unused_tcp_port_factory):
+        port1, port2 = unused_tcp_port_factory(), unused_tcp_port_factory()
+        ...
 
 Markers
 -------
