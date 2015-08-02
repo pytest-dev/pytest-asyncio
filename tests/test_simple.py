@@ -3,6 +3,8 @@ import asyncio
 import os
 import pytest
 
+import pytest_asyncio.plugin
+
 
 @asyncio.coroutine
 def async_coro(loop):
@@ -104,6 +106,26 @@ def test_unused_port_factory_fixture(unused_tcp_port_factory, event_loop):
     yield from server2.wait_closed()
     server3.close()
     yield from server3.wait_closed()
+
+
+def test_unused_port_factory_duplicate(unused_tcp_port_factory, monkeypatch):
+    """Test correct avoidance of duplicate ports."""
+    counter = 0
+
+    def mock_unused_tcp_port():
+        """Force some duplicate ports."""
+        nonlocal counter
+        counter += 1
+        if counter < 5:
+            return 10000
+        else:
+            return 10000 + counter
+
+    monkeypatch.setattr(pytest_asyncio.plugin, 'unused_tcp_port',
+                        mock_unused_tcp_port)
+
+    assert unused_tcp_port_factory() == 10000
+    assert unused_tcp_port_factory() > 10000
 
 
 class Test:

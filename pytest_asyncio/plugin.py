@@ -97,8 +97,11 @@ def unused_tcp_port_factory():
 
     def factory():
         port = unused_tcp_port()
+
         while port in produced:
-            port = unused_tcp_port
+            port = unused_tcp_port()
+
+        produced.add(port)
 
         return port
     return factory
