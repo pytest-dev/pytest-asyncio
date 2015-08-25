@@ -1,4 +1,9 @@
-import asyncio
+try:
+    # python 3
+    import asyncio
+except ImportError:
+    # python 2
+    import trollius as asyncio
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import closing
 import inspect
