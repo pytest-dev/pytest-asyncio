@@ -6,6 +6,11 @@ import socket
 import pytest
 
 
+def _is_coroutine(obj):
+    """Check to see if an object is really an asyncio coroutine."""
+    return asyncio.iscoroutinefunction(obj) or inspect.isgeneratorfunction(obj)
+
+
 def pytest_configure(config):
     config.addinivalue_line("markers",
                             "asyncio: "
@@ -20,7 +25,7 @@ def pytest_configure(config):
 
 @pytest.mark.tryfirst
 def pytest_pycollect_makeitem(collector, name, obj):
-    if collector.funcnamefilter(name) and inspect.isgeneratorfunction(obj):
+    if collector.funcnamefilter(name) and _is_coroutine(obj):
         item = pytest.Function(name, parent=collector)
         if ('asyncio' in item.keywords or
            'asyncio_process_pool' in item.keywords):
