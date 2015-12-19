@@ -18,6 +18,15 @@ provides useful fixtures and markers to make testing easier.
 .. code-block:: python
 
     @pytest.mark.asyncio
+    async def test_some_asyncio_code():
+        res = await library.do_something()
+        assert b'expected result' == res
+
+or, if you're using the pre-Python 3.5 syntax:
+
+.. code-block:: python
+
+    @pytest.mark.asyncio
     def test_some_asyncio_code():
         res = yield from library.do_something()
         assert b'expected result' == res
