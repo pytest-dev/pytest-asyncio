@@ -71,7 +71,7 @@ def event_loop(request):
 
     try:
         current_loop = policy.get_event_loop()
-    except RuntimeError:
+    except (RuntimeError, AssertionError):
         pass
     else:
         current_loop.close()
