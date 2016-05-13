@@ -69,13 +69,18 @@ def event_loop(request):
     """Create an instance of the default event loop for each test case."""
     policy = asyncio.get_event_loop_policy()
 
-    policy.get_event_loop().close()
+    try:
+        current_loop = policy.get_event_loop()
+    except (RuntimeError, AssertionError):
+        pass
+    else:
+        current_loop.close()
+    finally:
+        event_loop = policy.new_event_loop()
+        policy.set_event_loop(event_loop)
 
-    event_loop = policy.new_event_loop()
-    policy.set_event_loop(event_loop)
-
-    request.addfinalizer(event_loop.close)
-    return event_loop
+        request.addfinalizer(event_loop.close)
+        return event_loop
 
 
 @pytest.fixture

@@ -1,4 +1,5 @@
 import asyncio
+import sys
 
 import pytest
 
@@ -24,6 +25,10 @@ def example_coroutine():
     return 42
 
 
+@pytest.mark.skipif(
+    (3, 3) < sys.version_info < (3, 5),
+    reason='exception type is different in Python 3.4 only'
+)
 @pytest.mark.asyncio
 def test_asyncio_marker_with_non_global_loop(event_loop):
     with pytest.raises(RuntimeError):
@@ -31,3 +36,14 @@ def test_asyncio_marker_with_non_global_loop(event_loop):
 
     result = yield from example_coroutine()
 
+
+@pytest.mark.skipif(
+    ((3, 4) > sys.version_info) or (sys.version_info >= (3, 5)),
+    reason='exception type is different in Python 3.4 only'
+)
+@pytest.mark.asyncio
+def test_asyncio_marker_with_non_global_loop_py34(event_loop):
+    with pytest.raises(AssertionError):
+        _ = asyncio.get_event_loop()
+
+    result = yield from example_coroutine()
