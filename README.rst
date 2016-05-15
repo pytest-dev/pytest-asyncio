@@ -41,6 +41,7 @@ Features
 - fixtures for creating and injecting versions of the asyncio event loop
 - fixtures for injecting unused tcp ports
 - pytest markers for treating tests as asyncio coroutines
+- easy testing with non-default event loops
 
 
 Installation
@@ -74,6 +75,18 @@ for treating test functions like coroutines.
         resp = event_loop.run_until_complete(http_client(url))
         assert b'HTTP/1.1 200 OK' in resp
 
+This fixture can be easily overridden in any of the standard pytest locations
+(e.g. directly in the test file, or in ``conftest.py``) to use a non-default
+event loop. This will take effect even if you're using the
+``pytest.mark.asyncio`` marker and not the ``event_loop`` fixture directly.
+
+.. code-block:: python
+
+    @pytest.fixture()
+    def event_loop():
+        return MyCustomLoop()
+
+
 ``event_loop_process_pool``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The ``event_loop_process_pool`` fixture is almost identical to the
@@ -99,14 +112,20 @@ when several unused TCP ports are required in a test.
 Markers
 -------
 
-``pytest.mark.asyncio``
-~~~~~~~~~~~~~~~~~~~~~~~
+``pytest.mark.asyncio(forbid_global_loop=False)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Mark your test coroutine with this marker and pytest will execute it as an
 asyncio task using the event loop provided by the ``event_loop`` fixture. See
 the introductory section for an example.
 
-``pytest.mark.asyncio_process_pool``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The event loop used can be overriden by overriding the ``event_loop`` fixture
+(see above).
+
+If ``forbid_global_loop`` is true, ``asyncio.get_event_loop()`` will result
+in exceptions, ensuring your tests are always passing the event loop explicitly.
+
+``pytest.mark.asyncio_process_pool(forbid_global_loop=False)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The ``asyncio_process_pool`` marker is almost identical to the ``asyncio``
 marker, except the event loop used will have a
 ``concurrent.futures.ProcessPoolExecutor`` set as the default executor.
