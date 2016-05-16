@@ -6,6 +6,11 @@ import socket
 import pytest
 
 
+class ForbiddenEventLoopPolicy(asyncio.AbstractEventLoopPolicy):
+    """An event loop policy that raises errors on any operation."""
+    pass
+
+
 def _is_coroutine(obj):
     """Check to see if an object is really an asyncio coroutine."""
     return asyncio.iscoroutinefunction(obj) or inspect.isgeneratorfunction(obj)
@@ -41,12 +46,26 @@ def pytest_pyfunc_call(pyfuncitem):
     for marker_name, fixture_name in _markers_2_fixtures.items():
         if marker_name in pyfuncitem.keywords:
             event_loop = pyfuncitem.funcargs[fixture_name]
+
+            forbid_global_loop = pyfuncitem.keywords[marker_name].kwargs.get('forbid_global_loop')
+
+            policy = asyncio.get_event_loop_policy()
+            if forbid_global_loop:
+                asyncio.set_event_loop_policy(ForbiddenEventLoopPolicy())
+            else:
+                policy.set_event_loop(event_loop)
+
             funcargs = pyfuncitem.funcargs
             testargs = {arg: funcargs[arg]
                         for arg in pyfuncitem._fixtureinfo.argnames}
-            event_loop.run_until_complete(
-                asyncio.async(pyfuncitem.obj(**testargs), loop=event_loop))
-            return True
+            try:
+                event_loop.run_until_complete(
+                    asyncio.async(pyfuncitem.obj(**testargs), loop=event_loop))
+            finally:
+                if forbid_global_loop:
+                    asyncio.set_event_loop_policy(policy)
+                event_loop.close()
+                return True
 
 
 def pytest_runtest_setup(item):
@@ -68,14 +87,7 @@ _markers_2_fixtures = {
 def event_loop(request):
     """Create an instance of the default event loop for each test case."""
     policy = asyncio.get_event_loop_policy()
-
-    policy.get_event_loop().close()
-
-    event_loop = policy.new_event_loop()
-    policy.set_event_loop(event_loop)
-
-    request.addfinalizer(event_loop.close)
-    return event_loop
+    return policy.new_event_loop()
 
 
 @pytest.fixture
