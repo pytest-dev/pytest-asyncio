@@ -58,13 +58,14 @@ def pytest_pyfunc_call(pyfuncitem):
             funcargs = pyfuncitem.funcargs
             testargs = {arg: funcargs[arg]
                         for arg in pyfuncitem._fixtureinfo.argnames}
-            event_loop.run_until_complete(
-                asyncio.async(pyfuncitem.obj(**testargs), loop=event_loop))
-
-            event_loop.close()
-            if forbid_global_loop:
-                asyncio.set_event_loop_policy(policy)
-            return True
+            try:
+                event_loop.run_until_complete(
+                    asyncio.async(pyfuncitem.obj(**testargs), loop=event_loop))
+            finally:
+                if forbid_global_loop:
+                    asyncio.set_event_loop_policy(policy)
+                event_loop.close()
+                return True
 
 
 def pytest_runtest_setup(item):
