@@ -53,7 +53,7 @@ def pytest_pyfunc_call(pyfuncitem):
 
         event_loop = None
         for name, value in pyfuncitem.funcargs.items():
-            if isinstance(value, asyncio.BaseEventLoop):
+            if isinstance(value, asyncio.AbstractEventLoop):
                 event_loop = value
                 break
         else:

@@ -26,7 +26,7 @@ tests and loops:
       you must explicitly create and request ``loop`` fixture, otherwise
       the plugin will raise a ``MissingLoopFixture`` exception. This fixture
       can be named anything, but requires to return an instance of
-      ``asyncio.BaseEventLoop``. There is one exception: if
+      ``asyncio.AbstractEventLoop``. There is one exception: if
       ``accept_global_loop`` is ``True`` AND a ``loop`` fixture is not requested,
       the plugin will use the global loop.
 
