@@ -6,7 +6,7 @@ import concurrent.futures
 collect_ignore = []
 if sys.version_info[:2] < (3, 5):
     collect_ignore.append("test_simple_35.py")
-    collect_ignore.append("test_autouse_35.py")
+    collect_ignore.append("test_async_fixture_35.py")
 
 
 @pytest.yield_fixture

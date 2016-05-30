@@ -54,6 +54,19 @@ The advantages are:
           def loop():
               ...
 
+You can also create coroutine-based fixtures:
+
+    .. code-block:: python
+
+        @pytest_asyncio.async_fixture
+        async def async_fixture(loop):
+            await asyncio.sleep(1, loop=loop)
+            return 'something'
+
+By default, using a global asyncio loop is forbidden by default, similarly
+to the test coroutine functions. To accept it, provide ``accept_global_loop=True``
+to the ``@pytest_asyncio.async_fixture`` decorator.
+
 Examples compared to the original examples:
 
 .. code-block:: python
