@@ -1,14 +1,11 @@
-import asyncio
-from concurrent.futures import ProcessPoolExecutor
-from contextlib import closing
-import inspect
 import socket
+import asyncio
+import inspect
+import contextlib
+
 import pytest
 
-
-class ForbiddenEventLoopPolicy(asyncio.AbstractEventLoopPolicy):
-    """An event loop policy that raises errors on any operation."""
-    pass
+from .utils import find_loop, maybe_accept_global_loop
 
 
 def _is_coroutine(obj):
@@ -32,8 +29,7 @@ def pytest_configure(config):
 def pytest_pycollect_makeitem(collector, name, obj):
     if collector.funcnamefilter(name) and _is_coroutine(obj):
         item = pytest.Function(name, parent=collector)
-        if ('asyncio' in item.keywords or
-           'asyncio_process_pool' in item.keywords):
+        if 'asyncio' in item.keywords:
             return list(collector._genfunctions(name, obj))
 
 
@@ -43,66 +39,26 @@ def pytest_pyfunc_call(pyfuncitem):
     Run asyncio marked test functions in an event loop instead of a normal
     function call.
     """
-    for marker_name, fixture_name in _markers_2_fixtures.items():
-        if marker_name in pyfuncitem.keywords:
-            event_loop = pyfuncitem.funcargs[fixture_name]
+    if 'asyncio' in pyfuncitem.keywords:
+        marker_kwargs = pyfuncitem.keywords['asyncio'].kwargs
+        accept_global_loop = marker_kwargs.get('accept_global_loop', False)
 
-            forbid_global_loop = pyfuncitem.keywords[marker_name].kwargs.get('forbid_global_loop')
+        event_loop = find_loop(pyfuncitem.funcargs.values())
 
-            policy = asyncio.get_event_loop_policy()
-            if forbid_global_loop:
-                asyncio.set_event_loop_policy(ForbiddenEventLoopPolicy())
-            else:
-                policy.set_event_loop(event_loop)
-
-            funcargs = pyfuncitem.funcargs
-            testargs = {arg: funcargs[arg]
-                        for arg in pyfuncitem._fixtureinfo.argnames}
-            try:
-                event_loop.run_until_complete(
-                    asyncio.async(pyfuncitem.obj(**testargs), loop=event_loop))
-            finally:
-                if forbid_global_loop:
-                    asyncio.set_event_loop_policy(policy)
-                event_loop.close()
-                return True
-
-
-def pytest_runtest_setup(item):
-    for marker, fixture in _markers_2_fixtures.items():
-        if marker in item.keywords and fixture not in item.fixturenames:
-            # inject an event loop fixture for all async tests
-            item.fixturenames.append(fixture)
-
-
-# maps marker to the name of the event loop fixture that will be available
-# to marked test functions
-_markers_2_fixtures = {
-    'asyncio': 'event_loop',
-    'asyncio_process_pool': 'event_loop_process_pool',
-}
-
-
-@pytest.fixture
-def event_loop(request):
-    """Create an instance of the default event loop for each test case."""
-    policy = asyncio.get_event_loop_policy()
-    return policy.new_event_loop()
-
-
-@pytest.fixture
-def event_loop_process_pool(event_loop):
-    """Create a fresh instance of the default event loop.
-
-    The event loop will have a process pool set as the default executor."""
-    event_loop.set_default_executor(ProcessPoolExecutor())
-    return event_loop
+        funcargs = pyfuncitem.funcargs
+        testargs = {arg: funcargs[arg]
+                    for arg in pyfuncitem._fixtureinfo.argnames}
+        with maybe_accept_global_loop(
+                event_loop, accept_global_loop) as loop:
+            loop.run_until_complete(asyncio.async(pyfuncitem.obj(**testargs),
+                                                  loop=loop))
+            return True
 
 
 @pytest.fixture
 def unused_tcp_port():
     """Find an unused localhost TCP port from 1024-65535 and return it."""
-    with closing(socket.socket()) as sock:
+    with contextlib.closing(socket.socket()) as sock:
         sock.bind(('127.0.0.1', 0))
         return sock.getsockname()[1]
 

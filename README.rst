@@ -1,12 +1,8 @@
 pytest-asyncio: pytest support for asyncio
 ==========================================
 
-.. image:: https://img.shields.io/pypi/v/pytest-asyncio.svg
-    :target: https://pypi.python.org/pypi/pytest-asyncio
-.. image:: https://travis-ci.org/pytest-dev/pytest-asyncio.svg?branch=master
-    :target: https://travis-ci.org/pytest-dev/pytest-asyncio
-.. image:: https://coveralls.io/repos/pytest-dev/pytest-asyncio/badge.svg
-    :target: https://coveralls.io/r/pytest-dev/pytest-asyncio
+.. image:: https://travis-ci.org/malinoff/pytest-asyncio.svg?branch=master
+    :target: https://travis-ci.org/malinoff/pytest-asyncio
 
 pytest-asyncio is an Apache2 licensed library, written in Python, for testing
 asyncio code with pytest.
@@ -15,30 +11,115 @@ asyncio code is usually written in the form of coroutines, which makes it
 slightly more difficult to test using normal testing tools. pytest-asyncio
 provides useful fixtures and markers to make testing easier.
 
+Original readme can be found in original `pytest-asyncio`_ repository.
+
+This fork completely changes how ``pytest-asyncio`` works with coroutine-based
+tests and loops:
+
+    * No more closing the loop after each test coroutine function. It's up
+      to the developer to choose when the loop is closed.
+
+    * The use of global event loop is now forbidden by default. You can accept
+      it by providing ``accept_global_loop=True`` to ``@asyncio.mark.asyncio``
+
+    * No more implicit loops defined by the plugin. In order to use a loop,
+      you must explicitly create and request ``loop`` fixture, otherwise
+      the plugin will raise a ``MissingLoopFixture`` exception. This fixture
+      can be named anything, but requires to return an instance of
+      ``asyncio.AbstractEventLoop``. There is one exception: if
+      ``accept_global_loop`` is ``True`` AND a ``loop`` fixture is not requested,
+      the plugin will use the global loop.
+
+The advantages are:
+
+    * You do not rely on implicit event loops created by the plugin.
+      Want to use ``concurrent.futures.ThreadPoolExecutor``? Easy!
+
+      .. code-block:: python
+
+          @pytest.yield_fixture
+          def threadpooled_loop():
+              loop = asyncio.get_event_loop_policy().new_event_loop()
+              loop.set_default_executor(concurrent.futures.ThreadPoolExecutor())
+              yield loop
+              loop.close()
+
+    * Lifetimes of loop fixtures can be expanded to ``module`` or ``session``
+      scopes easily (in the original plugin it is not possible because the loop
+      closes after each test coroutine function):
+
+      .. code-block:: python
+    
+          @pytest.yield_fixture(scope='module')
+          def loop():
+              ...
+
+You can also create coroutine-based fixtures:
+
+    .. code-block:: python
+
+        @pytest_asyncio.async_fixture
+        async def async_fixture(loop):
+            await asyncio.sleep(1, loop=loop)
+            return 'something'
+
+By default, using a global asyncio loop is forbidden by default, similarly
+to the test coroutine functions. To accept it, provide ``accept_global_loop=True``
+to the ``@pytest_asyncio.async_fixture`` decorator.
+
+Examples compared to the original examples:
+
 .. code-block:: python
 
+    # Original
     @pytest.mark.asyncio
     async def test_some_asyncio_code():
         res = await library.do_something()
+        assert b'expected result' == res
+
+    # Fork
+    import asyncio
+    @pytest.yield_fixture
+    def loop():
+        loop = asyncio.get_event_loop_policy().new_event_loop()
+        yield loop
+        loop.close()
+
+    @pytest.mark.asyncio
+    async def test_some_asyncio_code(loop):
+        res = await library.do_something(loop=loop)
         assert b'expected result' == res
 
 or, if you're using the pre-Python 3.5 syntax:
 
 .. code-block:: python
 
+    # Original
     @pytest.mark.asyncio
     def test_some_asyncio_code():
         res = yield from library.do_something()
         assert b'expected result' == res
 
+    # Fork
+    import asyncio
+    @pytest.fixture
+    def loop():
+        return asyncio.get_event_loop_policy().new_event_loop()
+
+    @pytest.mark.asyncio
+    async def test_some_asyncio_code(loop):
+        res = await library.do_something(loop=loop)
+        assert b'expected result' == res
+
 pytest-asyncio has been strongly influenced by pytest-tornado_.
 
+.. _pytest-asyncio: https://github.com/pytest-dev/pytest-asyncio/blob/master/README.rst
 .. _pytest-tornado: https://github.com/eugeniy/pytest-tornado
 
 Features
 --------
 
-- fixtures for creating and injecting versions of the asyncio event loop
+- pluggable fixtures of the asyncio event loops
 - fixtures for injecting unused tcp ports
 - pytest markers for treating tests as asyncio coroutines
 - easy testing with non-default event loops
@@ -51,47 +132,12 @@ To install pytest-asyncio, simply:
 
 .. code-block:: bash
 
-    $ pip install pytest-asyncio
+    $ pip install git+https://github.com/malinoff/pytest-asyncio
 
 This is enough for pytest to pick up pytest-asyncio.
 
 Fixtures
 --------
-
-``event_loop``
-~~~~~~~~~~~~~~
-Creates and injects a new instance of the default asyncio event loop. The loop
-will be closed at the end of the test.
-
-Note that just using the ``event_loop`` fixture won't make your test function
-a coroutine. You'll need to interact with the event loop directly, using methods
-like ``event_loop.run_until_complete``. See the ``pytest.mark.asyncio`` marker
-for treating test functions like coroutines.
-
-.. code-block:: python
-
-    def test_http_client(event_loop):
-        url = 'http://httpbin.org/get'
-        resp = event_loop.run_until_complete(http_client(url))
-        assert b'HTTP/1.1 200 OK' in resp
-
-This fixture can be easily overridden in any of the standard pytest locations
-(e.g. directly in the test file, or in ``conftest.py``) to use a non-default
-event loop. This will take effect even if you're using the
-``pytest.mark.asyncio`` marker and not the ``event_loop`` fixture directly.
-
-.. code-block:: python
-
-    @pytest.fixture()
-    def event_loop():
-        return MyCustomLoop()
-
-
-``event_loop_process_pool``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The ``event_loop_process_pool`` fixture is almost identical to the
-``event_loop`` fixture, except the created event loop will have a
-``concurrent.futures.ProcessPoolExecutor`` set as the default executor.
 
 ``unused_tcp_port``
 ~~~~~~~~~~~~~~~~~~~
@@ -112,24 +158,16 @@ when several unused TCP ports are required in a test.
 Markers
 -------
 
-``pytest.mark.asyncio(forbid_global_loop=False)``
+``pytest.mark.asyncio(accept_global_loop=False)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Mark your test coroutine with this marker and pytest will execute it as an
-asyncio task using the event loop provided by the ``event_loop`` fixture. See
+asyncio task using the event loop provided by a ``loop`` fixture. See
 the introductory section for an example.
 
-The event loop used can be overriden by overriding the ``event_loop`` fixture
-(see above).
+A different event loop can be provided easily, see the introductory section.
 
-If ``forbid_global_loop`` is true, ``asyncio.get_event_loop()`` will result
+If ``accept_global_loop`` is false, ``asyncio.get_event_loop()`` will result
 in exceptions, ensuring your tests are always passing the event loop explicitly.
-
-``pytest.mark.asyncio_process_pool(forbid_global_loop=False)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The ``asyncio_process_pool`` marker is almost identical to the ``asyncio``
-marker, except the event loop used will have a
-``concurrent.futures.ProcessPoolExecutor`` set as the default executor.
-
 
 Contributing
 ------------
