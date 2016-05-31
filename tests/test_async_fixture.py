@@ -35,8 +35,9 @@ def test_forbidden_global_loop_raises(testdir):
 
 
 @pytest_asyncio.async_fixture(accept_global_loop=True)
-async def using_global_loop():
-    await asyncio.sleep(0)
+@asyncio.coroutine
+def using_global_loop():
+    yield from asyncio.sleep(0)
     return 'ok'
 
 
