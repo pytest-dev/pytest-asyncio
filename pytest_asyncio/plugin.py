@@ -61,11 +61,11 @@ def pytest_pyfunc_call(pyfuncitem):
             try:
                 event_loop.run_until_complete(
                     asyncio.async(pyfuncitem.obj(**testargs), loop=event_loop))
+                return True
             finally:
                 if forbid_global_loop:
                     asyncio.set_event_loop_policy(policy)
                 event_loop.close()
-                return True
 
 
 def pytest_runtest_setup(item):

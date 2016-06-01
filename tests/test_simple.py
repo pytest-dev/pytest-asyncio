@@ -39,7 +39,7 @@ def test_asyncio_marker():
     yield  # sleep(0)
 
 
-@pytest.mark.xfail(reason='need a failure')
+@pytest.mark.xfail(reason='need a failure', strict=True)
 @pytest.mark.asyncio
 def test_asyncio_marker_fail():
     assert False
