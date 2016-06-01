@@ -39,6 +39,12 @@ def test_asyncio_marker():
     yield  # sleep(0)
 
 
+@pytest.mark.xfail(reason='need a failure')
+@pytest.mark.asyncio
+def test_asyncio_marker_fail():
+    assert False
+
+
 @pytest.mark.asyncio
 def test_asyncio_marker_with_default_param(a_param=None):
     """Test the asyncio pytest marker."""
