@@ -130,6 +130,43 @@ The ``asyncio_process_pool`` marker is almost identical to the ``asyncio``
 marker, except the event loop used will have a
 ``concurrent.futures.ProcessPoolExecutor`` set as the default executor.
 
+Changelog
+---------
+
+0.5.0 (UNRELEASED)
+~~~~~~~~~~~~~~~~~~
+- Introduced a changelog.
+  `#31 <https://github.com/pytest-dev/pytest-asyncio/issues/31>`_
+
+
+0.4.1 (2016-06-01)
+~~~~~~~~~~~~~~~~~~
+- Fix a bug preventing the propagation of exceptions from the plugin.
+  `#25 <https://github.com/pytest-dev/pytest-asyncio/issues/25>`_
+
+0.4.0 (2016-05-30)
+~~~~~~~~~~~~~~~~~~
+- Make ``event_loop`` fixtures simpler to override by closing them in the
+  plugin, instead of directly in the fixture.
+  `#21 <https://github.com/pytest-dev/pytest-asyncio/pull/21>`_
+- Introduce the ``forbid_global_loop`` parameter.
+  `#21 <https://github.com/pytest-dev/pytest-asyncio/pull/21>`_
+
+0.3.0 (2015-12-19)
+~~~~~~~~~~~~~~~~~~
+- Support for Python 3.5 ``async``/``await`` syntax.
+  `#17 <https://github.com/pytest-dev/pytest-asyncio/pull/17>`_
+
+0.2.0 (2015-08-01)
+~~~~~~~~~~~~~~~~~~
+- ``unused_tcp_port_factory`` fixture.
+  `#10 <https://github.com/pytest-dev/pytest-asyncio/issues/10>`_
+
+
+0.1.1 (2015-04-23)
+~~~~~~~~~~~~~~~~~~
+Initial release.
+
 
 Contributing
 ------------
