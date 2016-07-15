@@ -65,7 +65,6 @@ def pytest_pyfunc_call(pyfuncitem):
             finally:
                 if forbid_global_loop:
                     asyncio.set_event_loop_policy(policy)
-                event_loop.close()
 
 
 def pytest_runtest_setup(item):
@@ -83,11 +82,12 @@ _markers_2_fixtures = {
 }
 
 
-@pytest.fixture
+@pytest.yield_fixture
 def event_loop(request):
     """Create an instance of the default event loop for each test case."""
-    policy = asyncio.get_event_loop_policy()
-    return policy.new_event_loop()
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
 
 
 @pytest.fixture

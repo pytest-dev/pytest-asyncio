@@ -8,7 +8,9 @@ class CustomSelectorLoop(asyncio.SelectorEventLoop):
     pass
 
 
-@pytest.fixture()
+@pytest.yield_fixture()
 def event_loop():
     """Create an instance of the default event loop for each test case."""
-    return CustomSelectorLoop()
+    loop = CustomSelectorLoop()
+    yield loop
+    loop.close()

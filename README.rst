@@ -60,8 +60,9 @@ Fixtures
 
 ``event_loop``
 ~~~~~~~~~~~~~~
-Creates and injects a new instance of the default asyncio event loop. The loop
-will be closed at the end of the test.
+Creates and injects a new instance of the default asyncio event loop. By
+default, the loop will be closed at the end of the test (i.e. the default
+fixture scope is ``function``).
 
 Note that just using the ``event_loop`` fixture won't make your test function
 a coroutine. You'll need to interact with the event loop directly, using methods
@@ -82,9 +83,11 @@ event loop. This will take effect even if you're using the
 
 .. code-block:: python
 
-    @pytest.fixture()
+    @pytest.yield_fixture()
     def event_loop():
-        return MyCustomLoop()
+        loop = MyCustomLoop()
+        yield loop
+        loop.close()
 
 
 ``event_loop_process_pool``
@@ -137,6 +140,10 @@ Changelog
 ~~~~~~~~~~~~~~~~~~
 - Introduced a changelog.
   `#31 <https://github.com/pytest-dev/pytest-asyncio/issues/31>`_
+- The ``event_loop`` fixture is again responsible for closing itself.
+  This makes the fixture slightly harder to correctly override, but enables
+  other fixtures to depend on it correctly.
+  `#30 <https://github.com/pytest-dev/pytest-asyncio/issues/30>`_
 
 
 0.4.1 (2016-06-01)

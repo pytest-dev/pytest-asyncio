@@ -17,3 +17,8 @@ def test_forbid_global_loop(event_loop):
     yield from asyncio.sleep(0.01, loop=event_loop)
     with pytest.raises(Exception):
         asyncio.get_event_loop()
+
+@pytest.mark.asyncio
+@asyncio.coroutine
+def test_dependent_fixture(dependent_fixture):
+    yield from asyncio.sleep(0.1)
