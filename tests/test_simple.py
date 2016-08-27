@@ -58,6 +58,12 @@ def test_asyncio_process_pool_marker(event_loop):
     assert ret == 'ok'
 
 
+@pytest.mark.xfail(raises=asyncio.TimeoutError)
+@pytest.mark.asyncio(timeout=0.05)
+def test_asyncio_marker_fail():
+    yield from asyncio.sleep(0.1)
+
+
 @pytest.mark.asyncio
 def test_unused_port_fixture(unused_tcp_port, event_loop):
     """Test the unused TCP port fixture."""
