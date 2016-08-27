@@ -58,9 +58,15 @@ def pytest_pyfunc_call(pyfuncitem):
             funcargs = pyfuncitem.funcargs
             testargs = {arg: funcargs[arg]
                         for arg in pyfuncitem._fixtureinfo.argnames}
+            test_coroutine = pyfuncitem.obj(**testargs)
+
+            if 'timeout' in pyfuncitem.keywords[marker_name].kwargs:
+                timeout = pyfuncitem.keywords[marker_name].kwargs['timeout']
+                test_coroutine = asyncio.wait_for(test_coroutine, timeout=timeout)
+
             try:
                 event_loop.run_until_complete(
-                    asyncio.async(pyfuncitem.obj(**testargs), loop=event_loop))
+                    asyncio.async(test_coroutine, loop=event_loop))
                 return True
             finally:
                 if forbid_global_loop:
