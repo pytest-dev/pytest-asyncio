@@ -37,6 +37,29 @@ def pytest_pycollect_makeitem(collector, name, obj):
             return list(collector._genfunctions(name, obj))
 
 
+@pytest.hookimpl(hookwrapper=True)
+def pytest_fixture_setup(fixturedef, request):
+    """Adjust the event loop policy when an event loop is produced."""
+    outcome = yield
+
+    if fixturedef.argname == "event_loop" and 'asyncio' in request.keywords:
+        loop = outcome.get_result()
+        for kw in _markers_2_fixtures.keys():
+            if kw not in request.keywords:
+                continue
+            forbid_global_loop = (request.keywords[kw].kwargs
+                                  .get('forbid_global_loop', False))
+
+            policy = asyncio.get_event_loop_policy()
+            if forbid_global_loop:
+                asyncio.set_event_loop_policy(ForbiddenEventLoopPolicy())
+                fixturedef.addfinalizer(lambda: asyncio.set_event_loop_policy(policy))
+            else:
+                policy.set_event_loop(loop)
+
+    return outcome
+
+
 @pytest.mark.tryfirst
 def pytest_pyfunc_call(pyfuncitem):
     """
@@ -47,24 +70,12 @@ def pytest_pyfunc_call(pyfuncitem):
         if marker_name in pyfuncitem.keywords:
             event_loop = pyfuncitem.funcargs[fixture_name]
 
-            forbid_global_loop = pyfuncitem.keywords[marker_name].kwargs.get('forbid_global_loop')
-
-            policy = asyncio.get_event_loop_policy()
-            if forbid_global_loop:
-                asyncio.set_event_loop_policy(ForbiddenEventLoopPolicy())
-            else:
-                policy.set_event_loop(event_loop)
-
             funcargs = pyfuncitem.funcargs
             testargs = {arg: funcargs[arg]
                         for arg in pyfuncitem._fixtureinfo.argnames}
-            try:
-                event_loop.run_until_complete(
-                    asyncio.async(pyfuncitem.obj(**testargs), loop=event_loop))
-                return True
-            finally:
-                if forbid_global_loop:
-                    asyncio.set_event_loop_policy(policy)
+            event_loop.run_until_complete(
+                asyncio.async(pyfuncitem.obj(**testargs), loop=event_loop))
+            return True
 
 
 def pytest_runtest_setup(item):
@@ -85,6 +96,7 @@ _markers_2_fixtures = {
 @pytest.yield_fixture
 def event_loop(request):
     """Create an instance of the default event loop for each test case."""
+    print("EVENT LOOP")
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
