@@ -111,6 +111,12 @@ def event_loop_process_pool(event_loop):
     return event_loop
 
 
+@pytest.yield_fixture
+def event_loop_policy(event_loop, request):
+    """Depending on test parameters, set up the event loop policy."""
+    import pdb; pdb.set_trace()
+
+
 @pytest.fixture
 def unused_tcp_port():
     """Find an unused localhost TCP port from 1024-65535 and return it."""
