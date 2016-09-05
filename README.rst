@@ -89,6 +89,11 @@ event loop. This will take effect even if you're using the
         yield loop
         loop.close()
 
+A special pytest hook will ensure the produced loop is either set as the
+default global loop, or a special, error-throwing event loop policy is installed
+as the default policy (depending on the ``forbid_global_loop`` parameter).
+Fixtures depending on the ``event_loop`` fixture can expect the policy to be
+properly modified when they run.
 
 ``event_loop_process_pool``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -144,6 +149,11 @@ Changelog
   This makes the fixture slightly harder to correctly override, but enables
   other fixtures to depend on it correctly.
   `#30 <https://github.com/pytest-dev/pytest-asyncio/issues/30>`_
+- Deal with the event loop policy by wrapping a special pytest hook,
+  ``pytest_fixture_setup``. This allows setting the policy before fixtures
+  dependent on the ``event_loop`` fixture run, thus allowing them to take
+  advantage of the ``forbid_global_loop`` parameter.
+  `#29 <https://github.com/pytest-dev/pytest-asyncio/issues/29>`_
 
 
 0.4.1 (2016-06-01)
