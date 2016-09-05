@@ -152,7 +152,8 @@ Changelog
 - Deal with the event loop policy by wrapping a special pytest hook,
   ``pytest_fixture_setup``. This allows setting the policy before fixtures
   dependent on the ``event_loop`` fixture run, thus allowing them to take
-  advantage of the ``forbid_global_loop`` parameter.
+  advantage of the ``forbid_global_loop`` parameter. As a consequence of this,
+  we now depend on pytest 3.0.
   `#29 <https://github.com/pytest-dev/pytest-asyncio/issues/29>`_
 
 
