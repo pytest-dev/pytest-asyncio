@@ -96,7 +96,6 @@ _markers_2_fixtures = {
 @pytest.yield_fixture
 def event_loop(request):
     """Create an instance of the default event loop for each test case."""
-    print("EVENT LOOP")
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
@@ -109,12 +108,6 @@ def event_loop_process_pool(event_loop):
     The event loop will have a process pool set as the default executor."""
     event_loop.set_default_executor(ProcessPoolExecutor())
     return event_loop
-
-
-@pytest.yield_fixture
-def event_loop_policy(event_loop, request):
-    """Depending on test parameters, set up the event loop policy."""
-    import pdb; pdb.set_trace()
 
 
 @pytest.fixture
