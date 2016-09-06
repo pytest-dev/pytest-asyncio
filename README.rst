@@ -141,7 +141,7 @@ marker, except the event loop used will have a
 Changelog
 ---------
 
-0.5.0 (UNRELEASED)
+0.5.0 (2016-09-07)
 ~~~~~~~~~~~~~~~~~~
 - Introduced a changelog.
   `#31 <https://github.com/pytest-dev/pytest-asyncio/issues/31>`_
