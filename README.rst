@@ -69,6 +69,10 @@ a coroutine. You'll need to interact with the event loop directly, using methods
 like ``event_loop.run_until_complete``. See the ``pytest.mark.asyncio`` marker
 for treating test functions like coroutines.
 
+Simply using this fixture will not set the generated event loop as the
+default asyncio event loop, or change the asyncio event loop policy in any way.
+Use ``pytest.mark.asyncio`` for this purpose.
+
 .. code-block:: python
 
     def test_http_client(event_loop):
@@ -89,11 +93,12 @@ event loop. This will take effect even if you're using the
         yield loop
         loop.close()
 
-A special pytest hook will ensure the produced loop is either set as the
-default global loop, or a special, error-throwing event loop policy is installed
-as the default policy (depending on the ``forbid_global_loop`` parameter).
-Fixtures depending on the ``event_loop`` fixture can expect the policy to be
-properly modified when they run.
+If the ``pytest.mark.asyncio`` marker is applied, a pytest hook will
+ensure the produced loop is either set as the default global loop, or a special,
+error-throwing event loop policy is installed as the default policy (depending
+on the ``forbid_global_loop`` parameter). Fixtures depending on the
+``event_loop`` fixture can expect the policy to be properly modified when they
+run.
 
 ``event_loop_process_pool``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -132,6 +137,26 @@ The event loop used can be overriden by overriding the ``event_loop`` fixture
 If ``forbid_global_loop`` is true, ``asyncio.get_event_loop()`` will result
 in exceptions, ensuring your tests are always passing the event loop explicitly.
 
+In order to make your test code a little more concise, the pytest |pytestmark|_
+feature can be used to mark entire modules or classes with this marker.
+Only test coroutines will be affected (by default, coroutines prefixed by
+``test_``), so, for example, fixtures are safe to define.
+
+.. code-block:: python
+
+    import asyncio
+    import pytest
+
+    # All test coroutines will be treated as marked.
+    pytestmark = pytest.mark.asyncio(forbid_global_loop=True)
+
+    async def test_example(event_loop):
+        """No marker!"""
+        await asyncio.sleep(0, loop=event_loop)
+
+.. |pytestmark| replace:: ``pytestmark``
+.. _pytestmark: http://doc.pytest.org/en/latest/example/markers.html#marking-whole-classes-or-modules
+
 ``pytest.mark.asyncio_process_pool(forbid_global_loop=False)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The ``asyncio_process_pool`` marker is almost identical to the ``asyncio``
@@ -140,6 +165,10 @@ marker, except the event loop used will have a
 
 Changelog
 ---------
+
+0.6.0 (UNRELEASED)
+~~~~~~~~~~~~~~~~~~
+- ``pytestmark`` now works on both module and class level.
 
 0.5.0 (2016-09-07)
 ~~~~~~~~~~~~~~~~~~

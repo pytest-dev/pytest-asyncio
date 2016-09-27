@@ -1,9 +1,13 @@
 import asyncio
-from concurrent.futures import ProcessPoolExecutor
-from contextlib import closing
 import inspect
 import socket
+
+from concurrent.futures import ProcessPoolExecutor
+from contextlib import closing
+
 import pytest
+
+from _pytest.python import transfer_markers
 
 
 class ForbiddenEventLoopPolicy(asyncio.AbstractEventLoopPolicy):
@@ -30,10 +34,18 @@ def pytest_configure(config):
 
 @pytest.mark.tryfirst
 def pytest_pycollect_makeitem(collector, name, obj):
+    """A pytest hook to collect asyncio coroutines."""
     if collector.funcnamefilter(name) and _is_coroutine(obj):
         item = pytest.Function(name, parent=collector)
+
+        # Due to how pytest test collection works, module-level pytestmarks
+        # are applied after the collection step. Since this is the collection
+        # step, we look ourselves.
+        transfer_markers(obj, item.cls, item.module)
+        item = pytest.Function(name, parent=collector)  # To reload keywords.
+
         if ('asyncio' in item.keywords or
-           'asyncio_process_pool' in item.keywords):
+            'asyncio_process_pool' in item.keywords):
             return list(collector._genfunctions(name, obj))
 
 
