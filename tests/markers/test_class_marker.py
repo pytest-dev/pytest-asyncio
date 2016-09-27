@@ -17,7 +17,7 @@ class TestPyTestMark:
             nonlocal counter
             counter += 1
             yield from asyncio.sleep(0, loop=event_loop)
-        yield from asyncio.ensure_future(inc(), loop=event_loop)
+        yield from asyncio.async(inc(), loop=event_loop)
         assert counter == 2
 
 
