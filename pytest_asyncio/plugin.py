@@ -1,3 +1,4 @@
+"""pytest-asyncio implementation."""
 import asyncio
 import inspect
 import socket
@@ -10,9 +11,18 @@ import pytest
 from _pytest.python import transfer_markers
 
 
-class ForbiddenEventLoopPolicy(asyncio.AbstractEventLoopPolicy):
-    """An event loop policy that raises errors on any operation."""
-    pass
+class ForbiddenEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
+    """An event loop policy that raises errors on most operations.
+
+    Operations involving child watchers are permitted."""
+
+    def get_event_loop(self):
+        """Not allowed."""
+        raise NotImplementedError
+
+    def set_event_loop(self, _):
+        """Not allowed."""
+        raise NotImplementedError
 
 
 def _is_coroutine(obj):
@@ -21,6 +31,7 @@ def _is_coroutine(obj):
 
 
 def pytest_configure(config):
+    """Inject documentation."""
     config.addinivalue_line("markers",
                             "asyncio: "
                             "mark the test as a coroutine, it will be "
@@ -65,6 +76,7 @@ def pytest_fixture_setup(fixturedef, request):
             policy = asyncio.get_event_loop_policy()
             if forbid_global_loop:
                 asyncio.set_event_loop_policy(ForbiddenEventLoopPolicy())
+                asyncio.get_child_watcher().attach_loop(loop)
                 fixturedef.addfinalizer(lambda: asyncio.set_event_loop_policy(policy))
             else:
                 policy.set_event_loop(loop)

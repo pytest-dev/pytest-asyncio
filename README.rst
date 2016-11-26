@@ -169,6 +169,9 @@ Changelog
 0.6.0 (UNRELEASED)
 ~~~~~~~~~~~~~~~~~~
 - ``pytestmark`` now works on both module and class level.
+- Using ``forbid_global_loop`` now allows tests to use ``asyncio`` 
+  subprocesses.
+  `#36 <https://github.com/pytest-dev/pytest-asyncio/issues/36>`_
 
 0.5.0 (2016-09-07)
 ~~~~~~~~~~~~~~~~~~
