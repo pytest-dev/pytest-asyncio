@@ -1,5 +1,6 @@
 """pytest-asyncio implementation."""
 import asyncio
+import functools
 import inspect
 import socket
 
@@ -8,7 +9,9 @@ from contextlib import closing
 
 import pytest
 
+from _pytest.fixtures import FixtureFunctionMarker
 from _pytest.python import transfer_markers
+
 
 
 class ForbiddenEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
@@ -148,6 +151,7 @@ def unused_tcp_port_factory():
     produced = set()
 
     def factory():
+        """Return an unused port."""
         port = unused_tcp_port()
 
         while port in produced:
@@ -157,3 +161,34 @@ def unused_tcp_port_factory():
 
         return port
     return factory
+
+
+class AsyncFixtureFunctionMarker(FixtureFunctionMarker):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def __call__(self, coroutine):
+        """The parameter is the actual fixture coroutine."""
+        if not _is_coroutine(coroutine):
+            raise ValueError('Only coroutine functions supported')
+
+        @functools.wraps(coroutine)
+        def inner(*args, **kwargs):
+            loop = None
+            return loop.run_until_complete(coroutine(*args, **kwargs))
+
+        inner._pytestfixturefunction = self
+        return inner
+
+
+def async_fixture(scope='function', params=None, autouse=False, ids=None):
+    if callable(scope) and params is None and not autouse:
+        # direct invocation
+        marker = AsyncFixtureFunctionMarker(
+            'function', params, autouse)
+        return marker(scope)
+    if params is not None and not isinstance(params, (list, tuple)):
+        params = list(params)
+    return AsyncFixtureFunctionMarker(
+        scope, params, autouse, ids=ids)
