@@ -8,6 +8,7 @@ import pytest_asyncio.plugin
 
 @asyncio.coroutine
 def async_coro(loop):
+    """A very simple coroutine."""
     yield from asyncio.sleep(0, loop=loop)
     return 'ok'
 

@@ -63,8 +63,8 @@ def test_unused_port_factory_fixture(unused_tcp_port_factory, event_loop):
         for port in port1, port2, port3:
             with pytest.raises(IOError):
                 await asyncio.start_server(closer, host='localhost',
-                                            port=port,
-                                            loop=event_loop)
+                                           port=port,
+                                           loop=event_loop)
 
         server1.close()
         await server1.wait_closed()

@@ -17,6 +17,8 @@ def test_forbid_global_loop(event_loop):
     yield from asyncio.sleep(0.01, loop=event_loop)
     with pytest.raises(Exception):
         asyncio.get_event_loop()
+    with pytest.raises(Exception):
+        asyncio.set_event_loop(None)
 
 @pytest.mark.asyncio
 @asyncio.coroutine
