@@ -81,8 +81,6 @@ def pytest_fixture_setup(fixturedef, request):
             else:
                 policy.set_event_loop(loop)
 
-    return outcome
-
 
 @pytest.mark.tryfirst
 def pytest_pyfunc_call(pyfuncitem):
