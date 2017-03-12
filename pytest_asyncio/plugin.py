@@ -83,7 +83,8 @@ def pytest_fixture_setup(fixturedef, request):
     return outcome
 
 
-async def initialize_async_fixtures(funcargs, testargs):
+@asyncio.coroutine
+def initialize_async_fixtures(funcargs, testargs):
     """
     Get async generator fixtures first value, and await coroutine fixtures
     """
@@ -92,18 +93,19 @@ async def initialize_async_fixtures(funcargs, testargs):
             continue
         if sys.version_info >= (3, 6) and inspect.isasyncgen(value):
             try:
-                testargs[name] = await value.__anext__()
+                testargs[name] = yield from value.__anext__()
             except StopAsyncIteration:
                 raise RuntimeError("async generator didn't yield") from None
-        elif inspect.iscoroutine(value):
-            testargs[name] = await value
+        elif sys.version_info >= (3, 5) and inspect.iscoroutine(value):
+            testargs[name] = yield from value
 
 
-async def finalize_async_fixtures(funcargs, testargs):
+@asyncio.coroutine
+def finalize_async_fixtures(funcargs, testargs):
     for name, value in funcargs.items():
         if sys.version_info >= (3, 6) and inspect.isasyncgen(value):
             try:
-                await value.__anext__()
+                yield from value.__anext__()
             except StopAsyncIteration:
                 continue
             else:
@@ -124,13 +126,14 @@ def pytest_pyfunc_call(pyfuncitem):
             testargs = {arg: funcargs[arg]
                         for arg in pyfuncitem._fixtureinfo.argnames}
 
-            async def func_executor(event_loop):
+            @asyncio.coroutine
+            def func_executor(event_loop):
                 """Ensure that test function and async fixtures run in one loop"""
-                await initialize_async_fixtures(funcargs, testargs)
+                yield from initialize_async_fixtures(funcargs, testargs)
                 try:
-                    return await asyncio.ensure_future(pyfuncitem.obj(**testargs), loop=event_loop)
+                    yield from asyncio.async(pyfuncitem.obj(**testargs), loop=event_loop)
                 finally:
-                    await finalize_async_fixtures(funcargs, testargs)
+                    yield from finalize_async_fixtures(funcargs, testargs)
 
             event_loop.run_until_complete(func_executor(event_loop))
             return True

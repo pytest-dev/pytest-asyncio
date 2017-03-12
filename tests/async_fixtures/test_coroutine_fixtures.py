@@ -22,7 +22,8 @@ def coroutine_fixture(mock):
 
 
 @pytest.mark.asyncio
-async def test_coroutine_fixture(coroutine_fixture, mock):
+@asyncio.coroutine
+def test_coroutine_fixture(coroutine_fixture, mock):
     assert mock.call_count == 1
     assert mock.call_args_list[-1] == unittest.mock.call(START)
     assert coroutine_fixture is RETVAL
