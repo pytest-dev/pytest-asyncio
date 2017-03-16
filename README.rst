@@ -42,7 +42,7 @@ Features
 - fixtures for injecting unused tcp ports
 - pytest markers for treating tests as asyncio coroutines
 - easy testing with non-default event loops
-
+- support of `async def` fixtures and async generator fixtures
 
 Installation
 ------------
@@ -122,6 +122,23 @@ when several unused TCP ports are required in a test.
         port1, port2 = unused_tcp_port_factory(), unused_tcp_port_factory()
         ...
 
+``async fixtures``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This fixtures may be defined as common pytest fixture:
+
+.. code-block:: python
+    
+    @pytest.fixture(scope='function')
+    async def async_gen_fixture():
+        yield await asyncio.sleep(0.1)
+        
+    @pytest.fixture(scope='function')
+    async def async_fixture():
+        return await asyncio.sleep(0.1)
+
+They behave just like a common fixtures, except that they **must** be function-scoped. 
+That ensures that they a run in the same event loop as test function.
+
 Markers
 -------
 
@@ -172,6 +189,7 @@ Changelog
 - Using ``forbid_global_loop`` now allows tests to use ``asyncio`` 
   subprocesses.
   `#36 <https://github.com/pytest-dev/pytest-asyncio/issues/36>`_
+- support for async and async gen fixtures
 
 0.5.0 (2016-09-07)
 ~~~~~~~~~~~~~~~~~~
