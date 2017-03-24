@@ -1,17 +1,13 @@
 """pytest-asyncio implementation."""
 import asyncio
-import functools
+import contextlib
 import inspect
 import socket
-
+import sys
 from concurrent.futures import ProcessPoolExecutor
-from contextlib import closing
 
 import pytest
-
-from _pytest.fixtures import FixtureFunctionMarker
 from _pytest.python import transfer_markers
-
 
 
 class ForbiddenEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
@@ -87,6 +83,35 @@ def pytest_fixture_setup(fixturedef, request):
     return outcome
 
 
+@asyncio.coroutine
+def initialize_async_fixtures(funcargs, testargs):
+    """
+    Get async generator fixtures first value, and await coroutine fixtures
+    """
+    for name, value in funcargs.items():
+        if name not in testargs:
+            continue
+        if sys.version_info >= (3, 6) and inspect.isasyncgen(value):
+            try:
+                testargs[name] = yield from value.__anext__()
+            except StopAsyncIteration:
+                raise RuntimeError("async generator didn't yield") from None
+        elif sys.version_info >= (3, 5) and inspect.iscoroutine(value):
+            testargs[name] = yield from value
+
+
+@asyncio.coroutine
+def finalize_async_fixtures(funcargs, testargs):
+    for name, value in funcargs.items():
+        if sys.version_info >= (3, 6) and inspect.isasyncgen(value):
+            try:
+                yield from value.__anext__()
+            except StopAsyncIteration:
+                continue
+            else:
+                raise RuntimeError("async generator didn't stop")
+
+
 @pytest.mark.tryfirst
 def pytest_pyfunc_call(pyfuncitem):
     """
@@ -100,8 +125,17 @@ def pytest_pyfunc_call(pyfuncitem):
             funcargs = pyfuncitem.funcargs
             testargs = {arg: funcargs[arg]
                         for arg in pyfuncitem._fixtureinfo.argnames}
-            event_loop.run_until_complete(
-                asyncio.async(pyfuncitem.obj(**testargs), loop=event_loop))
+
+            @asyncio.coroutine
+            def func_executor(event_loop):
+                """Ensure that test function and async fixtures run in one loop"""
+                yield from initialize_async_fixtures(funcargs, testargs)
+                try:
+                    yield from asyncio.async(pyfuncitem.obj(**testargs), loop=event_loop)
+                finally:
+                    yield from finalize_async_fixtures(funcargs, testargs)
+
+            event_loop.run_until_complete(func_executor(event_loop))
             return True
 
 
@@ -140,7 +174,7 @@ def event_loop_process_pool(event_loop):
 @pytest.fixture
 def unused_tcp_port():
     """Find an unused localhost TCP port from 1024-65535 and return it."""
-    with closing(socket.socket()) as sock:
+    with contextlib.closing(socket.socket()) as sock:
         sock.bind(('127.0.0.1', 0))
         return sock.getsockname()[1]
 
@@ -161,34 +195,3 @@ def unused_tcp_port_factory():
 
         return port
     return factory
-
-
-class AsyncFixtureFunctionMarker(FixtureFunctionMarker):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def __call__(self, coroutine):
-        """The parameter is the actual fixture coroutine."""
-        if not _is_coroutine(coroutine):
-            raise ValueError('Only coroutine functions supported')
-
-        @functools.wraps(coroutine)
-        def inner(*args, **kwargs):
-            loop = None
-            return loop.run_until_complete(coroutine(*args, **kwargs))
-
-        inner._pytestfixturefunction = self
-        return inner
-
-
-def async_fixture(scope='function', params=None, autouse=False, ids=None):
-    if callable(scope) and params is None and not autouse:
-        # direct invocation
-        marker = AsyncFixtureFunctionMarker(
-            'function', params, autouse)
-        return marker(scope)
-    if params is not None and not isinstance(params, (list, tuple)):
-        params = list(params)
-    return AsyncFixtureFunctionMarker(
-        scope, params, autouse, ids=ids)

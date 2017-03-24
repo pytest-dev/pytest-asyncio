@@ -1,15 +1,13 @@
 language: python
-python: 3.5
-
-env:
-    - TOX_ENV=py33
-    - TOX_ENV=py34
-    - TOX_ENV=py35
+python:
+  - "3.3"
+  - "3.4"
+  - "3.5"
 
 install:
-    - pip install tox
+    - pip install tox tox-travis
 
-script: tox -e $TOX_ENV
+script: tox
 
 after_success:
     - pip install coveralls && cd tests && coveralls
