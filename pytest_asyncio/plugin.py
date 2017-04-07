@@ -78,7 +78,9 @@ def pytest_fixture_setup(fixturedef, request):
                 asyncio.get_child_watcher().attach_loop(loop)
                 fixturedef.addfinalizer(lambda: asyncio.set_event_loop_policy(policy))
             else:
+                old_loop = policy.get_event_loop()
                 policy.set_event_loop(loop)
+                fixturedef.addfinalizer(lambda: policy.set_event_loop(old_loop))
 
 
 @asyncio.coroutine
