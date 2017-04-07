@@ -42,7 +42,7 @@ setup(
         "Framework :: Pytest",
     ],
     install_requires=[
-        'pytest >= 3.0.2',
+        'pytest >= 3.0.6',
     ],
     extras_require={
         ':python_version == "3.3"': ['asyncio']
