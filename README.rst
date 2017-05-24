@@ -110,15 +110,16 @@ when several unused TCP ports are required in a test.
         port1, port2 = unused_tcp_port_factory(), unused_tcp_port_factory()
         ...
 
-``async fixtures``
+Async fixtures
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Asynchronous fixtures are defined similar to ordinary pytest fixtures.
+Asynchronous fixtures are defined just like ordinary pytest fixtures, except they should be coroutines or asynchronous generators.
 
 .. code-block:: python
 
     @pytest.fixture
     async def async_gen_fixture():
-        yield await asyncio.sleep(0.1)
+        await asyncio.sleep(0.1)
+        yield 'a value'
 
     @pytest.fixture(scope='module')
     async def async_fixture():
