@@ -22,15 +22,6 @@ provides useful fixtures and markers to make testing easier.
         res = await library.do_something()
         assert b'expected result' == res
 
-or, if you're using the pre-Python 3.5 syntax:
-
-.. code-block:: python
-
-    @pytest.mark.asyncio
-    def test_some_asyncio_code():
-        res = yield from library.do_something()
-        assert b'expected result' == res
-
 pytest-asyncio has been strongly influenced by pytest-tornado_.
 
 .. _pytest-tornado: https://github.com/eugeniy/pytest-tornado
@@ -124,25 +115,27 @@ when several unused TCP ports are required in a test.
 
 ``async fixtures``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-This fixtures may be defined as common pytest fixture:
+Asynchronous fixtures are defined similar to ordinary pytest fixtures.
 
 .. code-block:: python
-    
-    @pytest.fixture(scope='function')
+
+    @pytest.fixture
     async def async_gen_fixture():
         yield await asyncio.sleep(0.1)
-        
-    @pytest.fixture(scope='function')
+
+    @pytest.fixture(scope='module')
     async def async_fixture():
         return await asyncio.sleep(0.1)
 
-They behave just like a common fixtures, except that they **must** be function-scoped. 
-That ensures that they a run in the same event loop as test function.
+All scopes are supported, but if you use a non-function scope you will need
+to redefine the ``event_loop`` fixture to have the same or broader scope.
+Async fixtures need the event loop, and so must have the same or narrower scope
+than the ``event_loop`` fixture.
 
 Markers
 -------
 
-``pytest.mark.asyncio(forbid_global_loop=False)``
+``pytest.mark.asyncio``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Mark your test coroutine with this marker and pytest will execute it as an
 asyncio task using the event loop provided by the ``event_loop`` fixture. See
@@ -150,9 +143,6 @@ the introductory section for an example.
 
 The event loop used can be overriden by overriding the ``event_loop`` fixture
 (see above).
-
-If ``forbid_global_loop`` is true, ``asyncio.get_event_loop()`` will result
-in exceptions, ensuring your tests are always passing the event loop explicitly.
 
 In order to make your test code a little more concise, the pytest |pytestmark|_
 feature can be used to mark entire modules or classes with this marker.
@@ -165,7 +155,7 @@ Only test coroutines will be affected (by default, coroutines prefixed by
     import pytest
 
     # All test coroutines will be treated as marked.
-    pytestmark = pytest.mark.asyncio(forbid_global_loop=True)
+    pytestmark = pytest.mark.asyncio
 
     async def test_example(event_loop):
         """No marker!"""
@@ -174,7 +164,7 @@ Only test coroutines will be affected (by default, coroutines prefixed by
 .. |pytestmark| replace:: ``pytestmark``
 .. _pytestmark: http://doc.pytest.org/en/latest/example/markers.html#marking-whole-classes-or-modules
 
-``pytest.mark.asyncio_process_pool(forbid_global_loop=False)``
+``pytest.mark.asyncio_process_pool``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The ``asyncio_process_pool`` marker is almost identical to the ``asyncio``
 marker, except the event loop used will have a
@@ -185,11 +175,11 @@ Changelog
 
 0.6.0 (UNRELEASED)
 ~~~~~~~~~~~~~~~~~~
+- Support for Python versions pre-3.5 has been dropped.
 - ``pytestmark`` now works on both module and class level.
-- Using ``forbid_global_loop`` now allows tests to use ``asyncio`` 
-  subprocesses.
-  `#36 <https://github.com/pytest-dev/pytest-asyncio/issues/36>`_
-- support for async and async gen fixtures
+- The ``forbid_global_loop`` parameter has been removed.
+- Support for async and async gen fixtures has been added.
+  `#45 <https://github.com/pytest-dev/pytest-asyncio/pull/45>`_
 
 0.5.0 (2016-09-07)
 ~~~~~~~~~~~~~~~~~~

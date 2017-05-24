@@ -11,15 +11,6 @@ def test_for_custom_loop():
     assert type(asyncio.get_event_loop()).__name__ == "CustomSelectorLoop"
 
 
-@pytest.mark.asyncio(forbid_global_loop=True)
-def test_forbid_global_loop(event_loop):
-    """Test forbidding fetching the global loop using get_event_loop."""
-    yield from asyncio.sleep(0.01, loop=event_loop)
-    with pytest.raises(Exception):
-        asyncio.get_event_loop()
-    with pytest.raises(Exception):
-        asyncio.set_event_loop(None)
-
 @pytest.mark.asyncio
 @asyncio.coroutine
 def test_dependent_fixture(dependent_fixture):

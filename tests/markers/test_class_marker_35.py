@@ -4,17 +4,17 @@ import pytest
 
 
 class TestPyTestMark:
-    pytestmark = pytest.mark.asyncio(forbid_global_loop=True)
+    pytestmark = pytest.mark.asyncio
 
-    async def test_no_global_loop(self, event_loop, sample_fixture):
-        with pytest.raises(NotImplementedError):
-            asyncio.get_event_loop()
+    async def test_is_asyncio(self, event_loop, sample_fixture):
+        assert asyncio.get_event_loop()
         counter = 1
+
         async def inc():
             nonlocal counter
             counter += 1
-            await asyncio.sleep(0, loop=event_loop)
-        await asyncio.ensure_future(inc(), loop=event_loop)
+            await asyncio.sleep(0)
+        await asyncio.ensure_future(inc())
         assert counter == 2
 
 

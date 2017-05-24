@@ -35,18 +35,14 @@ setup(
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
-        "Programming Language :: Python :: 3.3",
-        "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
         "Topic :: Software Development :: Testing",
         "Framework :: Pytest",
     ],
     install_requires=[
         'pytest >= 3.0.6',
     ],
-    extras_require={
-        ':python_version == "3.3"': ['asyncio']
-    },
     entry_points={
         'pytest11': ['asyncio = pytest_asyncio.plugin'],
     },

@@ -10,20 +10,6 @@ import pytest
 from _pytest.python import transfer_markers
 
 
-class ForbiddenEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
-    """An event loop policy that raises errors on most operations.
-
-    Operations involving child watchers are permitted."""
-
-    def get_event_loop(self):
-        """Not allowed."""
-        raise NotImplementedError
-
-    def set_event_loop(self, _):
-        """Not allowed."""
-        raise NotImplementedError
-
-
 def _is_coroutine(obj):
     """Check to see if an object is really an asyncio coroutine."""
     return asyncio.iscoroutinefunction(obj) or inspect.isgeneratorfunction(obj)
@@ -62,6 +48,75 @@ def pytest_pycollect_makeitem(collector, name, obj):
 @pytest.hookimpl(hookwrapper=True)
 def pytest_fixture_setup(fixturedef, request):
     """Adjust the event loop policy when an event loop is produced."""
+    if inspect.isasyncgenfunction(fixturedef.func):
+        # This is an async generator function. Wrap it accordingly.
+        f = fixturedef.func
+
+        strip_event_loop = False
+        if 'event_loop' not in fixturedef.argnames:
+            fixturedef.argnames += ('event_loop', )
+            strip_event_loop = True
+        strip_request = False
+        if 'request' not in fixturedef.argnames:
+            fixturedef.argnames += ('request', )
+            strip_request = True
+
+        def wrapper(*args, **kwargs):
+            loop = kwargs['event_loop']
+            request = kwargs['request']
+            if strip_event_loop:
+                del kwargs['event_loop']
+            if strip_request:
+                del kwargs['request']
+
+            gen_obj = f(*args, **kwargs)
+
+            async def setup():
+                res = await gen_obj.__anext__()
+                return res
+
+            def finalizer():
+                """Yield again, to finalize."""
+                async def async_finalizer():
+                    try:
+                        await gen_obj.__anext__()
+                    except StopAsyncIteration:
+                        pass
+                    else:
+                        msg = "Async generator fixture didn't stop."
+                        msg += "Yield only once."
+                        raise ValueError(msg)
+
+                loop.run_until_complete(async_finalizer())
+
+            request.addfinalizer(finalizer)
+
+            return loop.run_until_complete(setup())
+
+        fixturedef.func = wrapper
+
+    elif inspect.iscoroutinefunction(fixturedef.func):
+        # Just a coroutine, not an async generator.
+        f = fixturedef.func
+
+        strip_event_loop = False
+        if 'event_loop' not in fixturedef.argnames:
+            fixturedef.argnames += ('event_loop', )
+            strip_event_loop = True
+
+        def wrapper(*args, **kwargs):
+            loop = kwargs['event_loop']
+            if strip_event_loop:
+                del kwargs['event_loop']
+
+            async def setup():
+                res = await f(*args, **kwargs)
+                return res
+
+            return loop.run_until_complete(setup())
+
+        fixturedef.func = wrapper
+
     outcome = yield
 
     if fixturedef.argname == "event_loop" and 'asyncio' in request.keywords:
@@ -69,47 +124,10 @@ def pytest_fixture_setup(fixturedef, request):
         for kw in _markers_2_fixtures.keys():
             if kw not in request.keywords:
                 continue
-            forbid_global_loop = (request.keywords[kw].kwargs
-                                  .get('forbid_global_loop', False))
-
             policy = asyncio.get_event_loop_policy()
-            if forbid_global_loop:
-                asyncio.set_event_loop_policy(ForbiddenEventLoopPolicy())
-                asyncio.get_child_watcher().attach_loop(loop)
-                fixturedef.addfinalizer(lambda: asyncio.set_event_loop_policy(policy))
-            else:
-                old_loop = policy.get_event_loop()
-                policy.set_event_loop(loop)
-                fixturedef.addfinalizer(lambda: policy.set_event_loop(old_loop))
-
-
-@asyncio.coroutine
-def initialize_async_fixtures(funcargs, testargs):
-    """
-    Get async generator fixtures first value, and await coroutine fixtures
-    """
-    for name, value in funcargs.items():
-        if name not in testargs:
-            continue
-        if sys.version_info >= (3, 6) and inspect.isasyncgen(value):
-            try:
-                testargs[name] = yield from value.__anext__()
-            except StopAsyncIteration:
-                raise RuntimeError("async generator didn't yield") from None
-        elif sys.version_info >= (3, 5) and inspect.iscoroutine(value):
-            testargs[name] = yield from value
-
-
-@asyncio.coroutine
-def finalize_async_fixtures(funcargs, testargs):
-    for name, value in funcargs.items():
-        if sys.version_info >= (3, 6) and inspect.isasyncgen(value):
-            try:
-                yield from value.__anext__()
-            except StopAsyncIteration:
-                continue
-            else:
-                raise RuntimeError("async generator didn't stop")
+            old_loop = policy.get_event_loop()
+            policy.set_event_loop(loop)
+            fixturedef.addfinalizer(lambda: policy.set_event_loop(old_loop))
 
 
 @pytest.mark.tryfirst
@@ -126,16 +144,8 @@ def pytest_pyfunc_call(pyfuncitem):
             testargs = {arg: funcargs[arg]
                         for arg in pyfuncitem._fixtureinfo.argnames}
 
-            @asyncio.coroutine
-            def func_executor(event_loop):
-                """Ensure that test function and async fixtures run in one loop"""
-                yield from initialize_async_fixtures(funcargs, testargs)
-                try:
-                    yield from asyncio.async(pyfuncitem.obj(**testargs), loop=event_loop)
-                finally:
-                    yield from finalize_async_fixtures(funcargs, testargs)
-
-            event_loop.run_until_complete(func_executor(event_loop))
+            event_loop.run_until_complete(
+                asyncio.async(pyfuncitem.obj(**testargs), loop=event_loop))
             return True
 
 
