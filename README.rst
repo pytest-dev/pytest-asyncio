@@ -33,7 +33,7 @@ Features
 - fixtures for injecting unused tcp ports
 - pytest markers for treating tests as asyncio coroutines
 - easy testing with non-default event loops
-- support of `async def` fixtures and async generator fixtures
+- support for `async def` fixtures and async generator fixtures
 
 Installation
 ------------
