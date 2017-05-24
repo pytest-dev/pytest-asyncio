@@ -85,11 +85,8 @@ event loop. This will take effect even if you're using the
         loop.close()
 
 If the ``pytest.mark.asyncio`` marker is applied, a pytest hook will
-ensure the produced loop is either set as the default global loop, or a special,
-error-throwing event loop policy is installed as the default policy (depending
-on the ``forbid_global_loop`` parameter). Fixtures depending on the
-``event_loop`` fixture can expect the policy to be properly modified when they
-run.
+ensure the produced loop is set as the default global loop.
+Fixtures depending on the ``event_loop`` fixture can expect the policy to be properly modified when they run.
 
 ``event_loop_process_pool``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
