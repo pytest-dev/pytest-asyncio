@@ -4,14 +4,9 @@ import sys
 import pytest
 
 collect_ignore = []
-if sys.version_info[:2] < (3, 5):
-    collect_ignore.append("test_simple_35.py")
-    collect_ignore.append("test_event_loop_scope_35.py")
-    collect_ignore.append("markers/test_class_marker_35.py")
-    collect_ignore.append("markers/test_module_marker_35.py")
-    collect_ignore.append("async_fixtures/test_async_fixtures_35.py")
 if sys.version_info[:2] < (3, 6):
     collect_ignore.append("async_fixtures/test_async_gen_fixtures_36.py")
+    collect_ignore.append("async_fixtures/test_nested_36.py")
 
 
 @pytest.yield_fixture()
