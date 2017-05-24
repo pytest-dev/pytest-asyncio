@@ -15,6 +15,13 @@ def _is_coroutine(obj):
     return asyncio.iscoroutinefunction(obj) or inspect.isgeneratorfunction(obj)
 
 
+if sys.version_info[:2] < (3, 6):
+    def isasyncgenfunction(_):
+        return False
+else:
+    from inspect import isasyncgenfunction
+
+
 def pytest_configure(config):
     """Inject documentation."""
     config.addinivalue_line("markers",
@@ -48,7 +55,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
 @pytest.hookimpl(hookwrapper=True)
 def pytest_fixture_setup(fixturedef, request):
     """Adjust the event loop policy when an event loop is produced."""
-    if inspect.isasyncgenfunction(fixturedef.func):
+    if isasyncgenfunction(fixturedef.func):
         # This is an async generator function. Wrap it accordingly.
         f = fixturedef.func
 
