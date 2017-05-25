@@ -178,6 +178,8 @@ Changelog
 - The ``forbid_global_loop`` parameter has been removed.
 - Support for async and async gen fixtures has been added.
   `#45 <https://github.com/pytest-dev/pytest-asyncio/pull/45>`_
+- The deprecation warning regarding ``asyncio.async()`` has been fixed.
+  `#51 <https://github.com/pytest-dev/pytest-asyncio/pull/51>`_
 
 0.5.0 (2016-09-07)
 ~~~~~~~~~~~~~~~~~~
