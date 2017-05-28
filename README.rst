@@ -170,6 +170,9 @@ marker, except the event loop used will have a
 
 Changelog
 ---------
+0.7.0 (UNRELEASED)
+~~~~~~~~~~~~~~~~~~
+
 
 0.6.0 (2017-05-28)
 ~~~~~~~~~~~~~~~~~~
