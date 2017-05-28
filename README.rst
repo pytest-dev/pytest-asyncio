@@ -171,7 +171,7 @@ marker, except the event loop used will have a
 Changelog
 ---------
 
-0.6.0 (UNRELEASED)
+0.6.0 (2017-05-28)
 ~~~~~~~~~~~~~~~~~~
 - Support for Python versions pre-3.5 has been dropped.
 - ``pytestmark`` now works on both module and class level.
