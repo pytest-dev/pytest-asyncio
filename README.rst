@@ -130,6 +130,21 @@ to redefine the ``event_loop`` fixture to have the same or broader scope.
 Async fixtures need the event loop, and so must have the same or narrower scope
 than the ``event_loop`` fixture.
 
+Python 3.5 lacks support for async generators. If you really need support for
+Python 3.5, you can still mimic a tear down using pytest's finalizers. Notice
+that the event loop is not running inside finalizers:
+
+.. code-block:: python
+
+    @pytest.fixture
+    async def async_fixture(request, event_loop):
+        def fin():
+            async def afin():
+                await some_teardown()
+            event_loop.run_until_complete(afin())
+        request.addfinalizer(fin)
+        return 'a value'
+
 Markers
 -------
 
