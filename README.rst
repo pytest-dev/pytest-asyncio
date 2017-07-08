@@ -114,7 +114,7 @@ Async fixtures
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Asynchronous fixtures are defined just like ordinary pytest fixtures, except they should be coroutines or asynchronous generators.
 
-.. code-block:: python
+.. code-block:: python3
 
     @pytest.fixture
     async def async_gen_fixture():
@@ -129,6 +129,20 @@ All scopes are supported, but if you use a non-function scope you will need
 to redefine the ``event_loop`` fixture to have the same or broader scope.
 Async fixtures need the event loop, and so must have the same or narrower scope
 than the ``event_loop`` fixture.
+
+If you want to do this with Python 3.5, the ``yield`` statement must be replaced with ``await yield_()`` and the coroutine
+function must be decorated with ``@async_generator``, like so:
+
+.. code-block:: python3
+
+    from async_generator import yield_, async_generator
+
+    @pytest.fixture
+    @async_generator
+    async def async_gen_fixture():
+        await asyncio.sleep(0.1)
+        await yield_('a value')
+
 
 Markers
 -------
