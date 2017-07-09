@@ -43,7 +43,10 @@ setup(
     install_requires=[
         'pytest >= 3.0.6',
     ],
+    extras_require={
+        ':python_version == "3.5"': 'async_generator >= 1.3'
+    },
     entry_points={
         'pytest11': ['asyncio = pytest_asyncio.plugin'],
-    },
+    }
 )

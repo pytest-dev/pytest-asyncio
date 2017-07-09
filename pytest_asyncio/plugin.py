@@ -3,23 +3,20 @@ import asyncio
 import contextlib
 import inspect
 import socket
-import sys
 from concurrent.futures import ProcessPoolExecutor
 
 import pytest
 from _pytest.python import transfer_markers
 
+try:
+    from async_generator import isasyncgenfunction
+except ImportError:
+    from inspect import isasyncgenfunction
+
 
 def _is_coroutine(obj):
     """Check to see if an object is really an asyncio coroutine."""
     return asyncio.iscoroutinefunction(obj) or inspect.isgeneratorfunction(obj)
-
-
-if sys.version_info[:2] < (3, 6):
-    def isasyncgenfunction(_):
-        return False
-else:
-    from inspect import isasyncgenfunction
 
 
 def pytest_configure(config):
