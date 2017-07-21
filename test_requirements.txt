@@ -1,3 +1,0 @@
-coverage==4.1
-tox==2.5.0
-async_generator==1.8
