@@ -184,8 +184,11 @@ marker, except the event loop used will have a
 
 Changelog
 ---------
-0.7.0 (UNRELEASED)
+
+0.7.0 (2017-09-08)
 ~~~~~~~~~~~~~~~~~~
+- Python versions pre-3.6 can use the async_generator library for async fixtures.
+  `#62 <https://github.com/pytest-dev/pytest-asyncio/pull/62>`
 
 
 0.6.0 (2017-05-28)
