@@ -129,9 +129,12 @@ def pytest_fixture_setup(fixturedef, request):
             if kw not in request.keywords:
                 continue
             policy = asyncio.get_event_loop_policy()
-            old_loop = policy.get_event_loop()
+            try:
+                old_loop = policy.get_event_loop()
+                fixturedef.addfinalizer(lambda: policy.set_event_loop(old_loop))
+            except RuntimeError:
+                pass
             policy.set_event_loop(loop)
-            fixturedef.addfinalizer(lambda: policy.set_event_loop(old_loop))
 
 
 @pytest.mark.tryfirst
