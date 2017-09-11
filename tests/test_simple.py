@@ -7,7 +7,7 @@ import pytest_asyncio.plugin
 
 
 @asyncio.coroutine
-def async_coro(loop):
+def async_coro(loop=None):
     """A very simple coroutine."""
     yield from asyncio.sleep(0, loop=loop)
     return 'ok'
@@ -142,4 +142,19 @@ class Test:
     def test_asyncio_marker_method(self, event_loop):
         """Test the asyncio pytest marker in a Test class."""
         ret = yield from async_coro(event_loop)
+        assert ret == 'ok'
+
+
+class TestUnexistingLoop:
+    @pytest.fixture
+    def remove_loop(self):
+        old_loop = asyncio.get_event_loop()
+        asyncio.set_event_loop(None)
+        yield
+        asyncio.set_event_loop(old_loop)
+
+    @pytest.mark.asyncio
+    def test_asyncio_marker_without_loop(self, remove_loop):
+        """Test the asyncio pytest marker in a Test class."""
+        ret = yield from async_coro()
         assert ret == 'ok'
