@@ -39,7 +39,7 @@ setup(
     ],
     extras_require={
         ':python_version == "3.5"': 'async_generator >= 1.3',
-        'testing': ['pytest-cov', 'async_generator >= 1.3'],
+        'testing': ['coverage', 'async_generator >= 1.3'],
     },
     entry_points={
         'pytest11': ['asyncio = pytest_asyncio.plugin'],
