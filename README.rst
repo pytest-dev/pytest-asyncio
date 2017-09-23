@@ -187,6 +187,8 @@ Changelog
 
 0.8.0 (UNRELEASED)
 ~~~~~~~~~~~~~~~~~~
+- Improve integration with other packages (like aiohttp) with more careful event loop handling.
+  `#64` <https://github.com/pytest-dev/pytest-asyncio/pull/64>
 
 0.7.0 (2017-09-08)
 ~~~~~~~~~~~~~~~~~~
