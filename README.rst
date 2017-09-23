@@ -185,7 +185,7 @@ marker, except the event loop used will have a
 Changelog
 ---------
 
-0.8.0 (UNRELEASED)
+0.8.0 (2017-09-23)
 ~~~~~~~~~~~~~~~~~~
 - Improve integration with other packages (like aiohttp) with more careful event loop handling.
   `#64` <https://github.com/pytest-dev/pytest-asyncio/pull/64>
