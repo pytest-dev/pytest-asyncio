@@ -1,0 +1,7 @@
+
+# Automatically added by dh_python3:
+if which py3compile >/dev/null 2>&1; then
+	py3compile -p python3-pytest-asyncio 
+fi
+
+# End automatically added section

@@ -1,0 +1,10 @@
+
+# Automatically added by dh_python3:
+if which py3clean >/dev/null 2>&1; then
+	py3clean -p python3-pytest-asyncio 
+else
+	dpkg -L python3-pytest-asyncio | perl -ne 's,/([^/]*)\.py$,/__pycache__/\1.*, or next; unlink $_ or die $! foreach glob($_)'
+	find /usr/lib/python3/dist-packages/ -type d -name __pycache__ -empty -print0 | xargs --null --no-run-if-empty rmdir
+fi
+
+# End automatically added section

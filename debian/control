@@ -1,0 +1,21 @@
+Source: python3-pytest-asyncio
+Section: python
+Priority: optional
+Maintainer: jeffrey.cliff@gmail.com <jeffrey.cliff@gmail.com>
+Uploaders: jeffrey.cliff@gmail.com <jeffrey.cliff@gmail.com>
+Build-Depends: debhelper(>= 9), python3(>= 3.5), python3-all, python3-pytest(>= 3.0.6), dh-python
+Standards-Version: 3.9.8
+Homepage: https://github.com/pytest-dev/pytest-asyncio
+
+Package: python3-pytest-asyncio
+Architecture: any
+Pre-Depends: dpkg (>= 1.16.1), python3
+Depends: make,  python3-all, ${shlibs:Depends}
+Suggests: python3-dev
+Description: pytest support for asyncio
+ pytest-asyncio is a library for testing asyncio (asynchronous 
+ input/output) code with pytest.
+ .
+ asyncio code is usually written in the form of coroutines, which makes it 
+ slightly more difficult to test using normal testing tools. pytest-asyncio
+ provides useful fixtures and markers to make testing easier.
