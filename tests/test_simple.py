@@ -6,10 +6,9 @@ import pytest
 import pytest_asyncio.plugin
 
 
-@asyncio.coroutine
-def async_coro(loop=None):
+async def async_coro(loop=None):
     """A very simple coroutine."""
-    yield from asyncio.sleep(0, loop=loop)
+    await asyncio.sleep(0, loop=loop)
     return 'ok'
 
 
@@ -53,66 +52,64 @@ def test_asyncio_marker_with_default_param(a_param=None):
 
 
 @pytest.mark.asyncio_process_pool
-def test_asyncio_process_pool_marker(event_loop):
+async def test_asyncio_process_pool_marker(event_loop):
     """Test the asyncio pytest marker."""
-    ret = yield from async_coro(event_loop)
+    ret = await async_coro(event_loop)
     assert ret == 'ok'
 
 
 @pytest.mark.asyncio
-def test_unused_port_fixture(unused_tcp_port, event_loop):
+async def test_unused_port_fixture(unused_tcp_port, event_loop):
     """Test the unused TCP port fixture."""
 
-    @asyncio.coroutine
-    def closer(_, writer):
+    async def closer(_, writer):
         writer.close()
 
-    server1 = yield from asyncio.start_server(closer, host='localhost',
-                                              port=unused_tcp_port,
-                                              loop=event_loop)
+    server1 = await asyncio.start_server(closer, host='localhost',
+                                         port=unused_tcp_port,
+                                         loop=event_loop)
 
     with pytest.raises(IOError):
-        yield from asyncio.start_server(closer, host='localhost',
-                                        port=unused_tcp_port,
-                                        loop=event_loop)
+        await asyncio.start_server(closer, host='localhost',
+                                   port=unused_tcp_port,
+                                   loop=event_loop)
 
     server1.close()
-    yield from server1.wait_closed()
+    await server1.wait_closed()
 
 
 @pytest.mark.asyncio
-def test_unused_port_factory_fixture(unused_tcp_port_factory, event_loop):
+async def test_unused_port_factory_fixture(unused_tcp_port_factory, event_loop):
     """Test the unused TCP port factory fixture."""
 
-    @asyncio.coroutine
-    def closer(_, writer):
+    async def closer(_, writer):
         writer.close()
 
     port1, port2, port3 = (unused_tcp_port_factory(), unused_tcp_port_factory(),
                            unused_tcp_port_factory())
 
-    server1 = yield from asyncio.start_server(closer, host='localhost',
-                                              port=port1,
-                                              loop=event_loop)
-    server2 = yield from asyncio.start_server(closer, host='localhost',
-                                              port=port2,
-                                              loop=event_loop)
-    server3 = yield from asyncio.start_server(closer, host='localhost',
-                                              port=port3,
-                                              loop=event_loop)
+    server1 = await asyncio.start_server(closer, host='localhost',
+                                         port=port1,
+                                         loop=event_loop)
+    server2 = await asyncio.start_server(closer, host='localhost',
+                                         port=port2,
+                                         loop=event_loop)
+    server3 = await asyncio.start_server(closer, host='localhost',
+                                         port=port3,
+                                         loop=event_loop)
 
     for port in port1, port2, port3:
         with pytest.raises(IOError):
-            yield from asyncio.start_server(closer, host='localhost',
-                                            port=port,
-                                            loop=event_loop)
+            await asyncio.start_server(closer, host='localhost',
+                                       port=port,
+                                       loop=event_loop)
 
     server1.close()
-    yield from server1.wait_closed()
+    await server1.wait_closed()
     server2.close()
-    yield from server2.wait_closed()
+    await server2.wait_closed()
     server3.close()
-    yield from server3.wait_closed()
+    await server3.wait_closed()
 
 
 def test_unused_port_factory_duplicate(unused_tcp_port_factory, monkeypatch):
@@ -139,9 +136,9 @@ class Test:
     """Test that asyncio marked functions work in test methods."""
 
     @pytest.mark.asyncio
-    def test_asyncio_marker_method(self, event_loop):
+    async def test_asyncio_marker_method(self, event_loop):
         """Test the asyncio pytest marker in a Test class."""
-        ret = yield from async_coro(event_loop)
+        ret = await async_coro(event_loop)
         assert ret == 'ok'
 
 
@@ -154,7 +151,7 @@ class TestUnexistingLoop:
         asyncio.set_event_loop(old_loop)
 
     @pytest.mark.asyncio
-    def test_asyncio_marker_without_loop(self, remove_loop):
+    async def test_asyncio_marker_without_loop(self, remove_loop):
         """Test the asyncio pytest marker in a Test class."""
-        ret = yield from async_coro()
+        ret = await async_coro()
         assert ret == 'ok'

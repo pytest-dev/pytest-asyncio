@@ -14,11 +14,10 @@ def dependent_fixture(event_loop):
     """A fixture dependent on the event_loop fixture, doing some cleanup."""
     counter = 0
 
-    @asyncio.coroutine
-    def just_a_sleep():
+    async def just_a_sleep():
         """Just sleep a little while."""
         nonlocal event_loop
-        yield from asyncio.sleep(0.1, loop=event_loop)
+        await asyncio.sleep(0.1, loop=event_loop)
         nonlocal counter
         counter += 1
 

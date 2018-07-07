@@ -4,7 +4,7 @@ import asyncio
 import pytest
 
 
-@asyncio.coroutine
+@pytest.mark.asyncio
 async def async_coro(loop):
     await asyncio.sleep(0, loop=loop)
     return 'ok'
