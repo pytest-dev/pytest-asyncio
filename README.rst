@@ -88,12 +88,6 @@ If the ``pytest.mark.asyncio`` marker is applied, a pytest hook will
 ensure the produced loop is set as the default global loop.
 Fixtures depending on the ``event_loop`` fixture can expect the policy to be properly modified when they run.
 
-``event_loop_process_pool``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The ``event_loop_process_pool`` fixture is almost identical to the
-``event_loop`` fixture, except the created event loop will have a
-``concurrent.futures.ProcessPoolExecutor`` set as the default executor.
-
 ``unused_tcp_port``
 ~~~~~~~~~~~~~~~~~~~
 Finds and yields a single unused TCP port on the localhost interface. Useful for
@@ -176,17 +170,15 @@ Only test coroutines will be affected (by default, coroutines prefixed by
 .. |pytestmark| replace:: ``pytestmark``
 .. _pytestmark: http://doc.pytest.org/en/latest/example/markers.html#marking-whole-classes-or-modules
 
-``pytest.mark.asyncio_process_pool``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The ``asyncio_process_pool`` marker is almost identical to the ``asyncio``
-marker, except the event loop used will have a
-``concurrent.futures.ProcessPoolExecutor`` set as the default executor.
-
 Changelog
 ---------
 
 0.9.0 (UNRELEASED)
 ~~~~~~~~~~~~~~~~~~
+- Python 3.7 support
+- Remove ``event_loop_process_pool`` fixture and
+  ``pytest.mark.asyncio_process_pool`` marker (see
+  https://bugs.python.org/issue34075 for deprecation and removal details)
 
 0.8.0 (2017-09-23)
 ~~~~~~~~~~~~~~~~~~

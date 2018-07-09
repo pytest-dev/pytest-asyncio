@@ -20,12 +20,6 @@ async def test_asyncio_marker_with_default_param(a_param=None):
     """Test the asyncio pytest marker."""
 
 
-@pytest.mark.asyncio_process_pool
-async def test_asyncio_process_pool_marker(event_loop):
-    ret = await async_coro(event_loop)
-    assert ret == 'ok'
-
-
 @pytest.mark.asyncio
 async def test_unused_port_fixture(unused_tcp_port, event_loop):
     """Test the unused TCP port fixture."""
