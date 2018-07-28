@@ -5,9 +5,14 @@ from setuptools import setup, find_packages
 
 
 def find_version():
-    version_file = Path(__file__).parent.joinpath('pytest_asyncio', '__init__.py').read_text()
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
-                              version_file, re.M)
+    version_file = (
+        Path(__file__)
+        .parent.joinpath("pytest_asyncio", "__init__.py")
+        .read_text()
+    )
+    version_match = re.search(
+        r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M
+    )
     if version_match:
         return version_match.group(1)
 
@@ -15,15 +20,15 @@ def find_version():
 
 
 setup(
-    name='pytest-asyncio',
+    name="pytest-asyncio",
     version=find_version(),
     packages=find_packages(),
-    url='https://github.com/pytest-dev/pytest-asyncio',
-    license='Apache 2.0',
-    author='Tin Tvrtković',
-    author_email='tinchester@gmail.com',
-    description='Pytest support for asyncio.',
-    long_description=Path(__file__).parent.joinpath('README.rst').read_text(),
+    url="https://github.com/pytest-dev/pytest-asyncio",
+    license="Apache 2.0",
+    author="Tin Tvrtković",
+    author_email="tinchester@gmail.com",
+    description="Pytest support for asyncio.",
+    long_description=Path(__file__).parent.joinpath("README.rst").read_text(),
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
@@ -34,15 +39,11 @@ setup(
         "Topic :: Software Development :: Testing",
         "Framework :: Pytest",
     ],
-    python_requires='>= 3.5',
-    install_requires=[
-        'pytest >= 3.0.6',
-    ],
+    python_requires=">= 3.5",
+    install_requires=["pytest >= 3.0.6"],
     extras_require={
-        ':python_version == "3.5"': 'async_generator >= 1.3',
-        'testing': ['coverage', 'async_generator >= 1.3'],
+        ':python_version == "3.5"': "async_generator >= 1.3",
+        "testing": ["coverage", "async_generator >= 1.3"],
     },
-    entry_points={
-        'pytest11': ['asyncio = pytest_asyncio.plugin'],
-    }
+    entry_points={"pytest11": ["asyncio = pytest_asyncio.plugin"]},
 )
