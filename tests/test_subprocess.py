@@ -7,20 +7,18 @@ import pytest
 
 
 @pytest.mark.asyncio(forbid_global_loop=False)
-@asyncio.coroutine
-def test_subprocess(event_loop):
+async def test_subprocess(event_loop):
     """Starting a subprocess should be possible."""
-    proc = yield from asyncio.subprocess.create_subprocess_exec(
+    proc = await asyncio.subprocess.create_subprocess_exec(
         sys.executable, '--version', stdout=asyncio.subprocess.PIPE,
         loop=event_loop)
-    yield from proc.communicate()
+    await proc.communicate()
 
 
 @pytest.mark.asyncio(forbid_global_loop=True)
-@asyncio.coroutine
-def test_subprocess_forbid(event_loop):
+async def test_subprocess_forbid(event_loop):
     """Starting a subprocess should be possible."""
-    proc = yield from asyncio.subprocess.create_subprocess_exec(
+    proc = await asyncio.subprocess.create_subprocess_exec(
         sys.executable, '--version', stdout=asyncio.subprocess.PIPE,
         loop=event_loop)
-    yield from proc.communicate()
+    await proc.communicate()

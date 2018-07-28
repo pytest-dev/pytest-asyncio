@@ -3,7 +3,6 @@ import asyncio
 import contextlib
 import inspect
 import socket
-from concurrent.futures import ProcessPoolExecutor
 
 import pytest
 from _pytest.python import transfer_markers
@@ -25,11 +24,6 @@ def pytest_configure(config):
                             "asyncio: "
                             "mark the test as a coroutine, it will be "
                             "run using an asyncio event loop")
-    config.addinivalue_line("markers",
-                            "asyncio_process_pool: "
-                            "mark the test as a coroutine, it will be "
-                            "run using an asyncio event loop with a process "
-                            "pool")
 
 
 @pytest.mark.tryfirst
@@ -44,8 +38,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
         transfer_markers(obj, item.cls, item.module)
         item = pytest.Function(name, parent=collector)  # To reload keywords.
 
-        if ('asyncio' in item.keywords or
-            'asyncio_process_pool' in item.keywords):
+        if 'asyncio' in item.keywords:
             return list(collector._genfunctions(name, obj))
 
 
@@ -170,7 +163,6 @@ def pytest_runtest_setup(item):
 # to marked test functions
 _markers_2_fixtures = {
     'asyncio': 'event_loop',
-    'asyncio_process_pool': 'event_loop_process_pool',
 }
 
 
@@ -180,15 +172,6 @@ def event_loop(request):
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
-
-
-@pytest.fixture
-def event_loop_process_pool(event_loop):
-    """Create a fresh instance of the default event loop.
-
-    The event loop will have a process pool set as the default executor."""
-    event_loop.set_default_executor(ProcessPoolExecutor())
-    return event_loop
 
 
 @pytest.fixture

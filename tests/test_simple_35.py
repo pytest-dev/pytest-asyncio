@@ -4,7 +4,7 @@ import asyncio
 import pytest
 
 
-@asyncio.coroutine
+@pytest.mark.asyncio
 async def async_coro(loop):
     await asyncio.sleep(0, loop=loop)
     return 'ok'
@@ -18,12 +18,6 @@ async def test_asyncio_marker():
 @pytest.mark.asyncio
 async def test_asyncio_marker_with_default_param(a_param=None):
     """Test the asyncio pytest marker."""
-
-
-@pytest.mark.asyncio_process_pool
-async def test_asyncio_process_pool_marker(event_loop):
-    ret = await async_coro(event_loop)
-    assert ret == 'ok'
 
 
 @pytest.mark.asyncio
