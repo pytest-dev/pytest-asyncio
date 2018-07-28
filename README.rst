@@ -7,6 +7,9 @@ pytest-asyncio: pytest support for asyncio
     :target: https://travis-ci.org/pytest-dev/pytest-asyncio
 .. image:: https://coveralls.io/repos/pytest-dev/pytest-asyncio/badge.svg
     :target: https://coveralls.io/r/pytest-dev/pytest-asyncio
+.. image:: https://img.shields.io/pypi/pyversions/cattrs.svg
+    :target: https://github.com/Tinche/cattrs
+    :alt: Supported Python versions
 
 pytest-asyncio is an Apache2 licensed library, written in Python, for testing
 asyncio code with pytest.
@@ -175,7 +178,7 @@ Changelog
 
 0.9.0 (UNRELEASED)
 ~~~~~~~~~~~~~~~~~~
-- Python 3.7 support
+- Python 3.7 support.
 - Remove ``event_loop_process_pool`` fixture and
   ``pytest.mark.asyncio_process_pool`` marker (see
   https://bugs.python.org/issue34075 for deprecation and removal details)
