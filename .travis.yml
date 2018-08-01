@@ -7,15 +7,12 @@ matrix:
       # They should be removed once Travis-CI supports 3.7 on the default image.
       dist: xenial
       sudo: true
-os:
-  - linux
 python:
   - 3.5
   - 3.6
+cache: pip
 
 install: pip install tox-travis coveralls
-
-cache: pip
 
 script: tox
 
