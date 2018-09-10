@@ -86,3 +86,22 @@ class Test:
 def test_async_close_loop(event_loop):
     event_loop.close()
     return 'ok'
+
+
+def test_clock_loop(clock_event_loop):
+    assert clock_event_loop.time() == 0
+
+    async def foo():
+        await asyncio.sleep(1)
+
+    # create the task
+    task = clock_event_loop.create_task(foo())
+    assert not task.done()
+
+    # start the task
+    clock_event_loop.advance_time(0)
+    assert not task.done()
+
+    # process the timeout
+    clock_event_loop.advance_time(1)
+    assert task.done()

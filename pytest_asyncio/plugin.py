@@ -159,6 +159,23 @@ def pytest_runtest_setup(item):
             item.fixturenames.append(fixture)
 
 
+class ClockEventLoop(asyncio.SelectorEventLoop):
+    _now = 0
+
+    def time(self):
+        return self._now
+
+    def advance_time(self, amount):
+        # advance the clock and run the loop
+        self._now += amount
+        self._run_once()
+
+        if amount > 0:
+            # Once advanced, new tasks may have just been scheduled for running
+            # in the next loop, advance once more to start these handlers
+            self._run_once()
+
+
 # maps marker to the name of the event loop fixture that will be available
 # to marked test functions
 _markers_2_fixtures = {
@@ -170,6 +187,15 @@ _markers_2_fixtures = {
 def event_loop(request):
     """Create an instance of the default event loop for each test case."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.yield_fixture
+def clock_event_loop(request):
+    """Create an instance of the default event loop for each test case."""
+    loop = ClockEventLoop()
+    asyncio.get_event_loop_policy().set_event_loop(loop)
     yield loop
     loop.close()
 
