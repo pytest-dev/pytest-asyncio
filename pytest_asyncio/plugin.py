@@ -160,6 +160,9 @@ def pytest_runtest_setup(item):
 
 
 class ClockEventLoop(asyncio.SelectorEventLoop):
+    """
+    A custom event loop that explicitly advances time when requested.
+    """
     _now = 0
 
     def time(self):
