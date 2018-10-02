@@ -107,6 +107,11 @@ when several unused TCP ports are required in a test.
         port1, port2 = unused_tcp_port_factory(), unused_tcp_port_factory()
         ...
 
+``unused_udp_port`` and ``unused_udp_port_factory``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Work just like their TCP counterparts but return unused UDP ports.
+
+
 Async fixtures
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Asynchronous fixtures are defined just like ordinary pytest fixtures, except they should be coroutines or asynchronous generators.
