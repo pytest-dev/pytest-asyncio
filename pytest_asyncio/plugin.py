@@ -174,12 +174,16 @@ def event_loop(request):
     loop.close()
 
 
-@pytest.fixture
-def unused_tcp_port():
+def _unused_tcp_port():
     """Find an unused localhost TCP port from 1024-65535 and return it."""
     with contextlib.closing(socket.socket()) as sock:
         sock.bind(('127.0.0.1', 0))
         return sock.getsockname()[1]
+
+
+@pytest.fixture
+def unused_tcp_port():
+    return _unused_tcp_port()
 
 
 @pytest.fixture
@@ -189,10 +193,10 @@ def unused_tcp_port_factory():
 
     def factory():
         """Return an unused port."""
-        port = unused_tcp_port()
+        port = _unused_tcp_port()
 
         while port in produced:
-            port = unused_tcp_port()
+            port = _unused_tcp_port()
 
         produced.add(port)
 
