@@ -178,6 +178,9 @@ Changelog
 
 0.10.0. (UNRELEASED)
 ~~~~~~~~~~~~~~~~~~~~
+- ``pytest-asyncio`` integrates with `Hypothesis <https://hypothesis.readthedocs.io>`_
+  to support ``@given`` on async test functions using ``asyncio``.
+  `#102` <https://github.com/pytest-dev/pytest-asyncio/pull/102>
 
 0.9.0 (2018-07-28)
 ~~~~~~~~~~~~~~~~~~
