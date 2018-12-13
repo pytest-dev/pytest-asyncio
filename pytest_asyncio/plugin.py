@@ -140,8 +140,8 @@ def pytest_pyfunc_call(pyfuncitem):
     function call.
     """
     for marker_name, fixture_name in _markers_2_fixtures.items():
-        if isasyncgenfunction(pyfuncitem.obj) \
-                and marker_name in pyfuncitem.keywords:
+        if marker_name in pyfuncitem.keywords \
+                and not getattr(pyfuncitem.obj, 'is_hypothesis_test', False):
             event_loop = pyfuncitem.funcargs[fixture_name]
 
             funcargs = pyfuncitem.funcargs
