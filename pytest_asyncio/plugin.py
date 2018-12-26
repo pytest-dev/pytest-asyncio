@@ -1,6 +1,7 @@
 """pytest-asyncio implementation."""
 import asyncio
 import contextlib
+import functools
 import inspect
 import socket
 
@@ -139,7 +140,8 @@ def pytest_pyfunc_call(pyfuncitem):
     function call.
     """
     for marker_name, fixture_name in _markers_2_fixtures.items():
-        if marker_name in pyfuncitem.keywords:
+        if marker_name in pyfuncitem.keywords \
+                and not getattr(pyfuncitem.obj, 'is_hypothesis_test', False):
             event_loop = pyfuncitem.funcargs[fixture_name]
 
             funcargs = pyfuncitem.funcargs
@@ -152,11 +154,39 @@ def pytest_pyfunc_call(pyfuncitem):
             return True
 
 
+def wrap_in_sync(func):
+    """Return a sync wrapper around an async function."""
+
+    @functools.wraps(func)
+    def inner(**kwargs):
+        loop = asyncio.get_event_loop_policy().new_event_loop()
+        try:
+            coro = func(**kwargs)
+            if coro is not None:
+                future = asyncio.ensure_future(coro, loop=loop)
+                loop.run_until_complete(future)
+        finally:
+            loop.close()
+
+    return inner
+
+
 def pytest_runtest_setup(item):
     for marker, fixture in _markers_2_fixtures.items():
         if marker in item.keywords and fixture not in item.fixturenames:
             # inject an event loop fixture for all async tests
             item.fixturenames.append(fixture)
+    if item.get_closest_marker("asyncio") is not None:
+        if hasattr(item.obj, 'hypothesis'):
+            # If it's a Hypothesis test, we insert the wrap_in_sync decorator
+            item.obj.hypothesis.inner_test = wrap_in_sync(
+                item.obj.hypothesis.inner_test
+            )
+        elif getattr(item.obj, 'is_hypothesis_test', False):
+            pytest.fail(
+                'test function `%r` is using Hypothesis, but pytest-asyncio '
+                'only works with Hypothesis 3.64.0 or later.' % item
+            )
 
 
 # maps marker to the name of the event loop fixture that will be available
