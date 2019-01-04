@@ -218,14 +218,14 @@ class ClockEventLoop(asyncio.new_event_loop().__class__):
         self._offset += seconds
 
         # ensure waiting callbacks are run before advancing the clock
-        await asyncio.sleep(0)
+        await asyncio.sleep(0, loop=self)
 
         if seconds > 0:
             # Once the clock is adjusted, new tasks may have just been scheduled for running
             # in the next pass through the event loop and advance again for the task
             # that calls `advance_time`
-            await asyncio.sleep(0)
-            await asyncio.sleep(0)
+            await asyncio.sleep(0, loop=self)
+            await asyncio.sleep(0, loop=self)
 
 
 # maps marker to the name of the event loop fixture that will be available
