@@ -196,6 +196,7 @@ class ClockEventLoop(asyncio.new_event_loop().__class__):
 # to marked test functions
 _markers_2_fixtures = {
     'asyncio': 'event_loop',
+    'asyncio_clock': 'clock_event_loop',
 }
 
 
