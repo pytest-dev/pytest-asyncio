@@ -88,9 +88,12 @@ def test_async_close_loop(event_loop):
     return 'ok'
 
 
-def test_clock_loop(clock_event_loop):
-    assert clock_event_loop.time() == 0
 
+@pytest.mark.asyncio_clock
+async def test_clock_loop_advance_time(clock_event_loop):
+    """
+    Test the sliding time event loop fixture
+    """
     async def short_nap():
         await asyncio.sleep(1)
 
@@ -99,9 +102,9 @@ def test_clock_loop(clock_event_loop):
     assert not task.done()
 
     # start the task
-    clock_event_loop.advance_time(0)
+    await clock_event_loop.advance_time(0)
     assert not task.done()
 
     # process the timeout
-    clock_event_loop.advance_time(1)
+    await clock_event_loop.advance_time(1)
     assert task.done()
