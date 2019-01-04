@@ -159,7 +159,7 @@ def pytest_runtest_setup(item):
             item.fixturenames.append(fixture)
 
 
-class ClockEventLoop(asyncio.SelectorEventLoop):
+class ClockEventLoop(asyncio.new_event_loop().__class__):
     """
     A custom event loop that explicitly advances time when requested.
     """
