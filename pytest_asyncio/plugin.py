@@ -161,22 +161,35 @@ def pytest_runtest_setup(item):
 
 class ClockEventLoop(asyncio.new_event_loop().__class__):
     """
-    A custom event loop that explicitly advances time when requested.
+    A custom event loop that explicitly advances time when requested. Otherwise,
+    this event loop advances time as expected.
     """
-    _now = 0
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._offset = 0
 
     def time(self):
-        return self._now
+        """
+        Return the time according the event loop's clock.
 
-    def advance_time(self, amount):
+        This time is adjusted by the stored offset that allows for advancement
+        with `advance_time`.
+        """
+        return super().time() + self._offset
+
+    async def advance_time(self, seconds):
+        '''
+        Advance time by a given offset in seconds.
+        '''
+        if seconds < 0:
+            raise ValueError('cannot go backwards in time')
         # advance the clock and run the loop
-        self._now += amount
-        self._run_once()
-
-        if amount > 0:
-            # Once advanced, new tasks may have just been scheduled for running
-            # in the next loop, advance once more to start these handlers
-            self._run_once()
+        self._offset += seconds
+        # Once advanced, new tasks may have just been scheduled for running
+        # in the next loop, advance once more to start these handlers
+        await asyncio.sleep(0)
+        await asyncio.sleep(0)
+        await asyncio.sleep(0)
 
 
 # maps marker to the name of the event loop fixture that will be available
