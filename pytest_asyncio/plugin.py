@@ -213,13 +213,19 @@ class ClockEventLoop(asyncio.new_event_loop().__class__):
         '''
         if seconds < 0:
             raise ValueError('cannot go backwards in time')
-        # advance the clock and run the loop
+
+        # advance the clock by the given offset
         self._offset += seconds
-        # Once advanced, new tasks may have just been scheduled for running
-        # in the next loop, advance once more to start these handlers
+
+        # ensure waiting callbacks are run before advancing the clock
         await asyncio.sleep(0)
-        await asyncio.sleep(0)
-        await asyncio.sleep(0)
+
+        if seconds > 0:
+            # Once the clock is adjusted, new tasks may have just been scheduled for running
+            # in the next pass through the event loop and advance again for the task
+            # that calls `advance_time`
+            await asyncio.sleep(0)
+            await asyncio.sleep(0)
 
 
 # maps marker to the name of the event loop fixture that will be available
