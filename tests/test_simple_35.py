@@ -88,6 +88,24 @@ def test_async_close_loop(event_loop):
     return 'ok'
 
 
+@pytest.mark.asyncio_clock
+async def test_mark_asyncio_clock():
+    """
+    Test that coroutines marked with asyncio_clock are run with a ClockEventLoop
+    """
+    import pytest_asyncio
+    assert isinstance(asyncio.get_event_loop(), pytest_asyncio.plugin.ClockEventLoop)
+
+
+def test_clock_loop_loop_fixture(clock_event_loop):
+    """
+    Test that the clock_event_loop fixture returns a proper instance of the loop
+    """
+    import pytest_asyncio
+    assert isinstance(asyncio.get_event_loop(), pytest_asyncio.plugin.ClockEventLoop)
+    clock_event_loop.close()
+    return 'ok'
+
 
 @pytest.mark.asyncio_clock
 async def test_clock_loop_advance_time(clock_event_loop):
