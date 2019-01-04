@@ -91,11 +91,11 @@ def test_async_close_loop(event_loop):
 def test_clock_loop(clock_event_loop):
     assert clock_event_loop.time() == 0
 
-    async def foo():
+    async def short_nap():
         await asyncio.sleep(1)
 
     # create the task
-    task = clock_event_loop.create_task(foo())
+    task = clock_event_loop.create_task(short_nap())
     assert not task.done()
 
     # start the task
