@@ -6,7 +6,12 @@ import inspect
 import socket
 
 import pytest
-from _pytest.python import transfer_markers
+try:
+    from _pytest.python import transfer_markers
+except ImportError:  # Pytest 4.1.0 removes the transfer_marker api (#104)
+    def transfer_markers(*args, **kwargs):  # noqa
+        """Noop when over pytest 4.1.0"""
+        pass
 
 try:
     from async_generator import isasyncgenfunction
