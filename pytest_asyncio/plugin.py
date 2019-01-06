@@ -6,6 +6,7 @@ import inspect
 import socket
 
 import pytest
+from _pytest.python import transfer_markers
 
 try:
     from async_generator import isasyncgenfunction
@@ -35,6 +36,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
         # Due to how pytest test collection works, module-level pytestmarks
         # are applied after the collection step. Since this is the collection
         # step, we look ourselves.
+        transfer_markers(obj, item.cls, item.module)
         item = pytest.Function(name, parent=collector)  # To reload keywords.
 
         if 'asyncio' in item.keywords:
