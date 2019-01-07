@@ -212,7 +212,8 @@ class ClockEventLoop(asyncio.new_event_loop().__class__):
         Advance time by a given offset in seconds.
         '''
         if seconds < 0:
-            raise ValueError('cannot go backwards in time')
+            # cannot go backwards in time, so return immediately
+            return
 
         # advance the clock by the given offset
         self._offset += seconds
