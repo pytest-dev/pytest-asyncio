@@ -176,7 +176,10 @@ Only test coroutines will be affected (by default, coroutines prefixed by
 Changelog
 ---------
 
-0.10.0. (UNRELEASED)
+0.11.0 (UNRELEASED)
+~~~~~~~~~~~~~~~~~~~
+
+0.10.0 (2019-01-08)
 ~~~~~~~~~~~~~~~~~~~~
 - ``pytest-asyncio`` integrates with `Hypothesis <https://hypothesis.readthedocs.io>`_
   to support ``@given`` on async test functions using ``asyncio``.
