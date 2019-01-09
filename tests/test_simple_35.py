@@ -93,16 +93,14 @@ async def test_mark_asyncio_clock():
     """
     Test that coroutines marked with asyncio_clock are run with a ClockEventLoop
     """
-    import pytest_asyncio
-    assert isinstance(asyncio.get_event_loop(), pytest_asyncio.plugin.ClockEventLoop)
+    assert hasattr(asyncio.get_event_loop(), 'advance_time')
 
 
 def test_clock_loop_loop_fixture(clock_event_loop):
     """
     Test that the clock_event_loop fixture returns a proper instance of the loop
     """
-    import pytest_asyncio
-    assert isinstance(asyncio.get_event_loop(), pytest_asyncio.plugin.ClockEventLoop)
+    assert hasattr(asyncio.get_event_loop(), 'advance_time')
     clock_event_loop.close()
     return 'ok'
 
@@ -112,11 +110,11 @@ async def test_clock_loop_advance_time(clock_event_loop):
     """
     Test the sliding time event loop fixture
     """
-    async def short_nap():
-        await asyncio.sleep(1)
+    # a timeout for operations using advance_time
+    NAP_TIME = 10
 
     # create the task
-    task = clock_event_loop.create_task(short_nap())
+    task = clock_event_loop.create_task(asyncio.sleep(NAP_TIME))
     assert not task.done()
 
     # start the task
@@ -124,5 +122,5 @@ async def test_clock_loop_advance_time(clock_event_loop):
     assert not task.done()
 
     # process the timeout
-    await clock_event_loop.advance_time(1)
+    await clock_event_loop.advance_time(NAP_TIME)
     assert task.done()
