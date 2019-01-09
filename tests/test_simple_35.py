@@ -110,11 +110,11 @@ async def test_clock_loop_advance_time(clock_event_loop):
     """
     Test the sliding time event loop fixture
     """
-    # a timeout for operations using advance_time
-    NAP_TIME = 10
+    # A task is created that will sleep some number of seconds
+    SLEEP_TIME = 10
 
     # create the task
-    task = clock_event_loop.create_task(asyncio.sleep(NAP_TIME))
+    task = clock_event_loop.create_task(asyncio.sleep(SLEEP_TIME))
     assert not task.done()
 
     # start the task
@@ -122,5 +122,5 @@ async def test_clock_loop_advance_time(clock_event_loop):
     assert not task.done()
 
     # process the timeout
-    await clock_event_loop.advance_time(NAP_TIME)
+    await clock_event_loop.advance_time(SLEEP_TIME)
     assert task.done()
