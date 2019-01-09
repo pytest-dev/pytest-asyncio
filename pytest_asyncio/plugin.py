@@ -237,14 +237,7 @@ def _clock_event_loop_class():
             '''
             if seconds <= 0:
                 # cannot go backwards in time, so return after one iteration of a loop
-                return asyncio.sleep(0)
-
-            # Add a task associated with iterating the currently "ready" tasks and handles
-            #
-            # NOTE: This can actually take place after the offset changed, but
-            # it is here to highlight that the loop is for currently ready
-            # items before offset is applied
-            self.create_task(asyncio.sleep(0))
+                return self.create_task(asyncio.sleep(0))
 
             # advance the clock by the given offset
             self._offset += seconds
