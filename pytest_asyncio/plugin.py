@@ -235,16 +235,12 @@ def _clock_event_loop_class():
             that will complete after all tasks scheduled for after advancement
             of time are proceeding.
             '''
-            if seconds <= 0:
-                # cannot go backwards in time, so return after one iteration of a loop
-                return self.create_task(asyncio.sleep(0))
-
-            # advance the clock by the given offset
-            self._offset += seconds
+            if seconds > 0:
+                # advance the clock by the given offset
+                self._offset += seconds
 
             # Once the clock is adjusted, new tasks may have just been
-            # scheduled for running in the next pass through the event loop and
-            # advance again for the newly ready tasks
+            # scheduled for running in the next pass through the event loop
             return self.create_task(asyncio.sleep(0))
 
     return ClockEventLoop
