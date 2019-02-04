@@ -198,20 +198,23 @@ _markers_2_fixtures = {
 
 def _event_loop_policy():
     """
-    Create a new class for ClockEventLoop based on the current
-    class-type produced by `asyncio.new_event_loop()`.  This is important
+    Create a new class for ClockEventLoopPolicy based on the current
+    class-type produced by `asyncio.get_event_loop_policy()`.  This is important
     for instances in which the enent-loop-policy has been changed.
     """
     class ClockEventLoopPolicy(asyncio.get_event_loop_policy().__class__):
-        """
-        A custom event loop that explicitly advances time when requested. Otherwise,
-        this event loop advances time as expected.
-        """
+        "A custom event loop policy for ClockEventLoop"
+
         def new_event_loop(self):
             parent_loop = super().new_event_loop()
             parent_loop.close()
 
             class ClockEventLoop(parent_loop.__class__):
+                """
+                A custom event loop that explicitly advances time when requested. Otherwise,
+                this event loop advances time as expected.
+                """
+
                 def __init__(self, *args, **kwargs):
                     super().__init__(*args, **kwargs)
                     self._clockoffset = 0
@@ -239,7 +242,10 @@ def _event_loop_policy():
                     # scheduled for running in the next pass through the event loop
                     return self.create_task(asyncio.sleep(0))
 
+            # return the new event loop
             return ClockEventLoop()
+
+    # return the new event loop policy
     return ClockEventLoopPolicy()
 
 
