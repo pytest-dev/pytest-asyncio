@@ -193,64 +193,62 @@ def pytest_runtest_setup(item):
 # to marked test functions
 _markers_2_fixtures = {
     'asyncio': 'event_loop',
-    'asyncio_clock': 'clock_event_loop',
 }
 
 
-@pytest.yield_fixture
-def event_loop(request):
-    """Create an instance of the default event loop for each test case."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
-def _clock_event_loop_class():
+def _event_loop_policy():
     """
     Create a new class for ClockEventLoop based on the current
     class-type produced by `asyncio.new_event_loop()`.  This is important
     for instances in which the enent-loop-policy has been changed.
     """
-    class ClockEventLoop(asyncio.new_event_loop().__class__):
+    class ClockEventLoopPolicy(asyncio.get_event_loop_policy().__class__):
         """
         A custom event loop that explicitly advances time when requested. Otherwise,
         this event loop advances time as expected.
         """
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self._offset = 0
+        def new_event_loop(self):
+            parent_loop = super().new_event_loop()
+            parent_loop.close()
 
-        def time(self):
-            """
-            Return the time according the event loop's clock.
+            class ClockEventLoop(parent_loop.__class__):
+                def __init__(self, *args, **kwargs):
+                    super().__init__(*args, **kwargs)
+                    self._clockoffset = 0
 
-            This time is adjusted by the stored offset that allows for advancement
-            with `advance_time`.
-            """
-            return super().time() + self._offset
+                def time(self):
+                    """
+                    Return the time according the event loop's clock.
 
-        def advance_time(self, seconds):
-            '''
-            Advance time by a given offset in seconds. Returns an awaitable
-            that will complete after all tasks scheduled for after advancement
-            of time are proceeding.
-            '''
-            if seconds > 0:
-                # advance the clock by the given offset
-                self._offset += seconds
+                    This time is adjusted by the stored offset that allows for advancement
+                    with `advance_time`.
+                    """
+                    return super().time() + self._clockoffset
 
-            # Once the clock is adjusted, new tasks may have just been
-            # scheduled for running in the next pass through the event loop
-            return self.create_task(asyncio.sleep(0))
+                def advance_time(self, seconds):
+                    '''
+                    Advance time by a given offset in seconds. Returns an awaitable
+                    that will complete after all tasks scheduled for after advancement
+                    of time are proceeding.
+                    '''
+                    if seconds > 0:
+                        # advance the clock by the given offset
+                        self._clockoffset += seconds
 
-    return ClockEventLoop
+                    # Once the clock is adjusted, new tasks may have just been
+                    # scheduled for running in the next pass through the event loop
+                    return self.create_task(asyncio.sleep(0))
+
+            return ClockEventLoop()
+    return ClockEventLoopPolicy()
 
 
 @pytest.yield_fixture
-def clock_event_loop(request):
+def event_loop(request):
     """Create an instance of the default event loop for each test case."""
-    loop = _clock_event_loop_class()()
-    asyncio.get_event_loop_policy().set_event_loop(loop)
+    # reset the event loop policy: modify existing policy to give time advancement
+    asyncio.set_event_loop_policy(_event_loop_policy())
+    loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
 
