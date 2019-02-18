@@ -201,6 +201,44 @@ _markers_2_fixtures = {
 }
 
 
+class EventLoopClockAdvancer:
+    """
+    A helper object that when called will advance the event loop's time. If the
+    call is awaited, the caller task will wait an iteration for the update to
+    wake up any awaiting handlers.
+    """
+    __slots__ = ("offset", "loop", "_base_time",)
+
+    def __init__(self, loop):
+        self.offset = 0.0
+        self._base_time = loop.time
+        self.loop = loop
+
+        # incorporate offset timing into the event loop
+        self.loop.time = self.time
+
+    def time(self):
+        """
+        Return the time according to the event loop's clock. The time is
+        adjusted by an offset.
+        """
+        return self._base_time() + self.offset
+
+    def __call__(self, seconds):
+        """
+        Advance time by a given offset in seconds. Returns an awaitable
+        that will complete after all tasks scheduled for after advancement
+        of time are proceeding.
+        """
+        if seconds > 0:
+            # advance the clock by the given offset
+            self.offset += abs(seconds)
+
+        # Once the clock is adjusted, new tasks may have just been
+        # scheduled for running in the next pass through the event loop
+        return self.loop.create_task(asyncio.sleep(0))
+
+
 @pytest.yield_fixture
 def event_loop(request):
     """Create an instance of the default event loop for each test case."""
@@ -237,3 +275,8 @@ def unused_tcp_port_factory():
 
         return port
     return factory
+
+
+@pytest.fixture
+def advance_time(event_loop):
+    return EventLoopClockAdvancer(event_loop)
