@@ -166,6 +166,26 @@ _markers_2_fixtures = {
 }
 
 
+class EventLoopClockAdvancer:
+    __slots__ = ("offset", "_base_time",)
+    def __init__(self, loop):
+        self.offset = 0.0
+        self._base_time = loop.time
+        loop.time = self.time
+
+    def time(self):
+        return self._base_time() + self.offset
+
+    def __call__(self, seconds):
+        if seconds > 0:
+            # advance the clock by the given offset
+            self.offset += seconds
+
+        # Once the clock is adjusted, new tasks may have just been
+        # scheduled for running in the next pass through the event loop
+        return self.create_task(asyncio.sleep(0))
+
+
 @pytest.yield_fixture
 def event_loop(request):
     """Create an instance of the default event loop for each test case."""
@@ -198,3 +218,8 @@ def unused_tcp_port_factory():
 
         return port
     return factory
+
+
+@pytest.fixture
+def advance_time(event_loop):
+    return EventLoopClockAdvancer(event_loop)
