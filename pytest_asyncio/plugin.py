@@ -1,5 +1,6 @@
 """pytest-asyncio implementation."""
 import asyncio
+import concurrent.futures
 import contextlib
 import functools
 import inspect
@@ -94,7 +95,10 @@ def pytest_fixture_setup(fixturedef, request):
 
             request.addfinalizer(finalizer)
 
-            return loop.run_until_complete(setup())
+            pool = concurrent.futures.ThreadPoolExecutor(1)
+            loop = asyncio.new_event_loop()
+            pool.submit(asyncio.set_event_loop, loop).result()
+            return pool.submit(loop.run_until_complete, setup()).result()
 
         fixturedef.func = wrapper
 
