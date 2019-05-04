@@ -138,40 +138,33 @@ def pytest_fixture_setup(fixturedef, request):
             fixturedef.addfinalizer(lambda: policy.set_event_loop(old_loop))
 
 
-@pytest.mark.tryfirst
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_pyfunc_call(pyfuncitem):
     """
     Run asyncio marked test functions in an event loop instead of a normal
     function call.
     """
     for marker_name, fixture_name in _markers_2_fixtures.items():
-        if marker_name in pyfuncitem.keywords \
-                and not getattr(pyfuncitem.obj, 'is_hypothesis_test', False):
-            event_loop = pyfuncitem.funcargs[fixture_name]
-
-            funcargs = pyfuncitem.funcargs
-            testargs = {arg: funcargs[arg]
-                        for arg in pyfuncitem._fixtureinfo.argnames}
-
-            event_loop.run_until_complete(
-                asyncio.ensure_future(
-                    pyfuncitem.obj(**testargs), loop=event_loop))
-            return True
+        if marker_name in pyfuncitem.keywords:
+            if getattr(pyfuncitem.obj, 'is_hypothesis_test', False):
+                pyfuncitem.obj.hypothesis.inner_test = wrap_in_sync(
+                    pyfuncitem.obj.hypothesis.inner_test
+                )
+            else:
+                pyfuncitem.obj = wrap_in_sync(pyfuncitem.obj)
+    yield
 
 
 def wrap_in_sync(func):
-    """Return a sync wrapper around an async function."""
+    """Return a sync wrapper around an async function executing it in the
+    current event loop."""
 
     @functools.wraps(func)
     def inner(**kwargs):
-        loop = asyncio.get_event_loop_policy().new_event_loop()
-        try:
-            coro = func(**kwargs)
-            if coro is not None:
-                future = asyncio.ensure_future(coro, loop=loop)
-                loop.run_until_complete(future)
-        finally:
-            loop.close()
+        coro = func(**kwargs)
+        if coro is not None:
+            future = asyncio.ensure_future(coro)
+            asyncio.get_event_loop().run_until_complete(future)
 
     return inner
 
@@ -181,13 +174,9 @@ def pytest_runtest_setup(item):
         if marker in item.keywords and fixture not in item.fixturenames:
             # inject an event loop fixture for all async tests
             item.fixturenames.append(fixture)
-    if item.get_closest_marker("asyncio") is not None:
-        if hasattr(item.obj, 'hypothesis'):
-            # If it's a Hypothesis test, we insert the wrap_in_sync decorator
-            item.obj.hypothesis.inner_test = wrap_in_sync(
-                item.obj.hypothesis.inner_test
-            )
-        elif getattr(item.obj, 'is_hypothesis_test', False):
+    if item.get_closest_marker("asyncio") is not None \
+        and not getattr(item.obj, 'hypothesis', False) \
+        and getattr(item.obj, 'is_hypothesis_test', False):
             pytest.fail(
                 'test function `%r` is using Hypothesis, but pytest-asyncio '
                 'only works with Hypothesis 3.64.0 or later.' % item
