@@ -124,18 +124,15 @@ def pytest_fixture_setup(fixturedef, request):
 
     if fixturedef.argname == "event_loop" and 'asyncio' in request.keywords:
         loop = outcome.get_result()
-        for kw in _markers_2_fixtures.keys():
-            if kw not in request.keywords:
-                continue
-            policy = asyncio.get_event_loop_policy()
-            try:
-                old_loop = policy.get_event_loop()
-            except RuntimeError as exc:
-                if 'no current event loop' not in str(exc):
-                    raise
-                old_loop = None
-            policy.set_event_loop(loop)
-            fixturedef.addfinalizer(lambda: policy.set_event_loop(old_loop))
+        policy = asyncio.get_event_loop_policy()
+        try:
+            old_loop = policy.get_event_loop()
+        except RuntimeError as exc:
+            if 'no current event loop' not in str(exc):
+                raise
+            old_loop = None
+        policy.set_event_loop(loop)
+        fixturedef.addfinalizer(lambda: policy.set_event_loop(old_loop))
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
@@ -144,14 +141,13 @@ def pytest_pyfunc_call(pyfuncitem):
     Run asyncio marked test functions in an event loop instead of a normal
     function call.
     """
-    for marker_name, fixture_name in _markers_2_fixtures.items():
-        if marker_name in pyfuncitem.keywords:
-            if getattr(pyfuncitem.obj, 'is_hypothesis_test', False):
-                pyfuncitem.obj.hypothesis.inner_test = wrap_in_sync(
-                    pyfuncitem.obj.hypothesis.inner_test
-                )
-            else:
-                pyfuncitem.obj = wrap_in_sync(pyfuncitem.obj)
+    if 'asyncio' in pyfuncitem.keywords:
+        if getattr(pyfuncitem.obj, 'is_hypothesis_test', False):
+            pyfuncitem.obj.hypothesis.inner_test = wrap_in_sync(
+                pyfuncitem.obj.hypothesis.inner_test
+            )
+        else:
+            pyfuncitem.obj = wrap_in_sync(pyfuncitem.obj)
     yield
 
 
@@ -170,10 +166,9 @@ def wrap_in_sync(func):
 
 
 def pytest_runtest_setup(item):
-    for marker, fixture in _markers_2_fixtures.items():
-        if marker in item.keywords and fixture not in item.fixturenames:
-            # inject an event loop fixture for all async tests
-            item.fixturenames.append(fixture)
+    if 'asyncio' in item.keywords and 'event_loop' not in item.fixturenames:
+        # inject an event loop fixture for all async tests
+        item.fixturenames.append('event_loop')
     if item.get_closest_marker("asyncio") is not None \
         and not getattr(item.obj, 'hypothesis', False) \
         and getattr(item.obj, 'is_hypothesis_test', False):
@@ -181,13 +176,6 @@ def pytest_runtest_setup(item):
                 'test function `%r` is using Hypothesis, but pytest-asyncio '
                 'only works with Hypothesis 3.64.0 or later.' % item
             )
-
-
-# maps marker to the name of the event loop fixture that will be available
-# to marked test functions
-_markers_2_fixtures = {
-    'asyncio': 'event_loop',
-}
 
 
 @pytest.yield_fixture
