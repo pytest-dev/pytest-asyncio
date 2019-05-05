@@ -51,28 +51,35 @@ def pytest_pycollect_makeitem(collector, name, obj):
 @pytest.hookimpl(hookwrapper=True)
 def pytest_fixture_setup(fixturedef, request):
     """Adjust the event loop policy when an event loop is produced."""
+    if fixturedef.argname == "event_loop" and 'asyncio' in request.keywords:
+        outcome = yield
+        loop = outcome.get_result()
+        policy = asyncio.get_event_loop_policy()
+        try:
+            old_loop = policy.get_event_loop()
+        except RuntimeError as exc:
+            if 'no current event loop' not in str(exc):
+                raise
+            old_loop = None
+        policy.set_event_loop(loop)
+        fixturedef.addfinalizer(lambda: policy.set_event_loop(old_loop))
+        return
+
     if isasyncgenfunction(fixturedef.func):
         # This is an async generator function. Wrap it accordingly.
-        f = fixturedef.func
+        generator = fixturedef.func
 
-        strip_event_loop = False
-        if 'event_loop' not in fixturedef.argnames:
-            fixturedef.argnames += ('event_loop', )
-            strip_event_loop = True
         strip_request = False
         if 'request' not in fixturedef.argnames:
             fixturedef.argnames += ('request', )
             strip_request = True
 
         def wrapper(*args, **kwargs):
-            loop = kwargs['event_loop']
             request = kwargs['request']
-            if strip_event_loop:
-                del kwargs['event_loop']
             if strip_request:
                 del kwargs['request']
 
-            gen_obj = f(*args, **kwargs)
+            gen_obj = generator(*args, **kwargs)
 
             async def setup():
                 res = await gen_obj.__anext__()
@@ -89,50 +96,24 @@ def pytest_fixture_setup(fixturedef, request):
                         msg = "Async generator fixture didn't stop."
                         msg += "Yield only once."
                         raise ValueError(msg)
-
-                loop.run_until_complete(async_finalizer())
+                asyncio.get_event_loop().run_until_complete(async_finalizer())
 
             request.addfinalizer(finalizer)
-
-            return loop.run_until_complete(setup())
+            return asyncio.get_event_loop().run_until_complete(setup())
 
         fixturedef.func = wrapper
-
     elif inspect.iscoroutinefunction(fixturedef.func):
-        # Just a coroutine, not an async generator.
-        f = fixturedef.func
-
-        strip_event_loop = False
-        if 'event_loop' not in fixturedef.argnames:
-            fixturedef.argnames += ('event_loop', )
-            strip_event_loop = True
+        coro = fixturedef.func
 
         def wrapper(*args, **kwargs):
-            loop = kwargs['event_loop']
-            if strip_event_loop:
-                del kwargs['event_loop']
-
             async def setup():
-                res = await f(*args, **kwargs)
+                res = await coro(*args, **kwargs)
                 return res
 
-            return loop.run_until_complete(setup())
+            return asyncio.get_event_loop().run_until_complete(setup())
 
         fixturedef.func = wrapper
-
-    outcome = yield
-
-    if fixturedef.argname == "event_loop" and 'asyncio' in request.keywords:
-        loop = outcome.get_result()
-        policy = asyncio.get_event_loop_policy()
-        try:
-            old_loop = policy.get_event_loop()
-        except RuntimeError as exc:
-            if 'no current event loop' not in str(exc):
-                raise
-            old_loop = None
-        policy.set_event_loop(loop)
-        fixturedef.addfinalizer(lambda: policy.set_event_loop(old_loop))
+    yield
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
