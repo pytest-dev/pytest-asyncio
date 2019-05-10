@@ -19,6 +19,40 @@ except ImportError:
     from inspect import isasyncgenfunction
 
 
+def pytest_addoption(parser):
+    parser.addini(
+        "asyncio_mode",
+        "should pytest-asyncio handle all async functions?",
+        type="bool",
+        # This is defaulted to true to retain previous behavior but should be
+        # updated to `False` after a deprecation cycle so that the library
+        # plays nice with others by default.
+        default=True,
+    )
+
+
+# Intentional that this only allows function scoped fixture without any way to
+# pass through `scope` to the underlying `pytest.fixture` wrapper.
+def asyncio_fixture(func):
+    func._force_asyncio_fixture = True
+    return pytest.fixture(func)
+
+
+def _has_explicit_asyncio_mark(value):
+    return getattr(value, "_force_asyncio_fixture", False)
+
+def _is_asyncio_fixture(func, coerce_asyncio, kwargs):
+    if _has_explicit_asyncio_mark(func):
+        return True
+    elif (coerce_asyncio and
+        (asyncio.iscoroutinefunction(func) or inspect.isasyncgenfunction(func))):
+        return True
+    elif any(_has_explicit_asyncio_mark(value) for value in kwargs.values()):
+        return True
+    else:
+        return False
+
+
 def _is_coroutine(obj):
     """Check to see if an object is really an asyncio coroutine."""
     return asyncio.iscoroutinefunction(obj) or inspect.isgeneratorfunction(obj)
@@ -65,54 +99,67 @@ def pytest_fixture_setup(fixturedef, request):
         fixturedef.addfinalizer(lambda: policy.set_event_loop(old_loop))
         return
 
-    if isasyncgenfunction(fixturedef.func):
-        # This is an async generator function. Wrap it accordingly.
-        generator = fixturedef.func
+    is_asyncio_test = request.node.get_closest_marker("asyncio") is not None
+    is_asyncio_mode = request.node.config.getini("asyncio_mode")
 
-        strip_request = False
-        if 'request' not in fixturedef.argnames:
-            fixturedef.argnames += ('request', )
-            strip_request = True
+    coerce_asyncio = is_asyncio_test or is_asyncio_mode
 
-        def wrapper(*args, **kwargs):
-            request = kwargs['request']
-            if strip_request:
-                del kwargs['request']
+    kwargs = {
+        name: request.getfixturevalue(name)
+        for name in fixturedef.argnames
+    }
 
-            gen_obj = generator(*args, **kwargs)
+    if _is_asyncio_fixture(fixturedef.func, coerce_asyncio, kwargs):
+        if isasyncgenfunction(fixturedef.func):
+            # This is an async generator function. Wrap it accordingly.
+            generator = fixturedef.func
 
-            async def setup():
-                res = await gen_obj.__anext__()
-                return res
+            strip_request = False
+            if 'request' not in fixturedef.argnames:
+                fixturedef.argnames += ('request', )
+                strip_request = True
 
-            def finalizer():
-                """Yield again, to finalize."""
-                async def async_finalizer():
-                    try:
-                        await gen_obj.__anext__()
-                    except StopAsyncIteration:
-                        pass
-                    else:
-                        msg = "Async generator fixture didn't stop."
-                        msg += "Yield only once."
-                        raise ValueError(msg)
-                asyncio.get_event_loop().run_until_complete(async_finalizer())
+            def wrapper(*args, **kwargs):
+                request = kwargs['request']
+                if strip_request:
+                    del kwargs['request']
 
-            request.addfinalizer(finalizer)
-            return asyncio.get_event_loop().run_until_complete(setup())
+                gen_obj = generator(*args, **kwargs)
 
-        fixturedef.func = wrapper
-    elif inspect.iscoroutinefunction(fixturedef.func):
-        coro = fixturedef.func
+                async def setup():
+                    res = await gen_obj.__anext__()
+                    return res
 
-        def wrapper(*args, **kwargs):
-            async def setup():
-                res = await coro(*args, **kwargs)
-                return res
+                def finalizer():
+                    """Yield again, to finalize."""
+                    async def async_finalizer():
+                        try:
+                            await gen_obj.__anext__()
+                        except StopAsyncIteration:
+                            pass
+                        else:
+                            msg = "Async generator fixture didn't stop."
+                            msg += "Yield only once."
+                            raise ValueError(msg)
+                    asyncio.get_event_loop().run_until_complete(async_finalizer())
 
-            return asyncio.get_event_loop().run_until_complete(setup())
+                request.addfinalizer(finalizer)
+                return asyncio.get_event_loop().run_until_complete(setup())
+            wrapper._is_asyncio_fixture = True
 
-        fixturedef.func = wrapper
+            fixturedef.func = wrapper
+        elif inspect.iscoroutinefunction(fixturedef.func):
+            coro = fixturedef.func
+
+            def wrapper(*args, **kwargs):
+                async def setup():
+                    res = await coro(*args, **kwargs)
+                    return res
+
+                return asyncio.get_event_loop().run_until_complete(setup())
+            wrapper._is_asyncio_fixture = True
+
+            fixturedef.func = wrapper
     yield
 
 
