@@ -104,7 +104,7 @@ def test_unused_port_factory_duplicate(unused_tcp_port_factory, monkeypatch):
         else:
             return 10000 + counter
 
-    monkeypatch.setattr(pytest_asyncio.plugin, 'unused_tcp_port',
+    monkeypatch.setattr(pytest_asyncio.plugin, '_unused_tcp_port',
                         mock_unused_tcp_port)
 
     assert unused_tcp_port_factory() == 10000
