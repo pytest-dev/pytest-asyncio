@@ -160,30 +160,6 @@ def pytest_runtest_setup(item):
 
 
 class EventLoopClockAdvancer:
-    __slots__ = ("offset", "_base_time",)
-
-    def __init__(self, loop):
-        self.offset = 0.0
-        self._base_time = loop.time
-        loop.time = self.time
-
-    def time(self):
-        return self._base_time() + self.offset
-
-    async def __call__(self, seconds):
-        # sleep so that the loop does everything currently waiting
-        await asyncio.sleep(0)
-
-        if seconds > 0:
-            # advance the clock by the given offset
-            self.offset += seconds
-
-            # Once the clock is adjusted, new tasks may have just been
-            # scheduled for running in the next pass through the event loop
-            await asyncio.sleep(0)
-
-
-class EventLoopClockAdvancer:
     """
     A helper object that when called will advance the event loop's time. If the
     call is awaited, the caller task will wait an iteration for the update to
@@ -206,19 +182,22 @@ class EventLoopClockAdvancer:
         """
         return self._base_time() + self.offset
 
-    def __call__(self, seconds):
+    async def __call__(self, seconds):
         """
         Advance time by a given offset in seconds. Returns an awaitable
         that will complete after all tasks scheduled for after advancement
         of time are proceeding.
         """
+        # sleep so that the loop does everything currently waiting
+        await asyncio.sleep(0)
+
         if seconds > 0:
             # advance the clock by the given offset
-            self.offset += abs(seconds)
+            self.offset += seconds
 
-        # Once the clock is adjusted, new tasks may have just been
-        # scheduled for running in the next pass through the event loop
-        return self.loop.create_task(asyncio.sleep(0))
+            # Once the clock is adjusted, new tasks may have just been
+            # scheduled for running in the next pass through the event loop
+            await asyncio.sleep(0)
 
 
 @pytest.yield_fixture
