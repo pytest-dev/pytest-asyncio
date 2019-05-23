@@ -32,13 +32,6 @@ def pytest_configure(config):
                             "run using an asyncio event loop")
 
 
-def pytest_addoption(parser):
-    """inject commandline option for advance_time"""
-    parser.addoption(
-        "--advance-time-sleep", type=float, default=0, help="sleep duration for advance_time fixture",
-    )
-
-
 @pytest.mark.tryfirst
 def pytest_pycollect_makeitem(collector, name, obj):
     """A pytest hook to collect asyncio coroutines."""
@@ -175,8 +168,7 @@ class EventLoopClockAdvancer:
 
     __slots__ = ("offset", "loop", "sleep_duration", "_base_time")
 
-    def __init__(self, loop, sleep_duration=0.0):
-        breakpoint()
+    def __init__(self, loop, sleep_duration=1e-6):
         self.offset = 0.0
         self._base_time = loop.time
         self.loop = loop
@@ -250,5 +242,4 @@ def unused_tcp_port_factory():
 
 @pytest.fixture
 def advance_time(event_loop, request):
-    sleep_duration = request.config.getoption("--advance-time-sleep")
-    return EventLoopClockAdvancer(event_loop, sleep_duration)
+    return EventLoopClockAdvancer(event_loop)
