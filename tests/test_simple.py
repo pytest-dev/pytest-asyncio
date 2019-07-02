@@ -134,3 +134,8 @@ class TestUnexistingLoop:
         """Test the asyncio pytest marker in a Test class."""
         ret = await async_coro()
         assert ret == 'ok'
+
+
+@pytest.mark.asyncio
+async def test_no_warning_on_skip():
+    pytest.skip("Need a skip error inside asyncio")
