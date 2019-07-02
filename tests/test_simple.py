@@ -138,4 +138,4 @@ class TestUnexistingLoop:
 
 @pytest.mark.asyncio
 async def test_no_warning_on_skip():
-    pytest.skip("Need a skip error inside asyncio")
+    pytest.skip("Test a skip error inside asyncio")
