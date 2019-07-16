@@ -140,9 +140,16 @@ def wrap_in_sync(func):
     def inner(**kwargs):
         coro = func(**kwargs)
         if coro is not None:
-            future = asyncio.ensure_future(coro)
-            asyncio.get_event_loop().run_until_complete(future)
-
+            task = asyncio.ensure_future(coro)
+            try:
+                asyncio.get_event_loop().run_until_complete(task)
+            except BaseException:
+                # run_until_complete doesn't get the result from exceptions
+                # that are not subclasses of `Exception`. Consume all
+                # exceptions to prevent asyncio's warning from logging.
+                if task.done() and not task.cancelled():
+                    task.exception()
+                raise
     return inner
 
 
