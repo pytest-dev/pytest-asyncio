@@ -147,7 +147,7 @@ def wrap_in_sync(func):
                 # run_until_complete doesn't get the result from exceptions
                 # that are not subclasses of `Exception`. Consume all
                 # exceptions to prevent asyncio's warning from logging.
-                if task.done():
+                if task.done() and not task.cancelled():
                     task.exception()
                 raise
     return inner
