@@ -40,7 +40,7 @@ setup(
         "Framework :: Pytest",
     ],
     python_requires=">= 3.5",
-    install_requires=["pytest >= 3.0.6"],
+    install_requires=["pytest >= 3.6.0"],
     extras_require={
         ':python_version == "3.5"': "async_generator >= 1.3",
         "testing": [
