@@ -86,3 +86,75 @@ class Test:
 def test_async_close_loop(event_loop):
     event_loop.close()
     return 'ok'
+
+
+@pytest.mark.asyncio
+async def test_advance_time_fixture(event_loop, advance_time):
+    """
+    Test the `advance_time` fixture using a sleep timer
+    """
+    # A task is created that will sleep some number of seconds
+    SLEEP_TIME = 10
+
+    # create the task
+    task = event_loop.create_task(asyncio.sleep(SLEEP_TIME))
+    assert not task.done()
+
+    # start the task
+    await advance_time(0)
+    assert not task.done()
+
+    # process the timeout
+    await advance_time(SLEEP_TIME)
+    assert task.done()
+
+
+@pytest.mark.asyncio
+async def test_advance_time_fixture_call_later(event_loop, advance_time):
+    """
+    Test the `advance_time` fixture using loop.call_later
+    """
+    # A task is created that will sleep some number of seconds
+    SLEEP_TIME = 10
+    result = []
+
+    # create a simple callback that adds a value to result
+    def callback():
+        result.append(True)
+
+    # create the task
+    event_loop.call_later(SLEEP_TIME, callback)
+
+    # start the task
+    await advance_time(0)
+    assert not result
+
+    # process the timeout
+    await advance_time(SLEEP_TIME)
+    assert result
+
+
+@pytest.mark.asyncio
+async def test_advance_time_fixture_coroutine(event_loop, advance_time):
+    """
+    Test the `advance_time` fixture using loop.call_later
+    """
+    # A task is created that will sleep some number of seconds
+    SLEEP_TIME = 10
+    result = []
+
+    # create a simple callback that adds a value to result
+    async def callback():
+        await asyncio.sleep(SLEEP_TIME)
+        result.append(True)
+
+    # create the task
+    task = event_loop.create_task(callback())
+
+    # start the task
+    await advance_time(0)
+    assert not task.done()
+
+    # process the timeout
+    await advance_time(SLEEP_TIME)
+    assert task.done() and result
