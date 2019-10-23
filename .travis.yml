@@ -13,7 +13,7 @@ matrix:
 
 install: pip install tox-travis coveralls
 
-script: tox
+script: tox -e $TOX_ENV
 
 after_success:
   - tox -e coverage-report
