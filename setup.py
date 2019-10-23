@@ -1,51 +1,53 @@
-import codecs
-import os
 import re
+from pathlib import Path
+
 from setuptools import setup, find_packages
 
-with open('README.rst') as f:
-    readme = f.read()
 
-
-def read(*parts):
-    here = os.path.abspath(os.path.dirname(__file__))
-    return codecs.open(os.path.join(here, *parts), 'r').read()
-
-
-def find_version(*file_paths):
-    version_file = read(*file_paths)
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
-                              version_file, re.M)
+def find_version():
+    version_file = (
+        Path(__file__)
+        .parent.joinpath("pytest_asyncio", "__init__.py")
+        .read_text()
+    )
+    version_match = re.search(
+        r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M
+    )
     if version_match:
         return version_match.group(1)
 
     raise RuntimeError("Unable to find version string.")
 
+
 setup(
-    name='pytest-asyncio',
-    version=find_version('pytest_asyncio', '__init__.py'),
+    name="pytest-asyncio",
+    version=find_version(),
     packages=find_packages(),
-    url='https://github.com/pytest-dev/pytest-asyncio',
-    license='Apache 2.0',
-    author='Tin Tvrtkovic',
-    author_email='tinchester@gmail.com',
-    description='Pytest support for asyncio.',
-    long_description=readme,
+    url="https://github.com/pytest-dev/pytest-asyncio",
+    license="Apache 2.0",
+    author="Tin Tvrtković",
+    author_email="tinchester@gmail.com",
+    description="Pytest support for asyncio.",
+    long_description=Path(__file__).parent.joinpath("README.rst").read_text(),
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
-        "Programming Language :: Python :: 3.3",
-        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
         "Topic :: Software Development :: Testing",
+        "Framework :: Pytest",
     ],
-    install_requires=[
-        'pytest',
-    ],
+    python_requires=">= 3.5",
+    install_requires=["pytest >= 3.6.0"],
     extras_require={
-        ':python_version == "3.3"': ['asyncio']
+        ':python_version == "3.5"': "async_generator >= 1.3",
+        "testing": [
+            "coverage",
+            "async_generator >= 1.3",
+            "hypothesis >= 3.64",
+        ],
     },
-    entry_points={
-        'pytest11': ['asyncio = pytest_asyncio.plugin'],
-    },
+    entry_points={"pytest11": ["asyncio = pytest_asyncio.plugin"]},
 )
