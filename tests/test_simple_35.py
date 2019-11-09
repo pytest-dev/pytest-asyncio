@@ -74,7 +74,7 @@ def test_unused_port_factory_fixture(unused_tcp_port_factory, event_loop):
 
 @pytest.mark.asyncio
 def test_non_corutine_marked():
-    """Tests that marked non-corutines function normally (Issue #109)"""
+    """Tests that marked non-coroutines function normally (Issue #109)"""
     assert True
 
 class Test:
