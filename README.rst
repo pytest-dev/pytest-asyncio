@@ -5,8 +5,9 @@ pytest-asyncio: pytest support for asyncio
     :target: https://pypi.python.org/pypi/pytest-asyncio
 .. image:: https://travis-ci.org/pytest-dev/pytest-asyncio.svg?branch=master
     :target: https://travis-ci.org/pytest-dev/pytest-asyncio
-.. image:: https://coveralls.io/repos/pytest-dev/pytest-asyncio/badge.svg
-    :target: https://coveralls.io/r/pytest-dev/pytest-asyncio
+.. image:: https://codecov.io/gh/pytest-dev/pytest-asyncio/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/pytest-dev/pytest-asyncio
+    :alt: Code coverage Status
 .. image:: https://img.shields.io/pypi/pyversions/pytest-asyncio.svg
     :target: https://github.com/pytest-dev/pytest-asyncio
     :alt: Supported Python versions
