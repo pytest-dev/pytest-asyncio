@@ -24,7 +24,7 @@ async def test_asyncio_marker_with_default_param(a_param=None):
 async def test_unused_port_fixture(unused_tcp_port, event_loop):
     """Test the unused TCP port fixture."""
     async def closer(_, writer):
-        writer.close()
+        raise NotImplementedError()
 
     server1 = await asyncio.start_server(closer, host='localhost',
                                          port=unused_tcp_port,
@@ -38,7 +38,7 @@ def test_unused_port_factory_fixture(unused_tcp_port_factory, event_loop):
     """Test the unused TCP port factory fixture."""
 
     async def closer(_, writer):
-        writer.close()
+        raise NotImplementedError()
 
     port1, port2, port3 = (unused_tcp_port_factory(), unused_tcp_port_factory(),
                            unused_tcp_port_factory())
