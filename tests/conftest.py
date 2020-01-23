@@ -9,7 +9,7 @@ if sys.version_info[:2] < (3, 6):
     collect_ignore.append("async_fixtures/test_nested_36.py")
 
 
-@pytest.yield_fixture()
+@pytest.fixture
 def dependent_fixture(event_loop):
     """A fixture dependent on the event_loop fixture, doing some cleanup."""
     counter = 0

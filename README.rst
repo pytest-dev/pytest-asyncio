@@ -81,7 +81,7 @@ event loop. This will take effect even if you're using the
 
 .. code-block:: python
 
-    @pytest.yield_fixture()
+    @pytest.fixture
     def event_loop():
         loop = MyCustomLoop()
         yield loop

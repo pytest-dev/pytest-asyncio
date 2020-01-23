@@ -166,7 +166,7 @@ def pytest_runtest_setup(item):
             )
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def event_loop(request):
     """Create an instance of the default event loop for each test case."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
