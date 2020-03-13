@@ -36,13 +36,13 @@ def pytest_configure(config):
 def pytest_pycollect_makeitem(collector, name, obj):
     """A pytest hook to collect asyncio coroutines."""
     if collector.funcnamefilter(name) and _is_coroutine(obj):
-        item = pytest.Function(name, parent=collector)
+        item = pytest.Function.from_parent(collector, name=name)
 
         # Due to how pytest test collection works, module-level pytestmarks
         # are applied after the collection step. Since this is the collection
         # step, we look ourselves.
         transfer_markers(obj, item.cls, item.module)
-        item = pytest.Function(name, parent=collector)  # To reload keywords.
+        item = pytest.Function.from_parent(collector, name=name)  # To reload keywords.
 
         if 'asyncio' in item.keywords:
             return list(collector._genfunctions(name, obj))
