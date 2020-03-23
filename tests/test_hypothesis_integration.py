@@ -8,6 +8,12 @@ import pytest
 from hypothesis import given, strategies as st
 
 
+@pytest.fixture(scope="module")
+def event_loop():
+    loop = asyncio.get_event_loop()
+    yield loop
+
+
 @given(st.integers())
 @pytest.mark.asyncio
 async def test_mark_inner(n):
