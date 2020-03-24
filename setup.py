@@ -46,7 +46,7 @@ setup(
         "testing": [
             "coverage",
             "async_generator >= 1.3",
-            "hypothesis >= 3.64",
+            "hypothesis >= 5.7.1",
         ],
     },
     entry_points={"pytest11": ["asyncio = pytest_asyncio.plugin"]},
