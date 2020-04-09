@@ -37,6 +37,6 @@ async def test_mark_and_parametrize(x, y):
 @given(st.integers())
 @pytest.mark.asyncio
 async def test_can_use_fixture_provided_event_loop(event_loop, n):
-    semaphore = asyncio.Semaphore(value=0, loop=event_loop)
+    semaphore = asyncio.Semaphore(value=0)
     event_loop.call_soon(semaphore.release)
     await semaphore.acquire()
