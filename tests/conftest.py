@@ -17,7 +17,7 @@ def dependent_fixture(event_loop):
     async def just_a_sleep():
         """Just sleep a little while."""
         nonlocal event_loop
-        await asyncio.sleep(0.1, loop=event_loop)
+        await asyncio.sleep(0.1)
         nonlocal counter
         counter += 1
 

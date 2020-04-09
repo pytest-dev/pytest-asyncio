@@ -1,4 +1,5 @@
 language: python
+
 matrix:
   include:
     - python: 3.5
@@ -7,10 +8,8 @@ matrix:
       env: TOX_ENV=py36
     - python: 3.7
       env: TOX_ENV=py37
-      # TODO: the dist and sudo keys are currently needed to use Python 3.7.
-      # They should be removed once Travis-CI supports 3.7 on the default image.
-      dist: xenial
-      sudo: true
+    - python: 3.8
+      env: TOX_ENV=py38
 
 install: pip install tox-travis coveralls
 

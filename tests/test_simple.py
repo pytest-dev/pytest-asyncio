@@ -1,28 +1,26 @@
 """Quick'n'dirty unit tests for provided fixtures and markers."""
 import asyncio
-import os
 import pytest
 
 import pytest_asyncio.plugin
 
 
-async def async_coro(loop=None):
-    """A very simple coroutine."""
-    await asyncio.sleep(0, loop=loop)
+async def async_coro():
+    await asyncio.sleep(0)
     return 'ok'
 
 
 def test_event_loop_fixture(event_loop):
     """Test the injection of the event_loop fixture."""
     assert event_loop
-    ret = event_loop.run_until_complete(async_coro(event_loop))
+    ret = event_loop.run_until_complete(async_coro())
     assert ret == 'ok'
 
 
 @pytest.mark.asyncio
-def test_asyncio_marker():
+async def test_asyncio_marker():
     """Test the asyncio pytest marker."""
-    yield  # sleep(0)
+    await asyncio.sleep(0)
 
 
 @pytest.mark.xfail(reason='need a failure', strict=True)
@@ -45,13 +43,11 @@ async def test_unused_port_fixture(unused_tcp_port, event_loop):
         writer.close()
 
     server1 = await asyncio.start_server(closer, host='localhost',
-                                         port=unused_tcp_port,
-                                         loop=event_loop)
+                                         port=unused_tcp_port)
 
     with pytest.raises(IOError):
         await asyncio.start_server(closer, host='localhost',
-                                   port=unused_tcp_port,
-                                   loop=event_loop)
+                                   port=unused_tcp_port)
 
     server1.close()
     await server1.wait_closed()
@@ -68,20 +64,16 @@ async def test_unused_port_factory_fixture(unused_tcp_port_factory, event_loop):
                            unused_tcp_port_factory())
 
     server1 = await asyncio.start_server(closer, host='localhost',
-                                         port=port1,
-                                         loop=event_loop)
+                                         port=port1)
     server2 = await asyncio.start_server(closer, host='localhost',
-                                         port=port2,
-                                         loop=event_loop)
+                                         port=port2)
     server3 = await asyncio.start_server(closer, host='localhost',
-                                         port=port3,
-                                         loop=event_loop)
+                                         port=port3)
 
     for port in port1, port2, port3:
         with pytest.raises(IOError):
             await asyncio.start_server(closer, host='localhost',
-                                       port=port,
-                                       loop=event_loop)
+                                       port=port)
 
     server1.close()
     await server1.wait_closed()
@@ -117,7 +109,7 @@ class Test:
     @pytest.mark.asyncio
     async def test_asyncio_marker_method(self, event_loop):
         """Test the asyncio pytest marker in a Test class."""
-        ret = await async_coro(event_loop)
+        ret = await async_coro()
         assert ret == 'ok'
 
 

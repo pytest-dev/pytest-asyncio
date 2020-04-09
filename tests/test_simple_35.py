@@ -6,7 +6,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def async_coro(loop):
-    await asyncio.sleep(0, loop=loop)
+    await asyncio.sleep(0)
     return 'ok'
 
 
@@ -27,8 +27,7 @@ async def test_unused_port_fixture(unused_tcp_port, event_loop):
         writer.close()
 
     server1 = await asyncio.start_server(closer, host='localhost',
-                                         port=unused_tcp_port,
-                                         loop=event_loop)
+                                         port=unused_tcp_port)
 
     server1.close()
     await server1.wait_closed()
@@ -45,20 +44,16 @@ def test_unused_port_factory_fixture(unused_tcp_port_factory, event_loop):
 
     async def run_test():
         server1 = await asyncio.start_server(closer, host='localhost',
-                                             port=port1,
-                                             loop=event_loop)
+                                             port=port1)
         server2 = await asyncio.start_server(closer, host='localhost',
-                                             port=port2,
-                                             loop=event_loop)
+                                             port=port2)
         server3 = await asyncio.start_server(closer, host='localhost',
-                                             port=port3,
-                                             loop=event_loop)
+                                             port=port3)
 
         for port in port1, port2, port3:
             with pytest.raises(IOError):
                 await asyncio.start_server(closer, host='localhost',
-                                           port=port,
-                                           loop=event_loop)
+                                           port=port)
 
         server1.close()
         await server1.wait_closed()
