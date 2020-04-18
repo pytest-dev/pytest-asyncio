@@ -204,12 +204,12 @@ class Task(asyncio.tasks._PyTask):
 
 
 @pytest.fixture
-def context(request, event_loop):
+def context(request):
     """Create an empty context for the async test case and it's async fixtures."""
     context = Context()
     def taskfactory(loop, coro):
-        return Task(coro, loop=event_loop, context=context)
-    event_loop.set_task_factory(taskfactory)
+        return Task(coro, loop=loop, context=context)
+    asyncio.get_event_loop().set_task_factory(taskfactory)
     return context
 
 
