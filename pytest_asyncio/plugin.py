@@ -68,12 +68,6 @@ def pytest_fixture_setup(fixturedef, request):
         fixturedef.addfinalizer(lambda: policy.set_event_loop(old_loop))
         return
 
-    if 'context' in request.fixturenames:
-        if fixturedef.argname != 'context' and fixturedef.scope == 'function':
-            context = request.getfixturevalue('context')
-    else:
-        context = None
-
     if isasyncgenfunction(fixturedef.func):
         # This is an async generator function. Wrap it accordingly.
         generator = fixturedef.func
@@ -204,12 +198,12 @@ class Task(asyncio.tasks._PyTask):
 
 
 @pytest.fixture
-def context(request):
+def context(event_loop, request):
     """Create an empty context for the async test case and it's async fixtures."""
     context = Context()
     def taskfactory(loop, coro):
         return Task(coro, loop=loop, context=context)
-    asyncio.get_event_loop().set_task_factory(taskfactory)
+    event_loop.set_task_factory(taskfactory)
     return context
 
 
