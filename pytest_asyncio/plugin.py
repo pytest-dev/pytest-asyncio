@@ -4,6 +4,9 @@ import contextlib
 import functools
 import inspect
 import socket
+from contextvars import Context, copy_context
+from asyncio import coroutines
+from asyncio.futures import Future
 
 import pytest
 try:
@@ -65,6 +68,12 @@ def pytest_fixture_setup(fixturedef, request):
         fixturedef.addfinalizer(lambda: policy.set_event_loop(old_loop))
         return
 
+    if 'context' in request.fixturenames:
+        if fixturedef.argname != 'context' and fixturedef.scope == 'function':
+            context = request.getfixturevalue('context')
+    else:
+        context = None
+
     if isasyncgenfunction(fixturedef.func):
         # This is an async generator function. Wrap it accordingly.
         generator = fixturedef.func
@@ -102,6 +111,7 @@ def pytest_fixture_setup(fixturedef, request):
             return asyncio.get_event_loop().run_until_complete(setup())
 
         fixturedef.func = wrapper
+
     elif inspect.iscoroutinefunction(fixturedef.func):
         coro = fixturedef.func
 
@@ -122,6 +132,7 @@ def pytest_pyfunc_call(pyfuncitem):
     Run asyncio marked test functions in an event loop instead of a normal
     function call.
     """
+    context = pyfuncitem.funcargs['context']
     if 'asyncio' in pyfuncitem.keywords:
         if getattr(pyfuncitem.obj, 'is_hypothesis_test', False):
             pyfuncitem.obj.hypothesis.inner_test = wrap_in_sync(
@@ -154,9 +165,12 @@ def wrap_in_sync(func):
 
 
 def pytest_runtest_setup(item):
-    if 'asyncio' in item.keywords and 'event_loop' not in item.fixturenames:
-        # inject an event loop fixture for all async tests
-        item.fixturenames.append('event_loop')
+    if 'asyncio' in item.keywords:
+        if 'event_loop' not in item.fixturenames:
+            # inject an event loop fixture for all async tests
+            item.fixturenames.append('event_loop')
+        if 'context' not in item.fixturenames:
+            item.fixturenames.append('context')
     if item.get_closest_marker("asyncio") is not None \
         and not getattr(item.obj, 'hypothesis', False) \
         and getattr(item.obj, 'is_hypothesis_test', False):
@@ -164,6 +178,40 @@ def pytest_runtest_setup(item):
                 'test function `%r` is using Hypothesis, but pytest-asyncio '
                 'only works with Hypothesis 3.64.0 or later.' % item
             )
+
+class Task(asyncio.tasks._PyTask):
+    def __init__(self, coro, *, loop=None, name=None, context=None):
+        asyncio.futures._PyFuture.__init__(self, loop=loop)
+        if self._source_traceback:
+            del self._source_traceback[-1]
+        if not coroutines.iscoroutine(coro):
+            # raise after Future.__init__(), attrs are required for __del__
+            # prevent logging for pending task in __del__
+            self._log_destroy_pending = False
+            raise TypeError(f"a coroutine was expected, got {coro!r}")
+
+        if name is None:
+            self._name = f'Task-{asyncio.tasks._task_name_counter()}'
+        else:
+            self._name = str(name)
+
+        self._must_cancel = False
+        self._fut_waiter = None
+        self._coro = coro
+        self._context = context if context is not None else copy_context()
+
+        self._loop.call_soon(self.__step, context=self._context)
+        asyncio._register_task(self)
+
+
+@pytest.fixture
+def context(request, event_loop):
+    """Create an instance of the default event loop for each test case."""
+    context = Context()
+    def taskfactory(loop, coro):
+        return Task(coro, loop=event_loop, context=context)
+    event_loop.set_task_factory(taskfactory)
+    return context
 
 
 @pytest.fixture
