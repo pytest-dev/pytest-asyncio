@@ -6,7 +6,6 @@ import inspect
 import socket
 from contextvars import Context, copy_context
 from asyncio import coroutines
-from asyncio.futures import Future
 
 import pytest
 try:
