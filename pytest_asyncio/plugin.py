@@ -159,7 +159,6 @@ def pytest_pyfunc_call(pyfuncitem):
     Run asyncio marked test functions in an event loop instead of a normal
     function call.
     """
-    context = pyfuncitem.funcargs['context']
     if 'asyncio' in pyfuncitem.keywords:
         if getattr(pyfuncitem.obj, 'is_hypothesis_test', False):
             pyfuncitem.obj.hypothesis.inner_test = wrap_in_sync(
