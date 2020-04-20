@@ -176,8 +176,14 @@ Only test coroutines will be affected (by default, coroutines prefixed by
 Changelog
 ---------
 
-0.11.0 (UNRELEASED)
+0.11.0 (2020-04-20)
 ~~~~~~~~~~~~~~~~~~~
+- Test on 3.8, drop 3.3 and 3.4. Stick to 0.10 for these versions.
+  `#152` <https://github.com/pytest-dev/pytest-asyncio/pull/152>
+- Use the new Pytest 5.4.0 Function API. We therefore depend on pytest >= 5.4.0.
+  `#142` <https://github.com/pytest-dev/pytest-asyncio/pull/142>
+- Better ``pytest.skip`` support.
+  `#126` <https://github.com/pytest-dev/pytest-asyncio/pull/126>
 
 0.10.0 (2019-01-08)
 ~~~~~~~~~~~~~~~~~~~~
