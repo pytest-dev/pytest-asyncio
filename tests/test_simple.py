@@ -128,6 +128,29 @@ class TestUnexistingLoop:
         assert ret == 'ok'
 
 
+class TestEventLoopStartedBeforeFixtures:
+    @pytest.fixture
+    async def loop(self):
+        return asyncio.get_event_loop()
+
+    @staticmethod
+    def foo():
+        return 1
+
+    @pytest.mark.asyncio
+    async def test_no_event_loop(self, loop):
+        assert await loop.run_in_executor(None, self.foo) == 1
+
+    @pytest.mark.asyncio
+    async def test_event_loop_after_fixture(self, loop, event_loop):
+        assert await loop.run_in_executor(None, self.foo) == 1
+
+    @pytest.mark.asyncio
+    async def test_event_loop_before_fixture(self, event_loop, loop):
+        assert await loop.run_in_executor(None, self.foo) == 1
+
+
+
 @pytest.mark.asyncio
 async def test_no_warning_on_skip():
     pytest.skip("Test a skip error inside asyncio")
