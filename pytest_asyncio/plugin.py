@@ -154,9 +154,11 @@ def wrap_in_sync(func):
 
 
 def pytest_runtest_setup(item):
-    if 'asyncio' in item.keywords and 'event_loop' not in item.fixturenames:
+    if 'asyncio' in item.keywords:
         # inject an event loop fixture for all async tests
-        item.fixturenames.append('event_loop')
+        if 'event_loop' in item.fixturenames:
+            item.fixturenames.remove('event_loop')
+        item.fixturenames.insert(0, 'event_loop')
     if item.get_closest_marker("asyncio") is not None \
         and not getattr(item.obj, 'hypothesis', False) \
         and getattr(item.obj, 'is_hypothesis_test', False):
