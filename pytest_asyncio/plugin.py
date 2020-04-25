@@ -125,14 +125,18 @@ def pytest_pyfunc_call(pyfuncitem):
     if 'asyncio' in pyfuncitem.keywords:
         if getattr(pyfuncitem.obj, 'is_hypothesis_test', False):
             pyfuncitem.obj.hypothesis.inner_test = wrap_in_sync(
-                pyfuncitem.obj.hypothesis.inner_test
+                pyfuncitem.obj.hypothesis.inner_test,
+                _loop=pyfuncitem.funcargs['event_loop']
             )
         else:
-            pyfuncitem.obj = wrap_in_sync(pyfuncitem.obj)
+            pyfuncitem.obj = wrap_in_sync(
+                pyfuncitem.obj,
+                _loop=pyfuncitem.funcargs['event_loop']
+            )
     yield
 
 
-def wrap_in_sync(func):
+def wrap_in_sync(func, _loop):
     """Return a sync wrapper around an async function executing it in the
     current event loop."""
 
@@ -140,9 +144,15 @@ def wrap_in_sync(func):
     def inner(**kwargs):
         coro = func(**kwargs)
         if coro is not None:
-            task = asyncio.ensure_future(coro)
             try:
-                asyncio.get_event_loop().run_until_complete(task)
+                loop = asyncio.get_event_loop()
+            except RuntimeError as exc:
+                if 'no current event loop' not in str(exc):
+                    raise
+                loop = _loop
+            task = asyncio.ensure_future(coro, loop=loop)
+            try:
+                loop.run_until_complete(task)
             except BaseException:
                 # run_until_complete doesn't get the result from exceptions
                 # that are not subclasses of `Exception`. Consume all
