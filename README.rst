@@ -176,6 +176,11 @@ Only test coroutines will be affected (by default, coroutines prefixed by
 Changelog
 ---------
 
+0.12.0 (2020-05-04)
+~~~~~~~~~~~~~~~~~~~
+- Run the event loop fixture as soon as possible. This helps with fixtures that have an implicit dependency on the event loop.
+  `#156` <https://github.com/pytest-dev/pytest-asyncio/pull/156>
+
 0.11.0 (2020-04-20)
 ~~~~~~~~~~~~~~~~~~~
 - Test on 3.8, drop 3.3 and 3.4. Stick to 0.10 for these versions.
