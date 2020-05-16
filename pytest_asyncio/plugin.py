@@ -18,6 +18,11 @@ try:
 except ImportError:
     from inspect import isasyncgenfunction
 
+try:
+    import contextvars
+except ImportError:
+    contextvars = None
+
 
 def _is_coroutine(obj):
     """Check to see if an object is really an asyncio coroutine."""
@@ -48,6 +53,14 @@ def pytest_pycollect_makeitem(collector, name, obj):
             return list(collector._genfunctions(name, obj))
 
 
+current_context = None
+
+
+def apply_context(context):
+    for var in context:
+        var.set(context[var])
+
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_fixture_setup(fixturedef, request):
     """Adjust the event loop policy when an event loop is produced."""
@@ -64,6 +77,10 @@ def pytest_fixture_setup(fixturedef, request):
         policy.set_event_loop(loop)
         fixturedef.addfinalizer(lambda: policy.set_event_loop(old_loop))
         return
+
+    if current_context:
+        # Apply the current context
+        apply_context(current_context)
 
     if isasyncgenfunction(fixturedef.func):
         # This is an async generator function. Wrap it accordingly.
@@ -83,7 +100,9 @@ def pytest_fixture_setup(fixturedef, request):
 
             async def setup():
                 res = await gen_obj.__anext__()
-                return res
+                # return the current context
+                # that is maybe modified by async gen_obj
+                return res, contextvars and contextvars.copy_context()
 
             def finalizer():
                 """Yield again, to finalize."""
@@ -99,7 +118,15 @@ def pytest_fixture_setup(fixturedef, request):
                 asyncio.get_event_loop().run_until_complete(async_finalizer())
 
             request.addfinalizer(finalizer)
-            return asyncio.get_event_loop().run_until_complete(setup())
+
+            res, context = asyncio.get_event_loop().run_until_complete(setup())
+            if context:
+                # Store the current context
+                global current_context
+
+                current_context = context
+
+            return res
 
         fixturedef.func = wrapper
     elif inspect.iscoroutinefunction(fixturedef.func):
@@ -122,6 +149,11 @@ def pytest_pyfunc_call(pyfuncitem):
     Run asyncio marked test functions in an event loop instead of a normal
     function call.
     """
+    global current_context
+    if current_context:
+        # Apply the current context
+        apply_context(current_context)
+
     if 'asyncio' in pyfuncitem.keywords:
         if getattr(pyfuncitem.obj, 'is_hypothesis_test', False):
             pyfuncitem.obj.hypothesis.inner_test = wrap_in_sync(
@@ -134,6 +166,8 @@ def pytest_pyfunc_call(pyfuncitem):
                 _loop=pyfuncitem.funcargs['event_loop']
             )
     yield
+    # Cleanup the current context
+    current_context = None
 
 
 def wrap_in_sync(func, _loop):
@@ -150,6 +184,7 @@ def wrap_in_sync(func, _loop):
                 if 'no current event loop' not in str(exc):
                     raise
                 loop = _loop
+
             task = asyncio.ensure_future(coro, loop=loop)
             try:
                 loop.run_until_complete(task)

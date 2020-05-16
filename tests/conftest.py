@@ -8,6 +8,9 @@ if sys.version_info[:2] < (3, 6):
     collect_ignore.append("async_fixtures/test_async_gen_fixtures_36.py")
     collect_ignore.append("async_fixtures/test_nested_36.py")
 
+if sys.version_info[:2] < (3, 7):
+    collect_ignore.append("async_fixtures/test_async_gen_fixtures_within_context_37.py")
+
 
 @pytest.fixture
 def dependent_fixture(event_loop):
