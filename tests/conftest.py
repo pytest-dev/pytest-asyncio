@@ -20,3 +20,10 @@ def dependent_fixture(event_loop):
     event_loop.run_until_complete(just_a_sleep())
 
     assert counter == 2
+
+
+@pytest.fixture(scope='session', name='factory_involving_factories')
+def factory_involving_factories_fixture(unused_tcp_port_factory):
+    def factory():
+        return unused_tcp_port_factory()
+    return factory

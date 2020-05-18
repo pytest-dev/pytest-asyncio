@@ -219,7 +219,7 @@ def unused_tcp_port():
     return _unused_tcp_port()
 
 
-@pytest.fixture
+@pytest.fixture(scope='session')
 def unused_tcp_port_factory():
     """A factory function, producing different unused TCP ports."""
     produced = set()

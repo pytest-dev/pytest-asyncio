@@ -166,6 +166,8 @@ Changelog
 ~~~~~~~~~~~~~~~~~~~
 - Add support for Python 3.9
 - Abandon support for Python 3.5. If you still require support for Python 3.5, please use pytest-asyncio v0.14 or earlier.
+- Set ``unused_tcp_port_factory`` fixture scope to 'session'.
+  `#163 <https://github.com/pytest-dev/pytest-asyncio/pull/163>`_
 
 0.14.0 (2020-06-24)
 ~~~~~~~~~~~~~~~~~~~
