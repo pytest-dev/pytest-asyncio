@@ -69,13 +69,20 @@ def pytest_fixture_setup(fixturedef, request):
         # This is an async generator function. Wrap it accordingly.
         generator = fixturedef.func
 
+        strip_event_loop = False
+        if 'event_loop' not in fixturedef.argnames:
+            fixturedef.argnames += ('event_loop', )
+            strip_event_loop = True
         strip_request = False
         if 'request' not in fixturedef.argnames:
             fixturedef.argnames += ('request', )
             strip_request = True
 
         def wrapper(*args, **kwargs):
+            loop = kwargs['event_loop']
             request = kwargs['request']
+            if strip_event_loop:
+                del kwargs['event_loop']
             if strip_request:
                 del kwargs['request']
 
@@ -96,21 +103,30 @@ def pytest_fixture_setup(fixturedef, request):
                         msg = "Async generator fixture didn't stop."
                         msg += "Yield only once."
                         raise ValueError(msg)
-                asyncio.get_event_loop().run_until_complete(async_finalizer())
+                loop.run_until_complete(async_finalizer())
 
             request.addfinalizer(finalizer)
-            return asyncio.get_event_loop().run_until_complete(setup())
+            return loop.run_until_complete(setup())
 
         fixturedef.func = wrapper
     elif inspect.iscoroutinefunction(fixturedef.func):
         coro = fixturedef.func
 
+        strip_event_loop = False
+        if 'event_loop' not in fixturedef.argnames:
+            fixturedef.argnames += ('event_loop', )
+            strip_event_loop = True
+
         def wrapper(*args, **kwargs):
+            loop = kwargs['event_loop']
+            if strip_event_loop:
+                del kwargs['event_loop']
+
             async def setup():
                 res = await coro(*args, **kwargs)
                 return res
 
-            return asyncio.get_event_loop().run_until_complete(setup())
+            return loop.run_until_complete(setup())
 
         fixturedef.func = wrapper
     yield
@@ -144,15 +160,9 @@ def wrap_in_sync(func, _loop):
     def inner(**kwargs):
         coro = func(**kwargs)
         if coro is not None:
+            task = asyncio.ensure_future(coro, loop=_loop)
             try:
-                loop = asyncio.get_event_loop()
-            except RuntimeError as exc:
-                if 'no current event loop' not in str(exc):
-                    raise
-                loop = _loop
-            task = asyncio.ensure_future(coro, loop=loop)
-            try:
-                loop.run_until_complete(task)
+                _loop.run_until_complete(task)
             except BaseException:
                 # run_until_complete doesn't get the result from exceptions
                 # that are not subclasses of `Exception`. Consume all
