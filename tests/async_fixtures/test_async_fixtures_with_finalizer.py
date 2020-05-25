@@ -32,7 +32,7 @@ async def port1(request, event_loop):
             await finalizer
         event_loop.run_until_complete(port_afinalizer())
 
-    worker = asyncio.create_task(asyncio.sleep(0.2))
+    worker = asyncio.ensure_future(asyncio.sleep(0.2))
     request.addfinalizer(functools.partial(port_finalizer, worker))
     return True
 
@@ -46,6 +46,6 @@ async def port2(request, event_loop):
             await finalizer
         asyncio.get_event_loop().run_until_complete(port_afinalizer())
 
-    worker = asyncio.create_task(asyncio.sleep(0.2))
+    worker = asyncio.ensure_future(asyncio.sleep(0.2))
     request.addfinalizer(functools.partial(port_finalizer, worker))
     return True
