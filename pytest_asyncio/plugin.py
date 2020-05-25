@@ -48,43 +48,53 @@ def pytest_pycollect_makeitem(collector, name, obj):
             return list(collector._genfunctions(name, obj))
 
 
+class FixtureStripper:
+    """Include additional Fixture, and then strip them"""
+    REQUEST = "request"
+    EVENT_LOOP = "event_loop"
+
+    def __init__(self, fixturedef):
+        self.fixturedef = fixturedef
+        self.to_strip = set()
+
+    def add(self, name):
+        """Add fixture name to fixturedef
+         and record in to_strip list (If not previously included)"""
+        if name in self.fixturedef.argnames:
+            return
+        self.fixturedef.argnames += (name, )
+        self.to_strip.add(name)
+
+    def get_and_strip_from(self, name, data_dict):
+        """Strip name from data, and return value"""
+        result = data_dict[name]
+        if name in self.to_strip:
+            del data_dict[name]
+        return result
+
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_fixture_setup(fixturedef, request):
     """Adjust the event loop policy when an event loop is produced."""
-    if fixturedef.argname == "event_loop" and 'asyncio' in request.keywords:
+    if fixturedef.argname == "event_loop":
         outcome = yield
         loop = outcome.get_result()
         policy = asyncio.get_event_loop_policy()
-        try:
-            old_loop = policy.get_event_loop()
-        except RuntimeError as exc:
-            if 'no current event loop' not in str(exc):
-                raise
-            old_loop = None
         policy.set_event_loop(loop)
-        fixturedef.addfinalizer(lambda: policy.set_event_loop(old_loop))
         return
 
     if isasyncgenfunction(fixturedef.func):
         # This is an async generator function. Wrap it accordingly.
         generator = fixturedef.func
 
-        strip_event_loop = False
-        if 'event_loop' not in fixturedef.argnames:
-            fixturedef.argnames += ('event_loop', )
-            strip_event_loop = True
-        strip_request = False
-        if 'request' not in fixturedef.argnames:
-            fixturedef.argnames += ('request', )
-            strip_request = True
+        fixture_stripper = FixtureStripper(fixturedef)
+        fixture_stripper.add(FixtureStripper.EVENT_LOOP)
+        fixture_stripper.add(FixtureStripper.REQUEST)
+
 
         def wrapper(*args, **kwargs):
-            loop = kwargs['event_loop']
-            request = kwargs['request']
-            if strip_event_loop:
-                del kwargs['event_loop']
-            if strip_request:
-                del kwargs['request']
+            loop = fixture_stripper.get_and_strip_from(FixtureStripper.EVENT_LOOP, kwargs)
+            request = fixture_stripper.get_and_strip_from(FixtureStripper.REQUEST, kwargs)
 
             gen_obj = generator(*args, **kwargs)
 
@@ -112,15 +122,11 @@ def pytest_fixture_setup(fixturedef, request):
     elif inspect.iscoroutinefunction(fixturedef.func):
         coro = fixturedef.func
 
-        strip_event_loop = False
-        if 'event_loop' not in fixturedef.argnames:
-            fixturedef.argnames += ('event_loop', )
-            strip_event_loop = True
+        fixture_stripper = FixtureStripper(fixturedef)
+        fixture_stripper.add(FixtureStripper.EVENT_LOOP)
 
         def wrapper(*args, **kwargs):
-            loop = kwargs['event_loop']
-            if strip_event_loop:
-                del kwargs['event_loop']
+            loop = fixture_stripper.get_and_strip_from(FixtureStripper.EVENT_LOOP, kwargs)
 
             async def setup():
                 res = await coro(*args, **kwargs)
