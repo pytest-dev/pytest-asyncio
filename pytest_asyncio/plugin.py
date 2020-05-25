@@ -72,6 +72,14 @@ class FixtureStripper:
             del data_dict[name]
         return result
 
+@pytest.hookimpl(trylast=True)
+def pytest_fixture_post_finalizer(fixturedef, request):
+    """Called after fixture teardown"""
+    if fixturedef.argname == "event_loop":
+        # Set empty loop policy, so that subsequent get_event_loop() provides a new loop
+        asyncio.set_event_loop_policy(None)
+
+
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_fixture_setup(fixturedef, request):
