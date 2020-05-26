@@ -1,5 +1,4 @@
 import asyncio
-import contextlib
 import functools
 import pytest
 
