@@ -1,18 +1,17 @@
 import asyncio
-import contextlib
 import functools
 import pytest
 
 
 @pytest.mark.asyncio
-async def test_module_with_event_loop_finalizer(port1):
+async def test_module_with_event_loop_finalizer(port_with_event_loop_finalizer):
     await asyncio.sleep(0.01)
-    assert port1
+    assert port_with_event_loop_finalizer
 
 @pytest.mark.asyncio
-async def test_module_with_get_event_loop_finalizer(port2):
+async def test_module_with_get_event_loop_finalizer(port_with_get_event_loop_finalizer):
     await asyncio.sleep(0.01)
-    assert port2
+    assert port_with_get_event_loop_finalizer
 
 @pytest.fixture(scope="module")
 def event_loop():
@@ -24,11 +23,11 @@ def event_loop():
 
 
 @pytest.fixture(scope="module")
-async def port1(request, event_loop):
+async def port_with_event_loop_finalizer(request, event_loop):
     def port_finalizer(finalizer):
         async def port_afinalizer():
-            # await task inside get_event_loop()
-            # RantimeError is raised if task is created on a different loop
+            # await task using loop provided by event_loop fixture
+            # RuntimeError is raised if task is created on a different loop
             await finalizer
         event_loop.run_until_complete(port_afinalizer())
 
@@ -38,11 +37,11 @@ async def port1(request, event_loop):
 
 
 @pytest.fixture(scope="module")
-async def port2(request, event_loop):
+async def port_with_get_event_loop_finalizer(request, event_loop):
     def port_finalizer(finalizer):
         async def port_afinalizer():
-            # await task inside get_event_loop()
-            # if loop is different a RuntimeError is raised
+            # await task using loop provided by asyncio.get_event_loop()
+            # RuntimeError is raised if task is created on a different loop
             await finalizer
         asyncio.get_event_loop().run_until_complete(port_afinalizer())
 
