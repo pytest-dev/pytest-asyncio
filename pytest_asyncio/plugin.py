@@ -59,23 +59,47 @@ current_context = None
 def apply_context(context):
     for var in context:
         var.set(context[var])
+class FixtureStripper:
+    """Include additional Fixture, and then strip them"""
+    REQUEST = "request"
+    EVENT_LOOP = "event_loop"
+
+    def __init__(self, fixturedef):
+        self.fixturedef = fixturedef
+        self.to_strip = set()
+
+    def add(self, name):
+        """Add fixture name to fixturedef
+         and record in to_strip list (If not previously included)"""
+        if name in self.fixturedef.argnames:
+            return
+        self.fixturedef.argnames += (name, )
+        self.to_strip.add(name)
+
+    def get_and_strip_from(self, name, data_dict):
+        """Strip name from data, and return value"""
+        result = data_dict[name]
+        if name in self.to_strip:
+            del data_dict[name]
+        return result
+
+@pytest.hookimpl(trylast=True)
+def pytest_fixture_post_finalizer(fixturedef, request):
+    """Called after fixture teardown"""
+    if fixturedef.argname == "event_loop":
+        # Set empty loop policy, so that subsequent get_event_loop() provides a new loop
+        asyncio.set_event_loop_policy(None)
+
 
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_fixture_setup(fixturedef, request):
     """Adjust the event loop policy when an event loop is produced."""
-    if fixturedef.argname == "event_loop" and 'asyncio' in request.keywords:
+    if fixturedef.argname == "event_loop":
         outcome = yield
         loop = outcome.get_result()
         policy = asyncio.get_event_loop_policy()
-        try:
-            old_loop = policy.get_event_loop()
-        except RuntimeError as exc:
-            if 'no current event loop' not in str(exc):
-                raise
-            old_loop = None
         policy.set_event_loop(loop)
-        fixturedef.addfinalizer(lambda: policy.set_event_loop(old_loop))
         return
 
     if current_context:
@@ -86,15 +110,14 @@ def pytest_fixture_setup(fixturedef, request):
         # This is an async generator function. Wrap it accordingly.
         generator = fixturedef.func
 
-        strip_request = False
-        if 'request' not in fixturedef.argnames:
-            fixturedef.argnames += ('request', )
-            strip_request = True
+        fixture_stripper = FixtureStripper(fixturedef)
+        fixture_stripper.add(FixtureStripper.EVENT_LOOP)
+        fixture_stripper.add(FixtureStripper.REQUEST)
+
 
         def wrapper(*args, **kwargs):
-            request = kwargs['request']
-            if strip_request:
-                del kwargs['request']
+            loop = fixture_stripper.get_and_strip_from(FixtureStripper.EVENT_LOOP, kwargs)
+            request = fixture_stripper.get_and_strip_from(FixtureStripper.REQUEST, kwargs)
 
             gen_obj = generator(*args, **kwargs)
 
@@ -115,7 +138,7 @@ def pytest_fixture_setup(fixturedef, request):
                         msg = "Async generator fixture didn't stop."
                         msg += "Yield only once."
                         raise ValueError(msg)
-                asyncio.get_event_loop().run_until_complete(async_finalizer())
+                loop.run_until_complete(async_finalizer())
 
             request.addfinalizer(finalizer)
 
@@ -132,12 +155,17 @@ def pytest_fixture_setup(fixturedef, request):
     elif inspect.iscoroutinefunction(fixturedef.func):
         coro = fixturedef.func
 
+        fixture_stripper = FixtureStripper(fixturedef)
+        fixture_stripper.add(FixtureStripper.EVENT_LOOP)
+
         def wrapper(*args, **kwargs):
+            loop = fixture_stripper.get_and_strip_from(FixtureStripper.EVENT_LOOP, kwargs)
+
             async def setup():
                 res = await coro(*args, **kwargs)
                 return res
 
-            return asyncio.get_event_loop().run_until_complete(setup())
+            return loop.run_until_complete(setup())
 
         fixturedef.func = wrapper
     yield
@@ -178,16 +206,9 @@ def wrap_in_sync(func, _loop):
     def inner(**kwargs):
         coro = func(**kwargs)
         if coro is not None:
+            task = asyncio.ensure_future(coro, loop=_loop)
             try:
-                loop = asyncio.get_event_loop()
-            except RuntimeError as exc:
-                if 'no current event loop' not in str(exc):
-                    raise
-                loop = _loop
-
-            task = asyncio.ensure_future(coro, loop=loop)
-            try:
-                loop.run_until_complete(task)
+                _loop.run_until_complete(task)
             except BaseException:
                 # run_until_complete doesn't get the result from exceptions
                 # that are not subclasses of `Exception`. Consume all

@@ -175,28 +175,32 @@ Only test coroutines will be affected (by default, coroutines prefixed by
 
 Changelog
 ---------
+0.13.0 (2020-XX-XX)
+~~~~~~~~~~~~~~~~~~~
+- Fix `#162 <https://github.com/pytest-dev/pytest-asyncio/issues/162>`_, and ``event_loop`` fixture behavior now is coherent on all scopes.
+  `#164 <https://github.com/pytest-dev/pytest-asyncio/pull/164>`_
 
 0.12.0 (2020-05-04)
 ~~~~~~~~~~~~~~~~~~~
 - Run the event loop fixture as soon as possible. This helps with fixtures that have an implicit dependency on the event loop.
-  `#156` <https://github.com/pytest-dev/pytest-asyncio/pull/156>
+  `#156 <https://github.com/pytest-dev/pytest-asyncio/pull/156>`_
 
 0.11.0 (2020-04-20)
 ~~~~~~~~~~~~~~~~~~~
 - Test on 3.8, drop 3.3 and 3.4. Stick to 0.10 for these versions.
-  `#152` <https://github.com/pytest-dev/pytest-asyncio/pull/152>
+  `#152 <https://github.com/pytest-dev/pytest-asyncio/pull/152>`_
 - Use the new Pytest 5.4.0 Function API. We therefore depend on pytest >= 5.4.0.
-  `#142` <https://github.com/pytest-dev/pytest-asyncio/pull/142>
+  `#142 <https://github.com/pytest-dev/pytest-asyncio/pull/142>`_
 - Better ``pytest.skip`` support.
-  `#126` <https://github.com/pytest-dev/pytest-asyncio/pull/126>
+  `#126 <https://github.com/pytest-dev/pytest-asyncio/pull/126>`_
 
 0.10.0 (2019-01-08)
 ~~~~~~~~~~~~~~~~~~~~
 - ``pytest-asyncio`` integrates with `Hypothesis <https://hypothesis.readthedocs.io>`_
   to support ``@given`` on async test functions using ``asyncio``.
-  `#102` <https://github.com/pytest-dev/pytest-asyncio/pull/102>
+  `#102 <https://github.com/pytest-dev/pytest-asyncio/pull/102>`_
 - Pytest 4.1 support.
-  `#105` <https://github.com/pytest-dev/pytest-asyncio/pull/105>
+  `#105 <https://github.com/pytest-dev/pytest-asyncio/pull/105>`_
 
 0.9.0 (2018-07-28)
 ~~~~~~~~~~~~~~~~~~
@@ -208,7 +212,7 @@ Changelog
 0.8.0 (2017-09-23)
 ~~~~~~~~~~~~~~~~~~
 - Improve integration with other packages (like aiohttp) with more careful event loop handling.
-  `#64` <https://github.com/pytest-dev/pytest-asyncio/pull/64>
+  `#64 <https://github.com/pytest-dev/pytest-asyncio/pull/64>`_
 
 0.7.0 (2017-09-08)
 ~~~~~~~~~~~~~~~~~~
