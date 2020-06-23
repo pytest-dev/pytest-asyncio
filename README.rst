@@ -175,7 +175,7 @@ Only test coroutines will be affected (by default, coroutines prefixed by
 
 Changelog
 ---------
-0.13.0 (2020-XX-XX)
+0.13.0 (2020-06-24)
 ~~~~~~~~~~~~~~~~~~~
 - Fix `#162 <https://github.com/pytest-dev/pytest-asyncio/issues/162>`_, and ``event_loop`` fixture behavior now is coherent on all scopes.
   `#164 <https://github.com/pytest-dev/pytest-asyncio/pull/164>`_
