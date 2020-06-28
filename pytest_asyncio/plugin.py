@@ -205,6 +205,9 @@ def pytest_runtest_setup(item):
         if "event_loop" in item.fixturenames:
             item.fixturenames.remove("event_loop")
         item.fixturenames.insert(0, "event_loop")
+        if "event_loop_policy" in item.fixturenames:
+            item.fixturenames.remove("event_loop_policy")
+            item.fixturenames.insert(0, "event_loop_policy")
     if (
         item.get_closest_marker("asyncio") is not None
         and not getattr(item.obj, "hypothesis", False)
