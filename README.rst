@@ -173,6 +173,12 @@ Only test coroutines will be affected (by default, coroutines prefixed by
 .. |pytestmark| replace:: ``pytestmark``
 .. _pytestmark: http://doc.pytest.org/en/latest/example/markers.html#marking-whole-classes-or-modules
 
+Note about unittest
+-------------------
+
+Test classes subclassing the standard `unittest <https://docs.python.org/3/library/unittest.html>`__ library are not supported, users
+are recommended to use one of the async frameworks available for that such as `asynctest <https://asynctest.readthedocs.io/en/latest>`__.
+
 Changelog
 ---------
 0.15.0 (UNRELEASED)
