@@ -80,8 +80,11 @@ class FixtureStripper:
 def pytest_fixture_post_finalizer(fixturedef, request):
     """Called after fixture teardown"""
     if fixturedef.argname == "event_loop":
-        # Set empty loop policy, so that subsequent get_event_loop() provides a new loop
-        asyncio.set_event_loop_policy(None)
+        policy = asyncio.get_event_loop_policy()
+        policy.get_event_loop().close()  # Clean up existing loop to avoid ResourceWarnings
+        new_loop = policy.new_event_loop()  # Replace existing event loop
+        # Ensure subsequent calls to get_event_loop() succeed
+        policy.set_event_loop(new_loop)
 
 
 @pytest.hookimpl(hookwrapper=True)

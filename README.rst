@@ -164,6 +164,10 @@ Only test coroutines will be affected (by default, coroutines prefixed by
 
 Changelog
 ---------
+0.17.0 (UNRELEASED)
+~~~~~~~~~~~~~~~~~~~
+- `pytest-asyncio` no longer alters existing event loop policies. `#168 <https://github.com/pytest-dev/pytest-asyncio/issues/168>`_, `#188 <https://github.com/pytest-dev/pytest-asyncio/issues/168>`_
+
 0.16.0 (2021-10-16)
 ~~~~~~~~~~~~~~~~~~~
 - Add support for Python 3.10
