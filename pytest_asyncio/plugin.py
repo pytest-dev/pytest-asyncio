@@ -13,10 +13,7 @@ except ImportError:  # Pytest 4.1.0 removes the transfer_marker api (#104)
         """Noop when over pytest 4.1.0"""
         pass
 
-try:
-    from async_generator import isasyncgenfunction
-except ImportError:
-    from inspect import isasyncgenfunction
+from inspect import isasyncgenfunction
 
 
 def _is_coroutine(obj):
