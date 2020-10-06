@@ -154,3 +154,8 @@ class TestEventLoopStartedBeforeFixtures:
 @pytest.mark.asyncio
 async def test_no_warning_on_skip():
     pytest.skip("Test a skip error inside asyncio")
+
+
+def test_async_close_loop(event_loop):
+    event_loop.close()
+    return 'ok'
