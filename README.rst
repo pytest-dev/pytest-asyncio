@@ -127,19 +127,6 @@ to redefine the ``event_loop`` fixture to have the same or broader scope.
 Async fixtures need the event loop, and so must have the same or narrower scope
 than the ``event_loop`` fixture.
 
-If you want to do this with Python 3.5, the ``yield`` statement must be replaced with ``await yield_()`` and the coroutine
-function must be decorated with ``@async_generator``, like so:
-
-.. code-block:: python3
-
-    from async_generator import yield_, async_generator
-
-    @pytest.fixture
-    @async_generator
-    async def async_gen_fixture():
-        await asyncio.sleep(0.1)
-        await yield_('a value')
-
 
 Markers
 -------
@@ -178,6 +165,7 @@ Changelog
 0.15.0 (UNRELEASED)
 ~~~~~~~~~~~~~~~~~~~
 - Add support for Python 3.9
+- Abandon support for Python 3.5. If you still require support for Python 3.5, please use pytest-asyncio v0.14 or earlier.
 
 0.14.0 (2020-06-24)
 ~~~~~~~~~~~~~~~~~~~

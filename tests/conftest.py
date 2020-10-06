@@ -1,12 +1,6 @@
 import asyncio
-import sys
 
 import pytest
-
-collect_ignore = []
-if sys.version_info[:2] < (3, 6):
-    collect_ignore.append("async_fixtures/test_async_gen_fixtures_36.py")
-    collect_ignore.append("async_fixtures/test_nested_36.py")
 
 
 @pytest.fixture
