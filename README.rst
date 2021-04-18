@@ -164,7 +164,7 @@ Only test coroutines will be affected (by default, coroutines prefixed by
 
 Changelog
 ---------
-0.15.0 (UNRELEASED)
+0.15.0 (2021-04-19)
 ~~~~~~~~~~~~~~~~~~~
 - Add support for Python 3.9
 - Abandon support for Python 3.5. If you still require support for Python 3.5, please use pytest-asyncio v0.14 or earlier.
