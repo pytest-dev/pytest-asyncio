@@ -1,4 +1,3 @@
-import asyncio
 import unittest.mock
 
 import pytest
@@ -8,7 +7,7 @@ END = object()
 RETVAL = object()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def mock():
     return unittest.mock.Mock(return_value=RETVAL)
 

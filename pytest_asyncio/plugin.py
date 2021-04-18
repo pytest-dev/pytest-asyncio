@@ -62,7 +62,7 @@ class FixtureStripper:
 
     def add(self, name):
         """Add fixture name to fixturedef
-         and record in to_strip list (If not previously included)"""
+        and record in to_strip list (If not previously included)"""
         if name in self.fixturedef.argnames:
             return
         self.fixturedef.argnames += (name,)

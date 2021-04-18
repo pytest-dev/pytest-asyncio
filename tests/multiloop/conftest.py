@@ -5,6 +5,7 @@ import pytest
 
 class CustomSelectorLoop(asyncio.SelectorEventLoop):
     """A subclass with no overrides, just to test for presence."""
+
     pass
 
 

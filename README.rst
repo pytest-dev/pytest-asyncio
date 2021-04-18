@@ -10,6 +10,8 @@ pytest-asyncio: pytest support for asyncio
 .. image:: https://img.shields.io/pypi/pyversions/pytest-asyncio.svg
     :target: https://github.com/pytest-dev/pytest-asyncio
     :alt: Supported Python versions
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/ambv/black
 
 pytest-asyncio is an Apache2 licensed library, written in Python, for testing
 asyncio code with pytest.

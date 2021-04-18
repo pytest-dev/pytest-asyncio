@@ -1,20 +1,20 @@
 """Quick'n'dirty unit tests for provided fixtures and markers."""
 import asyncio
-import pytest
 
+import pytest
 import pytest_asyncio.plugin
 
 
 async def async_coro():
     await asyncio.sleep(0)
-    return 'ok'
+    return "ok"
 
 
 def test_event_loop_fixture(event_loop):
     """Test the injection of the event_loop fixture."""
     assert event_loop
     ret = event_loop.run_until_complete(async_coro())
-    assert ret == 'ok'
+    assert ret == "ok"
 
 
 @pytest.mark.asyncio
@@ -23,7 +23,7 @@ async def test_asyncio_marker():
     await asyncio.sleep(0)
 
 
-@pytest.mark.xfail(reason='need a failure', strict=True)
+@pytest.mark.xfail(reason="need a failure", strict=True)
 @pytest.mark.asyncio
 def test_asyncio_marker_fail():
     assert False
@@ -42,12 +42,10 @@ async def test_unused_port_fixture(unused_tcp_port, event_loop):
     async def closer(_, writer):
         writer.close()
 
-    server1 = await asyncio.start_server(closer, host='localhost',
-                                         port=unused_tcp_port)
+    server1 = await asyncio.start_server(closer, host="localhost", port=unused_tcp_port)
 
     with pytest.raises(IOError):
-        await asyncio.start_server(closer, host='localhost',
-                                   port=unused_tcp_port)
+        await asyncio.start_server(closer, host="localhost", port=unused_tcp_port)
 
     server1.close()
     await server1.wait_closed()
@@ -60,20 +58,19 @@ async def test_unused_port_factory_fixture(unused_tcp_port_factory, event_loop):
     async def closer(_, writer):
         writer.close()
 
-    port1, port2, port3 = (unused_tcp_port_factory(), unused_tcp_port_factory(),
-                           unused_tcp_port_factory())
+    port1, port2, port3 = (
+        unused_tcp_port_factory(),
+        unused_tcp_port_factory(),
+        unused_tcp_port_factory(),
+    )
 
-    server1 = await asyncio.start_server(closer, host='localhost',
-                                         port=port1)
-    server2 = await asyncio.start_server(closer, host='localhost',
-                                         port=port2)
-    server3 = await asyncio.start_server(closer, host='localhost',
-                                         port=port3)
+    server1 = await asyncio.start_server(closer, host="localhost", port=port1)
+    server2 = await asyncio.start_server(closer, host="localhost", port=port2)
+    server3 = await asyncio.start_server(closer, host="localhost", port=port3)
 
     for port in port1, port2, port3:
         with pytest.raises(IOError):
-            await asyncio.start_server(closer, host='localhost',
-                                       port=port)
+            await asyncio.start_server(closer, host="localhost", port=port)
 
     server1.close()
     await server1.wait_closed()
@@ -96,8 +93,7 @@ def test_unused_port_factory_duplicate(unused_tcp_port_factory, monkeypatch):
         else:
             return 10000 + counter
 
-    monkeypatch.setattr(pytest_asyncio.plugin, '_unused_tcp_port',
-                        mock_unused_tcp_port)
+    monkeypatch.setattr(pytest_asyncio.plugin, "_unused_tcp_port", mock_unused_tcp_port)
 
     assert unused_tcp_port_factory() == 10000
     assert unused_tcp_port_factory() > 10000
@@ -110,7 +106,7 @@ class Test:
     async def test_asyncio_marker_method(self, event_loop):
         """Test the asyncio pytest marker in a Test class."""
         ret = await async_coro()
-        assert ret == 'ok'
+        assert ret == "ok"
 
 
 class TestUnexistingLoop:
@@ -125,7 +121,7 @@ class TestUnexistingLoop:
     async def test_asyncio_marker_without_loop(self, remove_loop):
         """Test the asyncio pytest marker in a Test class."""
         ret = await async_coro()
-        assert ret == 'ok'
+        assert ret == "ok"
 
 
 class TestEventLoopStartedBeforeFixtures:
@@ -150,7 +146,6 @@ class TestEventLoopStartedBeforeFixtures:
         assert await loop.run_in_executor(None, self.foo) == 1
 
 
-
 @pytest.mark.asyncio
 async def test_no_warning_on_skip():
     pytest.skip("Test a skip error inside asyncio")
@@ -158,4 +153,4 @@ async def test_no_warning_on_skip():
 
 def test_async_close_loop(event_loop):
     event_loop.close()
-    return 'ok'
+    return "ok"

@@ -7,7 +7,9 @@ START = object()
 END = object()
 RETVAL = object()
 
-pytestmark = pytest.mark.skip(reason='@asyncio.coroutine fixtures are not supported yet')
+pytestmark = pytest.mark.skip(
+    reason="@asyncio.coroutine fixtures are not supported yet"
+)
 
 
 @pytest.fixture
