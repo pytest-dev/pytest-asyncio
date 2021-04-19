@@ -91,9 +91,13 @@ def pytest_fixture_setup(fixturedef, request):
         outcome = yield
         loop = outcome.get_result()
         policy = asyncio.get_event_loop_policy()
-        old_loop = policy.get_event_loop()
-        if old_loop is not loop:
-            old_loop.close()
+        try:
+            old_loop = policy.get_event_loop()
+            if old_loop is not loop:
+                old_loop.close()
+        except RuntimeError:
+            # Swallow this, since it's probably bad event loop hygiene.
+            pass
         policy.set_event_loop(loop)
         return
 
