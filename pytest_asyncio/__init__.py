@@ -1,2 +1,2 @@
 """The main point for importing pytest-asyncio items."""
-__version__ = "0.15.1"
+__version__ = "0.16.0dev0"

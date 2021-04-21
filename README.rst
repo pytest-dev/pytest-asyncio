@@ -164,6 +164,9 @@ Only test coroutines will be affected (by default, coroutines prefixed by
 
 Changelog
 ---------
+0.16.0 (UNRELEASED)
+~~~~~~~~~~~~~~~~~~~
+
 0.15.1 (2021-04-22)
 ~~~~~~~~~~~~~~~~~~~
 - Hotfix for errors while closing event loops while replacing them.
