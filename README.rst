@@ -164,9 +164,11 @@ Only test coroutines will be affected (by default, coroutines prefixed by
 
 Changelog
 ---------
-0.16.0 (UNRELEASED)
+0.15.1 (2021-04-22)
 ~~~~~~~~~~~~~~~~~~~
-
+- Hotfix for errors while closing event loops while replacing them.
+  `#209 <https://github.com/pytest-dev/pytest-asyncio/issues/209>`_
+  `#210 <https://github.com/pytest-dev/pytest-asyncio/issues/210>`_
 
 0.15.0 (2021-04-19)
 ~~~~~~~~~~~~~~~~~~~
