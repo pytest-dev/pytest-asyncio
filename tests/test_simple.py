@@ -110,15 +110,8 @@ class Test:
 
 
 class TestUnexistingLoop:
-    @pytest.fixture
-    def remove_loop(self):
-        old_loop = asyncio.get_event_loop()
-        asyncio.set_event_loop(None)
-        yield
-        asyncio.set_event_loop(old_loop)
-
     @pytest.mark.asyncio
-    async def test_asyncio_marker_without_loop(self, remove_loop):
+    async def test_asyncio_marker_without_loop(self):
         """Test the asyncio pytest marker in a Test class."""
         ret = await async_coro()
         assert ret == "ok"
