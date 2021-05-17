@@ -99,20 +99,18 @@ def test_unused_port_factory_duplicate(unused_tcp_port_factory, monkeypatch):
     assert unused_tcp_port_factory() > 10000
 
 
-class Test:
-    """Test that asyncio marked functions work in test methods."""
+class TestMarkerInClassBasedTests:
+    """Test that asyncio marked functions work for methods of test classes."""
 
     @pytest.mark.asyncio
-    async def test_asyncio_marker_method(self, event_loop):
-        """Test the asyncio pytest marker in a Test class."""
+    async def test_asyncio_marker_with_explicit_loop_fixture(self, event_loop):
+        """Test the "asyncio" marker works on a method in a class-based test with explicit loop fixture."""
         ret = await async_coro()
         assert ret == "ok"
 
-
-class TestUnexistingLoop:
     @pytest.mark.asyncio
-    async def test_asyncio_marker_without_loop(self):
-        """Test the asyncio pytest marker in a Test class."""
+    async def test_asyncio_marker_with_implicit_loop_fixture(self):
+        """Test the "asyncio" marker works on a method in a class-based test with implicit loop fixture."""
         ret = await async_coro()
         assert ret == "ok"
 
