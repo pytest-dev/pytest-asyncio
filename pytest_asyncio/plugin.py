@@ -34,6 +34,13 @@ def pytest_configure(config):
     )
 
 
+def pytest_addoption(parser):
+    group = parser.getgroup("asyncio")
+    help_ = "Timeout in seconds after which the test coroutine shall be cancelled and marked as failed"
+    group.addoption("--asyncio-timeout", dest="asyncio_timeout", type=float, help=help_)
+    parser.addini("asyncio_timeout", help=help_)
+
+
 @pytest.mark.tryfirst
 def pytest_pycollect_makeitem(collector, name, obj):
     """A pytest hook to collect asyncio coroutines."""
@@ -163,6 +170,33 @@ def pytest_fixture_setup(fixturedef, request):
     yield
 
 
+def get_timeout(obj):
+    """
+    Get the timeout for the provided test function.
+
+    Priority:
+
+    * Marker keyword arguments `asyncio_timeout` and `timeout`
+    * CLI
+    * INI file
+    """
+    marker = obj.get_closest_marker("asyncio")
+    timeout = marker.kwargs.get("asyncio_timeout", marker.kwargs.get("timeout"))
+
+    if not timeout:
+        timeout = obj._request.config.getvalue("asyncio_timeout")
+    if not timeout:
+        timeout = obj._request.config.getini("asyncio_timeout")
+
+    if timeout:
+        try:
+            return float(timeout)
+        except:
+            raise ValueError(
+                f"Invalid timeout (asyncio_timeout) provided. Got {timeout} but expected a float-like."
+            )
+
+
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_pyfunc_call(pyfuncitem):
     """
@@ -170,19 +204,23 @@ def pytest_pyfunc_call(pyfuncitem):
     function call.
     """
     if "asyncio" in pyfuncitem.keywords:
+        timeout = get_timeout(pyfuncitem)
         if getattr(pyfuncitem.obj, "is_hypothesis_test", False):
             pyfuncitem.obj.hypothesis.inner_test = wrap_in_sync(
                 pyfuncitem.obj.hypothesis.inner_test,
                 _loop=pyfuncitem.funcargs["event_loop"],
+                timeout=timeout,
             )
         else:
             pyfuncitem.obj = wrap_in_sync(
-                pyfuncitem.obj, _loop=pyfuncitem.funcargs["event_loop"]
+                pyfuncitem.obj,
+                _loop=pyfuncitem.funcargs["event_loop"],
+                timeout=timeout,
             )
     yield
 
 
-def wrap_in_sync(func, _loop):
+def wrap_in_sync(func, _loop, timeout):
     """Return a sync wrapper around an async function executing it in the
     current event loop."""
 
@@ -190,7 +228,10 @@ def wrap_in_sync(func, _loop):
     def inner(**kwargs):
         coro = func(**kwargs)
         if coro is not None:
+            if timeout:
+                coro = asyncio.wait_for(coro, timeout=timeout)
             task = asyncio.ensure_future(coro, loop=_loop)
+
             try:
                 _loop.run_until_complete(task)
             except BaseException:
