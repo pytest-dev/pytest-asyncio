@@ -47,6 +47,7 @@ setup(
         "testing": [
             "coverage",
             "hypothesis >= 5.7.1",
+            "flaky >= 3.5.0"
         ],
     },
     entry_points={"pytest11": ["asyncio = pytest_asyncio.plugin"]},
