@@ -186,6 +186,12 @@ def wrap_in_sync(func, _loop):
     """Return a sync wrapper around an async function executing it in the
     current event loop."""
 
+    # if the function is already wrapped, we rewrap using the original one
+    # not using __wrapped__ because the original function may already be
+    # a wrapped one
+    if hasattr(func, '_raw_test_func'):
+        func = func._raw_test_func
+
     @functools.wraps(func)
     def inner(**kwargs):
         coro = func(**kwargs)
@@ -201,6 +207,7 @@ def wrap_in_sync(func, _loop):
                     task.exception()
                 raise
 
+    inner._raw_test_func = func
     return inner
 
 
