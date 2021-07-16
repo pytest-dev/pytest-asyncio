@@ -138,8 +138,9 @@ def pytest_fixture_setup(fixturedef, request):
 
                 loop.run_until_complete(async_finalizer())
 
+            result = loop.run_until_complete(setup())
             request.addfinalizer(finalizer)
-            return loop.run_until_complete(setup())
+            return result
 
         fixturedef.func = wrapper
     elif inspect.iscoroutinefunction(fixturedef.func):
