@@ -84,6 +84,15 @@ def pytest_fixture_post_finalizer(fixturedef, request):
         asyncio.set_event_loop_policy(None)
 
 
+def is_loop_on_different_thread(loop):
+    try:
+        current_loop = asyncio.get_running_loop()
+    except RuntimeError:
+        # No loop is running
+        current_loop = None
+    return loop.is_running() and current_loop != loop
+
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_fixture_setup(fixturedef, request):
     """Adjust the event loop policy when an event loop is produced."""
@@ -136,10 +145,17 @@ def pytest_fixture_setup(fixturedef, request):
                         msg += "Yield only once."
                         raise ValueError(msg)
 
-                loop.run_until_complete(async_finalizer())
+                if is_loop_on_different_thread(loop):
+                    asyncio.run_coroutine_threadsafe(async_finalizer(), loop).result()
+                else:
+                    loop.run_until_complete(async_finalizer())
 
             request.addfinalizer(finalizer)
-            return loop.run_until_complete(setup())
+
+            if is_loop_on_different_thread(loop):
+                return asyncio.run_coroutine_threadsafe(setup(), loop).result()
+            else:
+                return loop.run_until_complete(setup())
 
         fixturedef.func = wrapper
     elif inspect.iscoroutinefunction(fixturedef.func):
@@ -153,11 +169,15 @@ def pytest_fixture_setup(fixturedef, request):
                 FixtureStripper.EVENT_LOOP, kwargs
             )
 
+
             async def setup():
                 res = await coro(*args, **kwargs)
                 return res
 
-            return loop.run_until_complete(setup())
+            if is_loop_on_different_thread(loop):
+                return asyncio.run_coroutine_threadsafe(setup(), loop).result()
+            else:
+                return loop.run_until_complete(setup())
 
         fixturedef.func = wrapper
     yield
@@ -190,16 +210,19 @@ def wrap_in_sync(func, _loop):
     def inner(**kwargs):
         coro = func(**kwargs)
         if coro is not None:
-            task = asyncio.ensure_future(coro, loop=_loop)
-            try:
-                _loop.run_until_complete(task)
-            except BaseException:
-                # run_until_complete doesn't get the result from exceptions
-                # that are not subclasses of `Exception`. Consume all
-                # exceptions to prevent asyncio's warning from logging.
-                if task.done() and not task.cancelled():
-                    task.exception()
-                raise
+            if is_loop_on_different_thread(_loop):
+                    asyncio.run_coroutine_threadsafe(coro, _loop).result()
+            else:
+                task = asyncio.ensure_future(coro, loop=_loop)
+                try:
+                    _loop.run_until_complete(task)
+                except BaseException:
+                    # run_until_complete doesn't get the result from exceptions
+                    # that are not subclasses of `Exception`. Consume all
+                    # exceptions to prevent asyncio's warning from logging.
+                    if task.done() and not task.cancelled():
+                        task.exception()
+                    raise
 
     return inner
 
