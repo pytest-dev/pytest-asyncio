@@ -164,7 +164,7 @@ Only test coroutines will be affected (by default, coroutines prefixed by
 
 Changelog
 ---------
-0.16.0 (UNRELEASED)
+0.16.0 (2021-10-16)
 ~~~~~~~~~~~~~~~~~~~
 - Add support for Python 3.10
 
