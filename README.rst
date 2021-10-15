@@ -3,8 +3,8 @@ pytest-asyncio: pytest support for asyncio
 
 .. image:: https://img.shields.io/pypi/v/pytest-asyncio.svg
     :target: https://pypi.python.org/pypi/pytest-asyncio
-.. image:: https://github.com/Tinche/cattrs/workflows/CI/badge.svg
-    :target: https://github.com/Tinche/cattrs/actions?workflow=CI
+.. image:: https://github.com/pytest-dev/pytest-asyncio/workflows/CI/badge.svg
+    :target: https://github.com/pytest-dev/pytest-asyncio/actions?workflow=CI
 .. image:: https://codecov.io/gh/pytest-dev/pytest-asyncio/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/pytest-dev/pytest-asyncio
 .. image:: https://img.shields.io/pypi/pyversions/pytest-asyncio.svg
