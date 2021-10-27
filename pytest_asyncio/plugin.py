@@ -85,11 +85,15 @@ def pytest_fixture_post_finalizer(fixturedef, request):
 
 
 def is_loop_on_different_thread(loop):
-    try:
-        current_loop = asyncio.get_running_loop()
-    except RuntimeError:
-        # No loop is running
-        current_loop = None
+    if hasattr(asyncio, 'get_running_loop'):
+        try:
+            return asyncio.get_running_loop()
+        except RuntimeError:
+            # No loop is running
+            current_loop = None
+    else:
+        # Python 3.6 compatibility
+        current_loop = asyncio._get_running_loop()
     return loop.is_running() and current_loop != loop
 
 
