@@ -139,7 +139,7 @@ Mark your test coroutine with this marker and pytest will execute it as an
 asyncio task using the event loop provided by the ``event_loop`` fixture. See
 the introductory section for an example.
 
-The event loop used can be overriden by overriding the ``event_loop`` fixture
+The event loop used can be overridden by overriding the ``event_loop`` fixture
 (see above).
 
 In order to make your test code a little more concise, the pytest |pytestmark|_
