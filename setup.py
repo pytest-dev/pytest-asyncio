@@ -38,6 +38,7 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Topic :: Software Development :: Testing",
+        "Framework :: Asyncio",
         "Framework :: Pytest",
     ],
     python_requires=">= 3.7",
