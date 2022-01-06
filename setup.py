@@ -33,7 +33,6 @@ setup(
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
@@ -41,7 +40,7 @@ setup(
         "Topic :: Software Development :: Testing",
         "Framework :: Pytest",
     ],
-    python_requires=">= 3.6",
+    python_requires=">= 3.7",
     install_requires=["pytest >= 5.4.0"],
     extras_require={
         "testing": [
