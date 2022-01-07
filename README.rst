@@ -109,6 +109,11 @@ when several unused TCP ports are required in a test.
         port1, port2 = unused_tcp_port_factory(), unused_tcp_port_factory()
         ...
 
+``unused_udp_port`` and ``unused_udp_port_factory``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Work just like their TCP counterparts but return unused UDP ports.
+
+
 Async fixtures
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Asynchronous fixtures are defined just like ordinary pytest fixtures, except they should be coroutines or asynchronous generators.
@@ -166,7 +171,7 @@ Note about unittest
 -------------------
 
 Test classes subclassing the standard `unittest <https://docs.python.org/3/library/unittest.html>`__ library are not supported, users
-are recommended to use `unitest.IsolatedAsyncioTestCase <https://docs.python.org/3/library/unittest.html#unittest.IsolatedAsyncioTestCase>`__ 
+are recommended to use `unitest.IsolatedAsyncioTestCase <https://docs.python.org/3/library/unittest.html#unittest.IsolatedAsyncioTestCase>`__
 or an async framework such as `asynctest <https://asynctest.readthedocs.io/en/latest>`__.
 
 Changelog
@@ -177,6 +182,7 @@ Changelog
 - Drop support for Python 3.6
 - Fixed an issue when pytest-asyncio was used in combination with `flaky` or inherited asynchronous Hypothesis tests. `#178 <https://github.com/pytest-dev/pytest-asyncio/issues/178>`_ `#231 <https://github.com/pytest-dev/pytest-asyncio/issues/231>`_
 - Added `flaky <https://pypi.org/project/flaky/>`_ to test dependencies
+- Added ``unused_udp_port`` and ``unused_udp_port_factory`` fixtures (similar to ``unused_tcp_port`` and ``unused_tcp_port_factory`` counterparts. `#99 <https://github.com/pytest-dev/pytest-asyncio/issues/99>`_
 
 0.16.0 (2021-10-16)
 ~~~~~~~~~~~~~~~~~~~
