@@ -39,6 +39,9 @@ Features
 - pytest markers for treating tests as asyncio coroutines
 - easy testing with non-default event loops
 - support for `async def` fixtures and async generator fixtures
+- support *auto* mode to handle all async fixtures and tests automatically by asyncio;
+  provide *strict* mode if a test suite should work with different async frameworks
+  simultaneously, e.g. ``asyncio`` and ``trio``.
 
 Installation
 ------------
@@ -50,6 +53,70 @@ To install pytest-asyncio, simply:
     $ pip install pytest-asyncio
 
 This is enough for pytest to pick up pytest-asyncio.
+
+Modes
+-----
+
+Strting from ``pytest-asyncio>=0.17``, three modes are provided: *auto*, *strict* and
+*legacy* (deault).
+
+The mode can be set by ``asyncio_mode`` configuration option in `configuration file
+<https://docs.pytest.org/en/latest/reference/customize.html>`_:
+
+.. code-block:: ini
+
+   # pytest.ini
+   [pytest]
+   asyncio_mode = auto
+
+The value can be overriden by command-line option for ``pytest`` invocation:
+
+.. code-block:: bash
+
+   $ pytest tests --asyncio-mode=strict
+
+Auto mode
+~~~~~~~~~
+
+When the mode is auto, all discovered *async* tests are considered *asyncio-driven* even
+if they have no ``@pytest.mark.asyncio`` marker.
+
+All async fixtures are considered *asyncio-driven* as well, even if they are decorated
+with a regular ``@pytest.fixture`` decorator instead of dedicated
+``@pytest_asyncio.fixture`` counterpart.
+
+*asyncio-driven* means that tests and fixtures are executed by ``pytest-asyncio``
+plugin.
+
+This mode requires the simpliest tests and fixtures configuration and is
+recommended for default usage *unless* the same project and its test suite should
+execute tests from different async frameworks, e.g. ``asyncio`` and ``trio``.  In this
+case, auto-handling can break tests designed for other framework; plase use *strict*
+mode instead.
+
+Strict mode
+~~~~~~~~~~~
+
+Strict mode enforces ``@pytest.mark.asyncio`` and ``@pytest_asyncio.fixture`` usage.
+Without these markers, tests and fixtures are not considered as *asyncio-driven*, other
+pytest plugin can handle them.
+
+Please use this mode if multiple async frameworks should be combined in the same test
+suite.
+
+
+Legacy mode
+~~~~~~~~~~~
+
+This mode follows rules used by ``pytest-asyncio<0.17``: tests are not auto-marked but
+fixtures are.
+
+This mode is used by default for the sake of backward compatibility, deprecation
+warnings are emitted with suggestion to either switching to ``auto`` mode or using
+``strict`` mode with ``@pytest_asyncio.fixture`` decorators.
+
+In future, the default will be changed.
+
 
 Fixtures
 --------
@@ -116,16 +183,18 @@ Work just like their TCP counterparts but return unused UDP ports.
 
 Async fixtures
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Asynchronous fixtures are defined just like ordinary pytest fixtures, except they should be coroutines or asynchronous generators.
+Asynchronous fixtures are defined just like ordinary pytest fixtures, except they should be decorated with ``@pytest_asyncio.fixture``.
 
 .. code-block:: python3
 
-    @pytest.fixture
+    import pytest_asyncio
+
+    @pytest_asyncio.fixture
     async def async_gen_fixture():
         await asyncio.sleep(0.1)
         yield 'a value'
 
-    @pytest.fixture(scope='module')
+    @pytest_asyncio.fixture(scope='module')
     async def async_fixture():
         return await asyncio.sleep(0.1)
 
@@ -133,6 +202,9 @@ All scopes are supported, but if you use a non-function scope you will need
 to redefine the ``event_loop`` fixture to have the same or broader scope.
 Async fixtures need the event loop, and so must have the same or narrower scope
 than the ``event_loop`` fixture.
+
+*auto* and *legacy* mode automatically converts async fixtures declared with the
+standard ``@pytest.fixture`` decorator to *asyncio-driven* versions.
 
 
 Markers
@@ -163,6 +235,10 @@ Only test coroutines will be affected (by default, coroutines prefixed by
     async def test_example(event_loop):
         """No marker!"""
         await asyncio.sleep(0, loop=event_loop)
+
+In *auto* mode, the ``pytest.mark.asyncio`` marker can be omited, the merker is added
+automatically to *async* test functions.
+
 
 .. |pytestmark| replace:: ``pytestmark``
 .. _pytestmark: http://doc.pytest.org/en/latest/example/markers.html#marking-whole-classes-or-modules
