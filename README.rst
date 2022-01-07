@@ -176,6 +176,7 @@ Changelog
 - `pytest-asyncio` no longer alters existing event loop policies. `#168 <https://github.com/pytest-dev/pytest-asyncio/issues/168>`_, `#188 <https://github.com/pytest-dev/pytest-asyncio/issues/168>`_
 - Drop support for Python 3.6
 - Fixed an issue when pytest-asyncio was used in combination with `flaky` or inherited asynchronous Hypothesis tests. `#178 <https://github.com/pytest-dev/pytest-asyncio/issues/178>`_ `#231 <https://github.com/pytest-dev/pytest-asyncio/issues/231>`_
+- Added `flaky <https://pypi.org/project/flaky/>`_ to test dependencies
 
 0.16.0 (2021-10-16)
 ~~~~~~~~~~~~~~~~~~~
