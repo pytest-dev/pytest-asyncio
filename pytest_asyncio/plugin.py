@@ -176,7 +176,7 @@ def wrap_in_sync(func, _loop):
     # if the function is already wrapped, we rewrap using the original one
     # not using __wrapped__ because the original function may already be
     # a wrapped one
-    if hasattr(func, '_raw_test_func'):
+    if hasattr(func, "_raw_test_func"):
         func = func._raw_test_func
 
     @functools.wraps(func)
