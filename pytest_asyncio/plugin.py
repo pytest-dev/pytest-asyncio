@@ -209,7 +209,7 @@ def unused_tcp_port_factory():
     return factory
 
 
-@pytest.fixture
+@pytest.fixture(scope=session)
 def unused_udp_port_factory():
     """A factory function, producing different unused UDP ports."""
     produced = set()
