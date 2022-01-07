@@ -35,7 +35,7 @@ Features
 --------
 
 - fixtures for creating and injecting versions of the asyncio event loop
-- fixtures for injecting unused tcp ports
+- fixtures for injecting unused tcp/udp ports
 - pytest markers for treating tests as asyncio coroutines
 - easy testing with non-default event loops
 - support for `async def` fixtures and async generator fixtures
