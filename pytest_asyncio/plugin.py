@@ -59,15 +59,18 @@ def pytest_addoption(parser, pluginmanager):
     )
 
 
-def asyncio_fixture(fixture_function=None, **kwargs):
+def fixture(fixture_function=None, **kwargs):
     if fixture_function is not None:
+        _set_explicit_asyncio_mark(fixture_function)
+        return pytest.fixture(fixture_function, **kwargs)
 
-        @functools.wraps(asyncio_fixture)
-        def inner(fixture_function, **kwargs):
-            return asyncio_fixture(fixture_function, **kwargs)
+    else:
 
-    _set_explicit_asyncio_mark(fixture_function)
-    return pytest.fixture(fixture_function, **kwargs)
+        @functools.wraps(fixture)
+        def inner(fixture_function):
+            return fixture(fixture_function, **kwargs)
+
+        return inner
 
 
 def _has_explicit_asyncio_mark(obj):
@@ -77,6 +80,7 @@ def _has_explicit_asyncio_mark(obj):
 
 def _set_explicit_asyncio_mark(obj):
     if hasattr(obj, "__func__"):
+        # instance method, check the function object
         obj = obj.__func__
     obj._force_asyncio_fixture = True
 

@@ -1,5 +1,4 @@
 from textwrap import dedent
-import re
 
 pytest_plugins = "pytester"
 
