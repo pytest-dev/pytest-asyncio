@@ -57,7 +57,7 @@ This is enough for pytest to pick up pytest-asyncio.
 Modes
 -----
 
-Strting from ``pytest-asyncio>=0.17``, three modes are provided: *auto*, *strict* and
+Starting from ``pytest-asyncio>=0.17``, three modes are provided: *auto*, *strict* and
 *legacy* (deault).
 
 The mode can be set by ``asyncio_mode`` configuration option in `configuration file
