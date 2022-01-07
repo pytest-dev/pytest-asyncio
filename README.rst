@@ -3,13 +3,15 @@ pytest-asyncio: pytest support for asyncio
 
 .. image:: https://img.shields.io/pypi/v/pytest-asyncio.svg
     :target: https://pypi.python.org/pypi/pytest-asyncio
-.. image:: https://travis-ci.org/pytest-dev/pytest-asyncio.svg?branch=master
-    :target: https://travis-ci.org/pytest-dev/pytest-asyncio
-.. image:: https://coveralls.io/repos/pytest-dev/pytest-asyncio/badge.svg
-    :target: https://coveralls.io/r/pytest-dev/pytest-asyncio
+.. image:: https://github.com/pytest-dev/pytest-asyncio/workflows/CI/badge.svg
+    :target: https://github.com/pytest-dev/pytest-asyncio/actions?workflow=CI
+.. image:: https://codecov.io/gh/pytest-dev/pytest-asyncio/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/pytest-dev/pytest-asyncio
 .. image:: https://img.shields.io/pypi/pyversions/pytest-asyncio.svg
     :target: https://github.com/pytest-dev/pytest-asyncio
     :alt: Supported Python versions
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/ambv/black
 
 pytest-asyncio is an Apache2 licensed library, written in Python, for testing
 asyncio code with pytest.
@@ -81,7 +83,7 @@ event loop. This will take effect even if you're using the
 
 .. code-block:: python
 
-    @pytest.yield_fixture()
+    @pytest.fixture
     def event_loop():
         loop = MyCustomLoop()
         yield loop
@@ -132,19 +134,6 @@ to redefine the ``event_loop`` fixture to have the same or broader scope.
 Async fixtures need the event loop, and so must have the same or narrower scope
 than the ``event_loop`` fixture.
 
-If you want to do this with Python 3.5, the ``yield`` statement must be replaced with ``await yield_()`` and the coroutine
-function must be decorated with ``@async_generator``, like so:
-
-.. code-block:: python3
-
-    from async_generator import yield_, async_generator
-
-    @pytest.fixture
-    @async_generator
-    async def async_gen_fixture():
-        await asyncio.sleep(0.1)
-        await yield_('a value')
-
 
 Markers
 -------
@@ -155,7 +144,7 @@ Mark your test coroutine with this marker and pytest will execute it as an
 asyncio task using the event loop provided by the ``event_loop`` fixture. See
 the introductory section for an example.
 
-The event loop used can be overriden by overriding the ``event_loop`` fixture
+The event loop used can be overridden by overriding the ``event_loop`` fixture
 (see above).
 
 In order to make your test code a little more concise, the pytest |pytestmark|_
@@ -178,11 +167,65 @@ Only test coroutines will be affected (by default, coroutines prefixed by
 .. |pytestmark| replace:: ``pytestmark``
 .. _pytestmark: http://doc.pytest.org/en/latest/example/markers.html#marking-whole-classes-or-modules
 
+Note about unittest
+-------------------
+
+Test classes subclassing the standard `unittest <https://docs.python.org/3/library/unittest.html>`__ library are not supported, users
+are recommended to use `unitest.IsolatedAsyncioTestCase <https://docs.python.org/3/library/unittest.html#unittest.IsolatedAsyncioTestCase>`__ 
+or an async framework such as `asynctest <https://asynctest.readthedocs.io/en/latest>`__.
+
 Changelog
 ---------
+0.17.0 (UNRELEASED)
+~~~~~~~~~~~~~~~~~~~
+- `pytest-asyncio` no longer alters existing event loop policies. `#168 <https://github.com/pytest-dev/pytest-asyncio/issues/168>`_, `#188 <https://github.com/pytest-dev/pytest-asyncio/issues/168>`_
+- Drop support for Python 3.6
 
-0.10.0. (UNRELEASED)
+0.16.0 (2021-10-16)
+~~~~~~~~~~~~~~~~~~~
+- Add support for Python 3.10
+
+0.15.1 (2021-04-22)
+~~~~~~~~~~~~~~~~~~~
+- Hotfix for errors while closing event loops while replacing them.
+  `#209 <https://github.com/pytest-dev/pytest-asyncio/issues/209>`_
+  `#210 <https://github.com/pytest-dev/pytest-asyncio/issues/210>`_
+
+0.15.0 (2021-04-19)
+~~~~~~~~~~~~~~~~~~~
+- Add support for Python 3.9
+- Abandon support for Python 3.5. If you still require support for Python 3.5, please use pytest-asyncio v0.14 or earlier.
+- Set ``unused_tcp_port_factory`` fixture scope to 'session'.
+  `#163 <https://github.com/pytest-dev/pytest-asyncio/pull/163>`_
+- Properly close event loops when replacing them.
+  `#208 <https://github.com/pytest-dev/pytest-asyncio/issues/208>`_
+
+0.14.0 (2020-06-24)
+~~~~~~~~~~~~~~~~~~~
+- Fix `#162 <https://github.com/pytest-dev/pytest-asyncio/issues/162>`_, and ``event_loop`` fixture behavior now is coherent on all scopes.
+  `#164 <https://github.com/pytest-dev/pytest-asyncio/pull/164>`_
+
+0.12.0 (2020-05-04)
+~~~~~~~~~~~~~~~~~~~
+- Run the event loop fixture as soon as possible. This helps with fixtures that have an implicit dependency on the event loop.
+  `#156 <https://github.com/pytest-dev/pytest-asyncio/pull/156>`_
+
+0.11.0 (2020-04-20)
+~~~~~~~~~~~~~~~~~~~
+- Test on 3.8, drop 3.3 and 3.4. Stick to 0.10 for these versions.
+  `#152 <https://github.com/pytest-dev/pytest-asyncio/pull/152>`_
+- Use the new Pytest 5.4.0 Function API. We therefore depend on pytest >= 5.4.0.
+  `#142 <https://github.com/pytest-dev/pytest-asyncio/pull/142>`_
+- Better ``pytest.skip`` support.
+  `#126 <https://github.com/pytest-dev/pytest-asyncio/pull/126>`_
+
+0.10.0 (2019-01-08)
 ~~~~~~~~~~~~~~~~~~~~
+- ``pytest-asyncio`` integrates with `Hypothesis <https://hypothesis.readthedocs.io>`_
+  to support ``@given`` on async test functions using ``asyncio``.
+  `#102 <https://github.com/pytest-dev/pytest-asyncio/pull/102>`_
+- Pytest 4.1 support.
+  `#105 <https://github.com/pytest-dev/pytest-asyncio/pull/105>`_
 
 0.9.0 (2018-07-28)
 ~~~~~~~~~~~~~~~~~~
@@ -194,7 +237,7 @@ Changelog
 0.8.0 (2017-09-23)
 ~~~~~~~~~~~~~~~~~~
 - Improve integration with other packages (like aiohttp) with more careful event loop handling.
-  `#64` <https://github.com/pytest-dev/pytest-asyncio/pull/64>
+  `#64 <https://github.com/pytest-dev/pytest-asyncio/pull/64>`_
 
 0.7.0 (2017-09-08)
 ~~~~~~~~~~~~~~~~~~

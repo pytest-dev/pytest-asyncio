@@ -1,16 +1,13 @@
 """pytest-asyncio implementation."""
 import asyncio
 import contextlib
+import functools
 import inspect
 import socket
 
 import pytest
-from _pytest.python import transfer_markers
 
-try:
-    from async_generator import isasyncgenfunction
-except ImportError:
-    from inspect import isasyncgenfunction
+from inspect import isasyncgenfunction
 
 
 def _is_coroutine(obj):
@@ -20,53 +17,94 @@ def _is_coroutine(obj):
 
 def pytest_configure(config):
     """Inject documentation."""
-    config.addinivalue_line("markers",
-                            "asyncio: "
-                            "mark the test as a coroutine, it will be "
-                            "run using an asyncio event loop")
+    config.addinivalue_line(
+        "markers",
+        "asyncio: "
+        "mark the test as a coroutine, it will be "
+        "run using an asyncio event loop",
+    )
 
 
 @pytest.mark.tryfirst
 def pytest_pycollect_makeitem(collector, name, obj):
     """A pytest hook to collect asyncio coroutines."""
     if collector.funcnamefilter(name) and _is_coroutine(obj):
-        item = pytest.Function(name, parent=collector)
-
-        # Due to how pytest test collection works, module-level pytestmarks
-        # are applied after the collection step. Since this is the collection
-        # step, we look ourselves.
-        transfer_markers(obj, item.cls, item.module)
-        item = pytest.Function(name, parent=collector)  # To reload keywords.
-
-        if 'asyncio' in item.keywords:
+        item = pytest.Function.from_parent(collector, name=name)
+        if "asyncio" in item.keywords:
             return list(collector._genfunctions(name, obj))
+
+
+class FixtureStripper:
+    """Include additional Fixture, and then strip them"""
+
+    REQUEST = "request"
+    EVENT_LOOP = "event_loop"
+
+    def __init__(self, fixturedef):
+        self.fixturedef = fixturedef
+        self.to_strip = set()
+
+    def add(self, name):
+        """Add fixture name to fixturedef
+        and record in to_strip list (If not previously included)"""
+        if name in self.fixturedef.argnames:
+            return
+        self.fixturedef.argnames += (name,)
+        self.to_strip.add(name)
+
+    def get_and_strip_from(self, name, data_dict):
+        """Strip name from data, and return value"""
+        result = data_dict[name]
+        if name in self.to_strip:
+            del data_dict[name]
+        return result
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_fixture_post_finalizer(fixturedef, request):
+    """Called after fixture teardown"""
+    if fixturedef.argname == "event_loop":
+        policy = asyncio.get_event_loop_policy()
+        policy.get_event_loop().close()  # Clean up existing loop to avoid ResourceWarnings
+        new_loop = policy.new_event_loop()  # Replace existing event loop
+        # Ensure subsequent calls to get_event_loop() succeed
+        policy.set_event_loop(new_loop)
 
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_fixture_setup(fixturedef, request):
     """Adjust the event loop policy when an event loop is produced."""
+    if fixturedef.argname == "event_loop":
+        outcome = yield
+        loop = outcome.get_result()
+        policy = asyncio.get_event_loop_policy()
+        try:
+            old_loop = policy.get_event_loop()
+            if old_loop is not loop:
+                old_loop.close()
+        except RuntimeError:
+            # Swallow this, since it's probably bad event loop hygiene.
+            pass
+        policy.set_event_loop(loop)
+        return
+
     if isasyncgenfunction(fixturedef.func):
         # This is an async generator function. Wrap it accordingly.
-        f = fixturedef.func
+        generator = fixturedef.func
 
-        strip_event_loop = False
-        if 'event_loop' not in fixturedef.argnames:
-            fixturedef.argnames += ('event_loop', )
-            strip_event_loop = True
-        strip_request = False
-        if 'request' not in fixturedef.argnames:
-            fixturedef.argnames += ('request', )
-            strip_request = True
+        fixture_stripper = FixtureStripper(fixturedef)
+        fixture_stripper.add(FixtureStripper.EVENT_LOOP)
+        fixture_stripper.add(FixtureStripper.REQUEST)
 
         def wrapper(*args, **kwargs):
-            loop = kwargs['event_loop']
-            request = kwargs['request']
-            if strip_event_loop:
-                del kwargs['event_loop']
-            if strip_request:
-                del kwargs['request']
+            loop = fixture_stripper.get_and_strip_from(
+                FixtureStripper.EVENT_LOOP, kwargs
+            )
+            request = fixture_stripper.get_and_strip_from(
+                FixtureStripper.REQUEST, kwargs
+            )
 
-            gen_obj = f(*args, **kwargs)
+            gen_obj = generator(*args, **kwargs)
 
             async def setup():
                 res = await gen_obj.__anext__()
@@ -74,6 +112,7 @@ def pytest_fixture_setup(fixturedef, request):
 
             def finalizer():
                 """Yield again, to finalize."""
+
                 async def async_finalizer():
                     try:
                         await gen_obj.__anext__()
@@ -87,86 +126,96 @@ def pytest_fixture_setup(fixturedef, request):
                 loop.run_until_complete(async_finalizer())
 
             request.addfinalizer(finalizer)
-
             return loop.run_until_complete(setup())
 
         fixturedef.func = wrapper
-
     elif inspect.iscoroutinefunction(fixturedef.func):
-        # Just a coroutine, not an async generator.
-        f = fixturedef.func
+        coro = fixturedef.func
 
-        strip_event_loop = False
-        if 'event_loop' not in fixturedef.argnames:
-            fixturedef.argnames += ('event_loop', )
-            strip_event_loop = True
+        fixture_stripper = FixtureStripper(fixturedef)
+        fixture_stripper.add(FixtureStripper.EVENT_LOOP)
 
         def wrapper(*args, **kwargs):
-            loop = kwargs['event_loop']
-            if strip_event_loop:
-                del kwargs['event_loop']
+            loop = fixture_stripper.get_and_strip_from(
+                FixtureStripper.EVENT_LOOP, kwargs
+            )
 
             async def setup():
-                res = await f(*args, **kwargs)
+                res = await coro(*args, **kwargs)
                 return res
 
             return loop.run_until_complete(setup())
 
         fixturedef.func = wrapper
-
-    outcome = yield
-
-    if fixturedef.argname == "event_loop" and 'asyncio' in request.keywords:
-        loop = outcome.get_result()
-        for kw in _markers_2_fixtures.keys():
-            if kw not in request.keywords:
-                continue
-            policy = asyncio.get_event_loop_policy()
-            try:
-                old_loop = policy.get_event_loop()
-            except RuntimeError as exc:
-                if 'no current event loop' not in str(exc):
-                    raise
-                old_loop = None
-            policy.set_event_loop(loop)
-            fixturedef.addfinalizer(lambda: policy.set_event_loop(old_loop))
+    yield
 
 
-@pytest.mark.tryfirst
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_pyfunc_call(pyfuncitem):
     """
     Run asyncio marked test functions in an event loop instead of a normal
     function call.
     """
-    for marker_name, fixture_name in _markers_2_fixtures.items():
-        if marker_name in pyfuncitem.keywords:
-            event_loop = pyfuncitem.funcargs[fixture_name]
+    if "asyncio" in pyfuncitem.keywords:
+        if getattr(pyfuncitem.obj, "is_hypothesis_test", False):
+            pyfuncitem.obj.hypothesis.inner_test = wrap_in_sync(
+                pyfuncitem.obj.hypothesis.inner_test,
+                _loop=pyfuncitem.funcargs["event_loop"],
+            )
+        else:
+            pyfuncitem.obj = wrap_in_sync(
+                pyfuncitem.obj, _loop=pyfuncitem.funcargs["event_loop"]
+            )
+    yield
 
-            funcargs = pyfuncitem.funcargs
-            testargs = {arg: funcargs[arg]
-                        for arg in pyfuncitem._fixtureinfo.argnames}
 
-            event_loop.run_until_complete(
-                asyncio.ensure_future(
-                    pyfuncitem.obj(**testargs), loop=event_loop))
-            return True
+def wrap_in_sync(func, _loop):
+    """Return a sync wrapper around an async function executing it in the
+    current event loop."""
+
+    # if the function is already wrapped, we rewrap using the original one
+    # not using __wrapped__ because the original function may already be
+    # a wrapped one
+    if hasattr(func, "_raw_test_func"):
+        func = func._raw_test_func
+
+    @functools.wraps(func)
+    def inner(**kwargs):
+        coro = func(**kwargs)
+        if coro is not None:
+            task = asyncio.ensure_future(coro, loop=_loop)
+            try:
+                _loop.run_until_complete(task)
+            except BaseException:
+                # run_until_complete doesn't get the result from exceptions
+                # that are not subclasses of `Exception`. Consume all
+                # exceptions to prevent asyncio's warning from logging.
+                if task.done() and not task.cancelled():
+                    task.exception()
+                raise
+
+    inner._raw_test_func = func
+    return inner
 
 
 def pytest_runtest_setup(item):
-    for marker, fixture in _markers_2_fixtures.items():
-        if marker in item.keywords and fixture not in item.fixturenames:
-            # inject an event loop fixture for all async tests
-            item.fixturenames.append(fixture)
+    if "asyncio" in item.keywords:
+        # inject an event loop fixture for all async tests
+        if "event_loop" in item.fixturenames:
+            item.fixturenames.remove("event_loop")
+        item.fixturenames.insert(0, "event_loop")
+    if (
+        item.get_closest_marker("asyncio") is not None
+        and not getattr(item.obj, "hypothesis", False)
+        and getattr(item.obj, "is_hypothesis_test", False)
+    ):
+        pytest.fail(
+            "test function `%r` is using Hypothesis, but pytest-asyncio "
+            "only works with Hypothesis 3.64.0 or later." % item
+        )
 
 
-# maps marker to the name of the event loop fixture that will be available
-# to marked test functions
-_markers_2_fixtures = {
-    'asyncio': 'event_loop',
-}
-
-
-@pytest.yield_fixture
+@pytest.fixture
 def event_loop(request):
     """Create an instance of the default event loop for each test case."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
@@ -174,16 +223,16 @@ def event_loop(request):
     loop.close()
 
 
-def _unused_port(socket_type=socket.SOCK_STREAM):
+def _unused_port(socket_type):
     """Find an unused localhost port from 1024-65535 and return it."""
     with contextlib.closing(socket.socket(type=socket_type)) as sock:
-        sock.bind(('127.0.0.1', 0))
+        sock.bind(("127.0.0.1", 0))
         return sock.getsockname()[1]
 
 
 @pytest.fixture
 def unused_tcp_port():
-    return _unused_port()
+    return _unused_port(socket.SOCK_STREAM)
 
 
 @pytest.fixture
@@ -191,25 +240,26 @@ def unused_udp_port():
     return _unused_port(socket.SOCK_DGRAM)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def unused_tcp_port_factory():
     """A factory function, producing different unused TCP ports."""
     produced = set()
 
     def factory():
         """Return an unused port."""
-        port = _unused_port()
+        port = _unused_port(socket.SOCK_STREAM)
 
         while port in produced:
-            port = _unused_port()
+            port = _unused_port(socket.SOCK_STREAM)
 
         produced.add(port)
 
         return port
+
     return factory
 
 
-@pytest.fixture(scope=session)
+@pytest.fixture(scope="session")
 def unused_udp_port_factory():
     """A factory function, producing different unused UDP ports."""
     produced = set()
@@ -224,4 +274,5 @@ def unused_udp_port_factory():
         produced.add(port)
 
         return port
+
     return factory

@@ -1,31 +1,29 @@
 """Quick'n'dirty unit tests for provided fixtures and markers."""
 import asyncio
-import os
-import pytest
 
+import pytest
 import pytest_asyncio.plugin
 
 
-async def async_coro(loop=None):
-    """A very simple coroutine."""
-    await asyncio.sleep(0, loop=loop)
-    return 'ok'
+async def async_coro():
+    await asyncio.sleep(0)
+    return "ok"
 
 
 def test_event_loop_fixture(event_loop):
     """Test the injection of the event_loop fixture."""
     assert event_loop
-    ret = event_loop.run_until_complete(async_coro(event_loop))
-    assert ret == 'ok'
+    ret = event_loop.run_until_complete(async_coro())
+    assert ret == "ok"
 
 
 @pytest.mark.asyncio
-def test_asyncio_marker():
+async def test_asyncio_marker():
     """Test the asyncio pytest marker."""
-    yield  # sleep(0)
+    await asyncio.sleep(0)
 
 
-@pytest.mark.xfail(reason='need a failure', strict=True)
+@pytest.mark.xfail(reason="need a failure", strict=True)
 @pytest.mark.asyncio
 def test_asyncio_marker_fail():
     assert False
@@ -44,14 +42,10 @@ async def test_unused_port_fixture(unused_tcp_port, event_loop):
     async def closer(_, writer):
         writer.close()
 
-    server1 = await asyncio.start_server(closer, host='localhost',
-                                         port=unused_tcp_port,
-                                         loop=event_loop)
+    server1 = await asyncio.start_server(closer, host="localhost", port=unused_tcp_port)
 
     with pytest.raises(IOError):
-        await asyncio.start_server(closer, host='localhost',
-                                   port=unused_tcp_port,
-                                   loop=event_loop)
+        await asyncio.start_server(closer, host="localhost", port=unused_tcp_port)
 
     server1.close()
     await server1.wait_closed()
@@ -70,17 +64,15 @@ async def test_unused_udp_port_fixture(unused_udp_port, event_loop):
 
     transport1, _ = await event_loop.create_datagram_endpoint(
         Closer,
-        local_addr=('127.0.0.1', unused_udp_port),
+        local_addr=("127.0.0.1", unused_udp_port),
         reuse_port=False,
-        reuse_address=False,
     )
 
     with pytest.raises(IOError):
         await event_loop.create_datagram_endpoint(
             Closer,
-            local_addr=('127.0.0.1', unused_udp_port),
+            local_addr=("127.0.0.1", unused_udp_port),
             reuse_port=False,
-            reuse_address=False,
         )
 
     transport1.abort()
@@ -93,24 +85,19 @@ async def test_unused_port_factory_fixture(unused_tcp_port_factory, event_loop):
     async def closer(_, writer):
         writer.close()
 
-    port1, port2, port3 = (unused_tcp_port_factory(), unused_tcp_port_factory(),
-                           unused_tcp_port_factory())
+    port1, port2, port3 = (
+        unused_tcp_port_factory(),
+        unused_tcp_port_factory(),
+        unused_tcp_port_factory(),
+    )
 
-    server1 = await asyncio.start_server(closer, host='localhost',
-                                         port=port1,
-                                         loop=event_loop)
-    server2 = await asyncio.start_server(closer, host='localhost',
-                                         port=port2,
-                                         loop=event_loop)
-    server3 = await asyncio.start_server(closer, host='localhost',
-                                         port=port3,
-                                         loop=event_loop)
+    server1 = await asyncio.start_server(closer, host="localhost", port=port1)
+    server2 = await asyncio.start_server(closer, host="localhost", port=port2)
+    server3 = await asyncio.start_server(closer, host="localhost", port=port3)
 
     for port in port1, port2, port3:
         with pytest.raises(IOError):
-            await asyncio.start_server(closer, host='localhost',
-                                       port=port,
-                                       loop=event_loop)
+            await asyncio.start_server(closer, host="localhost", port=port)
 
     server1.close()
     await server1.wait_closed()
@@ -121,8 +108,7 @@ async def test_unused_port_factory_fixture(unused_tcp_port_factory, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_unused_udp_port_factory_fixture(unused_udp_port_factory,
-                                               event_loop):
+async def test_unused_udp_port_factory_fixture(unused_udp_port_factory, event_loop):
     """Test the unused UDP port factory fixture."""
 
     class Closer:
@@ -132,35 +118,34 @@ async def test_unused_udp_port_factory_fixture(unused_udp_port_factory,
         def connection_lost(self, *arg, **kwd):
             pass
 
-    port1, port2, port3 = (unused_udp_port_factory(), unused_udp_port_factory(),
-                           unused_udp_port_factory())
+    port1, port2, port3 = (
+        unused_udp_port_factory(),
+        unused_udp_port_factory(),
+        unused_udp_port_factory(),
+    )
 
     transport1, _ = await event_loop.create_datagram_endpoint(
         Closer,
-        local_addr=('127.0.0.1', port1),
+        local_addr=("127.0.0.1", port1),
         reuse_port=False,
-        reuse_address=False,
     )
     transport2, _ = await event_loop.create_datagram_endpoint(
         Closer,
-        local_addr=('127.0.0.1', port2),
+        local_addr=("127.0.0.1", port2),
         reuse_port=False,
-        reuse_address=False,
     )
     transport3, _ = await event_loop.create_datagram_endpoint(
         Closer,
-        local_addr=('127.0.0.1', port3),
+        local_addr=("127.0.0.1", port3),
         reuse_port=False,
-        reuse_address=False,
     )
 
     for port in port1, port2, port3:
         with pytest.raises(IOError):
             await event_loop.create_datagram_endpoint(
                 Closer,
-                local_addr=('127.0.0.1', port),
+                local_addr=("127.0.0.1", port),
                 reuse_port=False,
-                reuse_address=False,
             )
 
     transport1.abort()
@@ -172,7 +157,7 @@ def test_unused_port_factory_duplicate(unused_tcp_port_factory, monkeypatch):
     """Test correct avoidance of duplicate ports."""
     counter = 0
 
-    def mock_unused_tcp_port():
+    def mock_unused_tcp_port(_ignored):
         """Force some duplicate ports."""
         nonlocal counter
         counter += 1
@@ -181,15 +166,13 @@ def test_unused_port_factory_duplicate(unused_tcp_port_factory, monkeypatch):
         else:
             return 10000 + counter
 
-    monkeypatch.setattr(pytest_asyncio.plugin, '_unused_port',
-                        mock_unused_tcp_port)
+    monkeypatch.setattr(pytest_asyncio.plugin, "_unused_port", mock_unused_tcp_port)
 
     assert unused_tcp_port_factory() == 10000
     assert unused_tcp_port_factory() > 10000
 
 
-def test_unused_udp_port_factory_duplicate(unused_udp_port_factory,
-                                           monkeypatch):
+def test_unused_udp_port_factory_duplicate(unused_udp_port_factory, monkeypatch):
     """Test correct avoidance of duplicate UDP ports."""
     counter = 0
 
@@ -202,33 +185,55 @@ def test_unused_udp_port_factory_duplicate(unused_udp_port_factory,
         else:
             return 10000 + counter
 
-    monkeypatch.setattr(pytest_asyncio.plugin, '_unused_port',
-                        mock_unused_udp_port)
+    monkeypatch.setattr(pytest_asyncio.plugin, "_unused_port", mock_unused_udp_port)
 
     assert unused_udp_port_factory() == 10000
     assert unused_udp_port_factory() > 10000
 
 
-class Test:
-    """Test that asyncio marked functions work in test methods."""
+class TestMarkerInClassBasedTests:
+    """Test that asyncio marked functions work for methods of test classes."""
 
     @pytest.mark.asyncio
-    async def test_asyncio_marker_method(self, event_loop):
-        """Test the asyncio pytest marker in a Test class."""
-        ret = await async_coro(event_loop)
-        assert ret == 'ok'
-
-
-class TestUnexistingLoop:
-    @pytest.fixture
-    def remove_loop(self):
-        old_loop = asyncio.get_event_loop()
-        asyncio.set_event_loop(None)
-        yield
-        asyncio.set_event_loop(old_loop)
-
-    @pytest.mark.asyncio
-    async def test_asyncio_marker_without_loop(self, remove_loop):
-        """Test the asyncio pytest marker in a Test class."""
+    async def test_asyncio_marker_with_explicit_loop_fixture(self, event_loop):
+        """Test the "asyncio" marker works on a method in a class-based test with explicit loop fixture."""
         ret = await async_coro()
-        assert ret == 'ok'
+        assert ret == "ok"
+
+    @pytest.mark.asyncio
+    async def test_asyncio_marker_with_implicit_loop_fixture(self):
+        """Test the "asyncio" marker works on a method in a class-based test with implicit loop fixture."""
+        ret = await async_coro()
+        assert ret == "ok"
+
+
+class TestEventLoopStartedBeforeFixtures:
+    @pytest.fixture
+    async def loop(self):
+        return asyncio.get_event_loop()
+
+    @staticmethod
+    def foo():
+        return 1
+
+    @pytest.mark.asyncio
+    async def test_no_event_loop(self, loop):
+        assert await loop.run_in_executor(None, self.foo) == 1
+
+    @pytest.mark.asyncio
+    async def test_event_loop_after_fixture(self, loop, event_loop):
+        assert await loop.run_in_executor(None, self.foo) == 1
+
+    @pytest.mark.asyncio
+    async def test_event_loop_before_fixture(self, event_loop, loop):
+        assert await loop.run_in_executor(None, self.foo) == 1
+
+
+@pytest.mark.asyncio
+async def test_no_warning_on_skip():
+    pytest.skip("Test a skip error inside asyncio")
+
+
+def test_async_close_loop(event_loop):
+    event_loop.close()
+    return "ok"

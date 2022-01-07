@@ -1,23 +1,21 @@
 import unittest.mock
 
 import pytest
-from async_generator import yield_, async_generator
 
 START = object()
 END = object()
 RETVAL = object()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def mock():
     return unittest.mock.Mock(return_value=RETVAL)
 
 
 @pytest.fixture
-@async_generator
 async def async_gen_fixture(mock):
     try:
-        await yield_(mock(START))
+        yield mock(START)
     except Exception as e:
         mock(e)
     else:
