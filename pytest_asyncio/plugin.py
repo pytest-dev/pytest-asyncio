@@ -153,8 +153,9 @@ def pytest_fixture_setup(fixturedef, request):
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_pyfunc_call(pyfuncitem):
     """
-    Run asyncio marked test functions in an event loop instead of a normal
-    function call.
+    Pytest hook called before a test case is run.
+
+    Wraps marked tests in a synchronous function where the wrapped test coroutine is executed in an event loop.
     """
     if "asyncio" in pyfuncitem.keywords:
         if getattr(pyfuncitem.obj, "is_hypothesis_test", False):
