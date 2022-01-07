@@ -209,8 +209,10 @@ def pytest_fixture_setup(fixturedef, request):
                 code = func.__code__
             except AttributeError:
                 code = func.__func__.__code__
-            name = (f"<fixture {func.__qualname__}, file={code.co_filename}, "
-                    f"line={code.co_firstlineno}>")
+            name = (
+                f"<fixture {func.__qualname__}, file={code.co_filename}, "
+                f"line={code.co_firstlineno}>"
+            )
             warnings.warn(
                 LEGACY_ASYNCIO_FIXTURE.format(name=name),
                 pytest.PytestDeprecationWarning,
