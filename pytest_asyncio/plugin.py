@@ -128,12 +128,15 @@ def pytest_pycollect_makeitem(collector, name, obj):
     """A pytest hook to collect asyncio coroutines."""
     if collector.funcnamefilter(name) and _is_coroutine(obj):
         item = pytest.Function.from_parent(collector, name=name)
-        if "asyncio" not in item.keywords:
-            if _get_asyncio_mode(item.config) == Mode.AUTO:
-                # implicitly add asyncio marker if asyncio mode is on
-                item.add_marker("asyncio")
         if "asyncio" in item.keywords:
             return list(collector._genfunctions(name, obj))
+        else:
+            if _get_asyncio_mode(item.config) == Mode.AUTO:
+                # implicitly add asyncio marker if asyncio mode is on
+                ret = list(collector._genfunctions(name, obj))
+                for elem in ret:
+                    elem.add_marker("asyncio")
+                return ret
 
 
 class FixtureStripper:
