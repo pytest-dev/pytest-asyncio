@@ -236,7 +236,7 @@ Only test coroutines will be affected (by default, coroutines prefixed by
         """No marker!"""
         await asyncio.sleep(0, loop=event_loop)
 
-In *auto* mode, the ``pytest.mark.asyncio`` marker can be omited, the merker is added
+In *auto* mode, the ``pytest.mark.asyncio`` marker can be omitted, the marker is added
 automatically to *async* test functions.
 
 

@@ -26,7 +26,7 @@ LEGACY_MODE = pytest.PytestDeprecationWarning(
 LEGACY_ASYNCIO_FIXTURE = (
     "'@pytest.fixture' is applied to {name} "
     "in 'legacy' mode, "
-    "please replace it with '@pytest_asyncio.pytest_asyncio' as a preparation "
+    "please replace it with '@pytest_asyncio.fixture' as a preparation "
     "for switching to 'strict' mode (or use 'auto' mode to seamlessly handle "
     "all these fixtures as asyncio-driven)."
 )
@@ -38,7 +38,7 @@ ASYNCIO_MODE_HELP = """\
 should be tested together, e.g. \
 both pytest-asyncio and pytest-trio are used in the same project)
 'legacy' - for keeping compatibility with pytest-asyncio<0.17: \
-auto-handling is disabled but asyncio_fixture usage is not enforced
+auto-handling is disabled but pytest_asyncio.fixture usage is not enforced
 """
 
 
