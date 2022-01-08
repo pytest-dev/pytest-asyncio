@@ -58,7 +58,7 @@ Modes
 -----
 
 Starting from ``pytest-asyncio>=0.17``, three modes are provided: *auto*, *strict* and
-*legacy* (deault).
+*legacy* (default).
 
 The mode can be set by ``asyncio_mode`` configuration option in `configuration file
 <https://docs.pytest.org/en/latest/reference/customize.html>`_:
@@ -88,7 +88,7 @@ with a regular ``@pytest.fixture`` decorator instead of dedicated
 *asyncio-driven* means that tests and fixtures are executed by ``pytest-asyncio``
 plugin.
 
-This mode requires the simpliest tests and fixtures configuration and is
+This mode requires the simplest tests and fixtures configuration and is
 recommended for default usage *unless* the same project and its test suite should
 execute tests from different async frameworks, e.g. ``asyncio`` and ``trio``.  In this
 case, auto-handling can break tests designed for other framework; plase use *strict*
