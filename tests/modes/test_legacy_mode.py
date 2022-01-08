@@ -12,7 +12,7 @@ LEGACY_MODE = (
 LEGACY_ASYNCIO_FIXTURE = (
     "'@pytest.fixture' is applied to {name} "
     "in 'legacy' mode, "
-    "please replace it with '@pytest_asyncio.pytest_asyncio' as a preparation "
+    "please replace it with '@pytest_asyncio.fixture' as a preparation "
     "for switching to 'strict' mode (or use 'auto' mode to seamlessly handle "
     "all these fixtures as asyncio-driven)."
 ).format(name="*")
