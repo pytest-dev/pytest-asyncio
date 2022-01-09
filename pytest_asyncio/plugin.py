@@ -5,7 +5,6 @@ import enum
 import functools
 import inspect
 import socket
-import sys
 import warnings
 
 import pytest
@@ -17,7 +16,7 @@ class Mode(str, enum.Enum):
     LEGACY = "legacy"
 
 
-LEGACY_MODE = pytest.PytestDeprecationWarning(
+LEGACY_MODE = DeprecationWarning(
     "The 'asyncio_mode' default value will change to 'strict' in future, "
     "please explicitly use 'asyncio_mode=strict' or 'asyncio_mode=auto' "
     "in pytest configuration file."
@@ -128,21 +127,7 @@ def pytest_configure(config):
         "run using an asyncio event loop",
     )
     if _get_asyncio_mode(config) == Mode.LEGACY:
-        _issue_warning_captured(LEGACY_MODE, config.hook, stacklevel=1)
-
-
-def _issue_warning_captured(warning, hook, *, stacklevel=1):
-    # copy-paste of pytest internal _pytest.warnings._issue_warning_captured function
-    with warnings.catch_warnings(record=True) as records:
-        warnings.simplefilter("always", type(warning))
-        warnings.warn(LEGACY_MODE, stacklevel=stacklevel)
-    frame = sys._getframe(stacklevel - 1)
-    location = frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name
-    hook.pytest_warning_recorded.call_historic(
-        kwargs=dict(
-            warning_message=records[0], when="config", nodeid="", location=location
-        )
-    )
+        config.issue_config_time_warning(LEGACY_MODE, stacklevel=2)
 
 
 @pytest.mark.tryfirst
@@ -192,7 +177,8 @@ def pytest_fixture_post_finalizer(fixturedef, request):
     """Called after fixture teardown"""
     if fixturedef.argname == "event_loop":
         policy = asyncio.get_event_loop_policy()
-        policy.get_event_loop().close()  # Clean up existing loop to avoid ResourceWarnings
+        # Clean up existing loop to avoid ResourceWarnings
+        policy.get_event_loop().close()
         new_loop = policy.new_event_loop()  # Replace existing event loop
         # Ensure subsequent calls to get_event_loop() succeed
         policy.set_event_loop(new_loop)
@@ -240,7 +226,7 @@ def pytest_fixture_setup(fixturedef, request):
             )
             warnings.warn(
                 LEGACY_ASYNCIO_FIXTURE.format(name=name),
-                pytest.PytestDeprecationWarning,
+                DeprecationWarning,
             )
         else:
             # asyncio_mode is STRICT,
@@ -345,7 +331,8 @@ def pytest_pyfunc_call(pyfuncitem):
     """
     Pytest hook called before a test case is run.
 
-    Wraps marked tests in a synchronous function where the wrapped test coroutine is executed in an event loop.
+    Wraps marked tests in a synchronous function
+    where the wrapped test coroutine is executed in an event loop.
     """
     if "asyncio" in pyfuncitem.keywords:
         timeout = _get_timeout(pyfuncitem)

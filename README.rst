@@ -25,7 +25,7 @@ provides useful fixtures and markers to make testing easier.
     @pytest.mark.asyncio
     async def test_some_asyncio_code():
         res = await library.do_something()
-        assert b'expected result' == res
+        assert b"expected result" == res
 
 pytest-asyncio has been strongly influenced by pytest-tornado_.
 
@@ -139,9 +139,9 @@ Use ``pytest.mark.asyncio`` for this purpose.
 .. code-block:: python
 
     def test_http_client(event_loop):
-        url = 'http://httpbin.org/get'
+        url = "http://httpbin.org/get"
         resp = event_loop.run_until_complete(http_client(url))
-        assert b'HTTP/1.1 200 OK' in resp
+        assert b"HTTP/1.1 200 OK" in resp
 
 This fixture can be easily overridden in any of the standard pytest locations
 (e.g. directly in the test file, or in ``conftest.py``) to use a non-default
@@ -189,12 +189,14 @@ Asynchronous fixtures are defined just like ordinary pytest fixtures, except the
 
     import pytest_asyncio
 
+
     @pytest_asyncio.fixture
     async def async_gen_fixture():
         await asyncio.sleep(0.1)
-        yield 'a value'
+        yield "a value"
 
-    @pytest_asyncio.fixture(scope='module')
+
+    @pytest_asyncio.fixture(scope="module")
     async def async_fixture():
         return await asyncio.sleep(0.1)
 
@@ -227,10 +229,12 @@ Only test coroutines will be affected (by default, coroutines prefixed by
 .. code-block:: python
 
     import asyncio
+
     import pytest
 
     # All test coroutines will be treated as marked.
     pytestmark = pytest.mark.asyncio
+
 
     async def test_example(event_loop):
         """No marker!"""
@@ -259,6 +263,7 @@ Changelog
 - Fixed an issue when pytest-asyncio was used in combination with `flaky` or inherited asynchronous Hypothesis tests. `#178 <https://github.com/pytest-dev/pytest-asyncio/issues/178>`_ `#231 <https://github.com/pytest-dev/pytest-asyncio/issues/231>`_
 - Added `flaky <https://pypi.org/project/flaky/>`_ to test dependencies
 - Added ``unused_udp_port`` and ``unused_udp_port_factory`` fixtures (similar to ``unused_tcp_port`` and ``unused_tcp_port_factory`` counterparts. `#99 <https://github.com/pytest-dev/pytest-asyncio/issues/99>`_
+- Added the plugin modes: *strict*, *auto*, and *legacy*. See `documentation <https://github.com/pytest-dev/pytest-asyncio#modes>`_ for details. `#125 <https://github.com/pytest-dev/pytest-asyncio/issues/125>`_
 
 0.16.0 (2021-10-16)
 ~~~~~~~~~~~~~~~~~~~
