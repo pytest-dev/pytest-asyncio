@@ -148,12 +148,6 @@ def test_async_close_loop(event_loop):
 
 
 @pytest.mark.asyncio(timeout=0.1)
-@pytest.mark.xfail(strict=True)
+@pytest.mark.xfail(strict=True, raises=asyncio.TimeoutError)
 async def test_timeout():
-    await asyncio.sleep(1)
-
-
-@pytest.mark.asyncio(asyncio_timeout=0.1)
-@pytest.mark.xfail(strict=True)
-async def test_timeout_2():
     await asyncio.sleep(1)
