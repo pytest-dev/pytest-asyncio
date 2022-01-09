@@ -1,4 +1,4 @@
-.PHONY: clean clean-build clean-pyc clean-test lint
+.PHONY: clean clean-build clean-pyc clean-test lint test
 
 clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
 
@@ -23,3 +23,6 @@ clean-test: ## remove test and coverage artifacts
 lint: ## check style with flake8
 	flake8 pytest_asyncio tests
 	black --check --verbose pytest_asyncio tests
+
+test:
+	pytest tests

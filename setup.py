@@ -6,13 +6,9 @@ from setuptools import setup, find_packages
 
 def find_version():
     version_file = (
-        Path(__file__)
-        .parent.joinpath("pytest_asyncio", "__init__.py")
-        .read_text()
+        Path(__file__).parent.joinpath("pytest_asyncio", "__init__.py").read_text()
     )
-    version_match = re.search(
-        r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M
-    )
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
     if version_match:
         return version_match.group(1)
 
@@ -33,21 +29,18 @@ setup(
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Topic :: Software Development :: Testing",
+        "Framework :: Asyncio",
         "Framework :: Pytest",
     ],
-    python_requires=">= 3.6",
+    python_requires=">= 3.7",
     install_requires=["pytest >= 5.4.0"],
     extras_require={
-        "testing": [
-            "coverage",
-            "hypothesis >= 5.7.1",
-        ],
+        "testing": ["coverage", "hypothesis >= 5.7.1", "flaky >= 3.5.0"],
     },
     entry_points={"pytest11": ["asyncio = pytest_asyncio.plugin"]},
 )

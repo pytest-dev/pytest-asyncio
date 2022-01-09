@@ -52,6 +52,33 @@ async def test_unused_port_fixture(unused_tcp_port, event_loop):
 
 
 @pytest.mark.asyncio
+async def test_unused_udp_port_fixture(unused_udp_port, event_loop):
+    """Test the unused TCP port fixture."""
+
+    class Closer:
+        def connection_made(self, transport):
+            pass
+
+        def connection_lost(self, *arg, **kwd):
+            pass
+
+    transport1, _ = await event_loop.create_datagram_endpoint(
+        Closer,
+        local_addr=("127.0.0.1", unused_udp_port),
+        reuse_port=False,
+    )
+
+    with pytest.raises(IOError):
+        await event_loop.create_datagram_endpoint(
+            Closer,
+            local_addr=("127.0.0.1", unused_udp_port),
+            reuse_port=False,
+        )
+
+    transport1.abort()
+
+
+@pytest.mark.asyncio
 async def test_unused_port_factory_fixture(unused_tcp_port_factory, event_loop):
     """Test the unused TCP port factory fixture."""
 
@@ -80,11 +107,57 @@ async def test_unused_port_factory_fixture(unused_tcp_port_factory, event_loop):
     await server3.wait_closed()
 
 
+@pytest.mark.asyncio
+async def test_unused_udp_port_factory_fixture(unused_udp_port_factory, event_loop):
+    """Test the unused UDP port factory fixture."""
+
+    class Closer:
+        def connection_made(self, transport):
+            pass
+
+        def connection_lost(self, *arg, **kwd):
+            pass
+
+    port1, port2, port3 = (
+        unused_udp_port_factory(),
+        unused_udp_port_factory(),
+        unused_udp_port_factory(),
+    )
+
+    transport1, _ = await event_loop.create_datagram_endpoint(
+        Closer,
+        local_addr=("127.0.0.1", port1),
+        reuse_port=False,
+    )
+    transport2, _ = await event_loop.create_datagram_endpoint(
+        Closer,
+        local_addr=("127.0.0.1", port2),
+        reuse_port=False,
+    )
+    transport3, _ = await event_loop.create_datagram_endpoint(
+        Closer,
+        local_addr=("127.0.0.1", port3),
+        reuse_port=False,
+    )
+
+    for port in port1, port2, port3:
+        with pytest.raises(IOError):
+            await event_loop.create_datagram_endpoint(
+                Closer,
+                local_addr=("127.0.0.1", port),
+                reuse_port=False,
+            )
+
+    transport1.abort()
+    transport2.abort()
+    transport3.abort()
+
+
 def test_unused_port_factory_duplicate(unused_tcp_port_factory, monkeypatch):
     """Test correct avoidance of duplicate ports."""
     counter = 0
 
-    def mock_unused_tcp_port():
+    def mock_unused_tcp_port(_ignored):
         """Force some duplicate ports."""
         nonlocal counter
         counter += 1
@@ -93,10 +166,29 @@ def test_unused_port_factory_duplicate(unused_tcp_port_factory, monkeypatch):
         else:
             return 10000 + counter
 
-    monkeypatch.setattr(pytest_asyncio.plugin, "_unused_tcp_port", mock_unused_tcp_port)
+    monkeypatch.setattr(pytest_asyncio.plugin, "_unused_port", mock_unused_tcp_port)
 
     assert unused_tcp_port_factory() == 10000
     assert unused_tcp_port_factory() > 10000
+
+
+def test_unused_udp_port_factory_duplicate(unused_udp_port_factory, monkeypatch):
+    """Test correct avoidance of duplicate UDP ports."""
+    counter = 0
+
+    def mock_unused_udp_port(_ignored):
+        """Force some duplicate ports."""
+        nonlocal counter
+        counter += 1
+        if counter < 5:
+            return 10000
+        else:
+            return 10000 + counter
+
+    monkeypatch.setattr(pytest_asyncio.plugin, "_unused_port", mock_unused_udp_port)
+
+    assert unused_udp_port_factory() == 10000
+    assert unused_udp_port_factory() > 10000
 
 
 class TestMarkerInClassBasedTests:
