@@ -3,5 +3,4 @@ __version__ = "0.16.0"
 
 from .plugin import fixture
 
-
 __all__ = ("fixture",)
