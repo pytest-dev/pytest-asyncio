@@ -310,7 +310,7 @@ def pytest_fixture_setup(fixturedef, request):
     yield
 
 
-def get_timeout(obj):
+def _get_timeout(obj):
     """
     Get the timeout for the provided test function.
 
@@ -348,7 +348,7 @@ def pytest_pyfunc_call(pyfuncitem):
     Wraps marked tests in a synchronous function where the wrapped test coroutine is executed in an event loop.
     """
     if "asyncio" in pyfuncitem.keywords:
-        timeout = get_timeout(pyfuncitem)
+        timeout = _get_timeout(pyfuncitem)
         if getattr(pyfuncitem.obj, "is_hypothesis_test", False):
             pyfuncitem.obj.hypothesis.inner_test = wrap_in_sync(
                 pyfuncitem.obj.hypothesis.inner_test,
