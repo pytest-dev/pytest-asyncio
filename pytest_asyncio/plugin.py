@@ -62,10 +62,19 @@ def pytest_addoption(parser, pluginmanager):
         type="string",
         default="legacy",
     )
-    group.addoption("--asyncio-timeout", dest="asyncio_timeout", type=float, help=ASYNCIO_TIMEOUT_HELP, default=None)
-    parser.addini("asyncio_timeout", type="string", help="default value for --asyncio-timeout",default=0)
-
-
+    group.addoption(
+        "--asyncio-timeout",
+        dest="asyncio_timeout",
+        type=float,
+        help=ASYNCIO_TIMEOUT_HELP,
+        default=None,
+    )
+    parser.addini(
+        "asyncio_timeout",
+        type="string",
+        help="default value for --asyncio-timeout",
+        default=0,
+    )
 
 
 def fixture(fixture_function=None, **kwargs):
