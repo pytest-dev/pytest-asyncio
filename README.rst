@@ -259,6 +259,7 @@ Changelog
 - Fixed an issue when pytest-asyncio was used in combination with `flaky` or inherited asynchronous Hypothesis tests. `#178 <https://github.com/pytest-dev/pytest-asyncio/issues/178>`_ `#231 <https://github.com/pytest-dev/pytest-asyncio/issues/231>`_
 - Added `flaky <https://pypi.org/project/flaky/>`_ to test dependencies
 - Added ``unused_udp_port`` and ``unused_udp_port_factory`` fixtures (similar to ``unused_tcp_port`` and ``unused_tcp_port_factory`` counterparts. `#99 <https://github.com/pytest-dev/pytest-asyncio/issues/99>`_
+- Added the plugin modes: *strict*, *auto*, and *legacy*. See `documentation <https://github.com/pytest-dev/pytest-asyncio#modes>`_ for details. `#125 <https://github.com/pytest-dev/pytest-asyncio/issues/125>`_
 
 0.16.0 (2021-10-16)
 ~~~~~~~~~~~~~~~~~~~
