@@ -20,9 +20,17 @@ clean-test: ## remove test and coverage artifacts
 	rm -f .coverage
 	rm -fr htmlcov/
 
-lint: ## check style with flake8
-	flake8 pytest_asyncio tests
-	black --check --verbose pytest_asyncio tests
+lint:
+# CI env-var is set by GitHub actions
+ifdef CI
+	pre-commit run --all-files --show-diff-on-failure
+else
+	pre-commit run --all-files
+endif
 
 test:
 	pytest tests
+
+install:
+	pip install -U pre-commit
+	pre-commit install

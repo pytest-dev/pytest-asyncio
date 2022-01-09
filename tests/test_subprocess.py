@@ -1,5 +1,4 @@
 """Tests for using subprocesses in tests."""
-import asyncio
 import asyncio.subprocess
 import sys
 

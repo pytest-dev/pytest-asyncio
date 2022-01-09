@@ -4,7 +4,6 @@ sync shim for Hypothesis.
 import asyncio
 
 import pytest
-
 from hypothesis import given, strategies as st
 
 

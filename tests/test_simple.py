@@ -2,6 +2,7 @@
 import asyncio
 
 import pytest
+
 import pytest_asyncio.plugin
 
 
@@ -26,7 +27,7 @@ async def test_asyncio_marker():
 @pytest.mark.xfail(reason="need a failure", strict=True)
 @pytest.mark.asyncio
 def test_asyncio_marker_fail():
-    assert False
+    raise AssertionError
 
 
 @pytest.mark.asyncio
@@ -196,13 +197,15 @@ class TestMarkerInClassBasedTests:
 
     @pytest.mark.asyncio
     async def test_asyncio_marker_with_explicit_loop_fixture(self, event_loop):
-        """Test the "asyncio" marker works on a method in a class-based test with explicit loop fixture."""
+        """Test the "asyncio" marker works on a method in
+        a class-based test with explicit loop fixture."""
         ret = await async_coro()
         assert ret == "ok"
 
     @pytest.mark.asyncio
     async def test_asyncio_marker_with_implicit_loop_fixture(self):
-        """Test the "asyncio" marker works on a method in a class-based test with implicit loop fixture."""
+        """Test the "asyncio" marker works on a method in
+        a class-based test with implicit loop fixture."""
         ret = await async_coro()
         assert ret == "ok"
 

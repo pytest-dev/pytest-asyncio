@@ -46,7 +46,8 @@ async def port_with_get_event_loop_finalizer(request, event_loop):
         async def port_afinalizer():
             # await task using current loop retrieved from the event loop policy
             # RuntimeError is raised if task is created on a different loop.
-            # This can happen when pytest_fixture_setup does not set up the loop correctly,
+            # This can happen when pytest_fixture_setup
+            # does not set up the loop correctly,
             # for example when policy.set_event_loop() is called with a wrong argument
             await finalizer
 
