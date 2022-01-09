@@ -11,8 +11,10 @@ class BaseClass:
 
 
 class TestOne(BaseClass):
-    """During the first execution the Hypothesis test is wrapped in a synchronous function."""
+    """During the first execution the Hypothesis test
+    is wrapped in a synchronous function."""
 
 
 class TestTwo(BaseClass):
-    """Execute the test a second time to ensure that the test receives a fresh event loop."""
+    """Execute the test a second time to ensure that
+    the test receives a fresh event loop."""

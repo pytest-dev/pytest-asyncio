@@ -174,7 +174,8 @@ def pytest_fixture_post_finalizer(fixturedef, request):
     """Called after fixture teardown"""
     if fixturedef.argname == "event_loop":
         policy = asyncio.get_event_loop_policy()
-        policy.get_event_loop().close()  # Clean up existing loop to avoid ResourceWarnings
+        # Clean up existing loop to avoid ResourceWarnings
+        policy.get_event_loop().close()
         new_loop = policy.new_event_loop()  # Replace existing event loop
         # Ensure subsequent calls to get_event_loop() succeed
         policy.set_event_loop(new_loop)
@@ -297,7 +298,8 @@ def pytest_pyfunc_call(pyfuncitem):
     """
     Pytest hook called before a test case is run.
 
-    Wraps marked tests in a synchronous function where the wrapped test coroutine is executed in an event loop.
+    Wraps marked tests in a synchronous function
+    where the wrapped test coroutine is executed in an event loop.
     """
     if "asyncio" in pyfuncitem.keywords:
         if getattr(pyfuncitem.obj, "is_hypothesis_test", False):
