@@ -60,3 +60,6 @@ target/
 .venv*
 .idea
 .vscode
+
+# pyenv
+.python-version
