@@ -41,6 +41,11 @@ both pytest-asyncio and pytest-trio are used in the same project)
 auto-handling is disabled but pytest_asyncio.fixture usage is not enforced
 """
 
+ASYNCIO_TIMEOUT_HELP = """\
+Timeout in seconds after which the test coroutine \
+shall be cancelled and marked as failed, 0 for no-timeout
+"""
+
 
 def pytest_addoption(parser, pluginmanager):
     group = parser.getgroup("asyncio")
@@ -57,6 +62,10 @@ def pytest_addoption(parser, pluginmanager):
         type="string",
         default="legacy",
     )
+    group.addoption("--asyncio-timeout", dest="asyncio_timeout", type=float, help=ASYNCIO_TIMEOUT_HELP, default=None)
+    parser.addini("asyncio_timeout", type="string", help="default value for --asyncio-timeout",default=0)
+
+
 
 
 def fixture(fixture_function=None, **kwargs):
@@ -125,13 +134,6 @@ def _issue_warning_captured(warning, hook, *, stacklevel=1):
             warning_message=records[0], when="config", nodeid="", location=location
         )
     )
-
-
-def pytest_addoption(parser):
-    group = parser.getgroup("asyncio")
-    help_ = "Timeout in seconds after which the test coroutine shall be cancelled and marked as failed"
-    group.addoption("--asyncio-timeout", dest="asyncio_timeout", type=float, help=help_)
-    parser.addini("asyncio_timeout", help=help_)
 
 
 @pytest.mark.tryfirst
@@ -317,13 +319,16 @@ def get_timeout(obj):
     if not timeout:
         timeout = obj._request.config.getini("asyncio_timeout")
 
-    if timeout:
-        try:
-            return float(timeout)
-        except:
-            raise ValueError(
-                f"Invalid timeout (asyncio_timeout) provided. Got {timeout} but expected a float-like."
-            )
+    if not timeout:
+        return None
+
+    try:
+        return float(timeout)
+    except (TypeError, ValueError):
+        raise ValueError(
+            f"Invalid asyncio timeout {timeout!r} provided, "
+            "a float-like value is expected."
+        ) from None
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
