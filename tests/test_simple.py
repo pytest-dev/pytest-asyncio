@@ -240,15 +240,3 @@ async def test_no_warning_on_skip():
 def test_async_close_loop(event_loop):
     event_loop.close()
     return "ok"
-
-
-@pytest.mark.asyncio(timeout=0.1)
-@pytest.mark.xfail(strict=True, raises=asyncio.TimeoutError)
-async def test_timeout():
-    await asyncio.sleep(1)
-
-
-@pytest.mark.asyncio(timeout="abc")
-@pytest.mark.xfail(strict=True, raises=ValueError)
-async def test_timeout_not_numeric():
-    await asyncio.sleep(1)
