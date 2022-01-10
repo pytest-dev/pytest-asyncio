@@ -207,7 +207,8 @@ def pytest_fixture_setup(fixturedef, request):
         yield
         return
 
-    config = request.node.config
+    node = request.node
+    config = node.config
     asyncio_mode = _get_asyncio_mode(config)
 
     if not _has_explicit_asyncio_mark(func):
@@ -253,13 +254,18 @@ def pytest_fixture_setup(fixturedef, request):
             gen_obj = generator(*args, **kwargs)
 
             async def setup():
-                res = await gen_obj.__anext__()
-                return res
+                node._asyncio_task = asyncio.get_running_loop()
+                try:
+                    res = await gen_obj.__anext__()
+                    return res
+                finally:
+                    node._asyncio_task = None
 
             def finalizer():
                 """Yield again, to finalize."""
 
                 async def async_finalizer():
+                    node._asyncio_task = asyncio.get_running_loop()
                     try:
                         await gen_obj.__anext__()
                     except StopAsyncIteration:
@@ -268,6 +274,8 @@ def pytest_fixture_setup(fixturedef, request):
                         msg = "Async generator fixture didn't stop."
                         msg += "Yield only once."
                         raise ValueError(msg)
+                    finally:
+                        node._asyncio_task = None
 
                 loop.run_until_complete(async_finalizer())
 
@@ -287,8 +295,12 @@ def pytest_fixture_setup(fixturedef, request):
             )
 
             async def setup():
-                res = await coro(*args, **kwargs)
-                return res
+                node._asyncio_task = asyncio.get_running_loop()
+                try:
+                    res = await coro(*args, **kwargs)
+                    return res
+                finally:
+                    node._asyncio_task = None
 
             return loop.run_until_complete(setup())
 
@@ -338,12 +350,14 @@ def pytest_pyfunc_call(pyfuncitem):
         timeout = _get_timeout(pyfuncitem)
         if getattr(pyfuncitem.obj, "is_hypothesis_test", False):
             pyfuncitem.obj.hypothesis.inner_test = wrap_in_sync(
+                pyfuncitem,
                 pyfuncitem.obj.hypothesis.inner_test,
                 _loop=pyfuncitem.funcargs["event_loop"],
                 timeout=timeout,
             )
         else:
             pyfuncitem.obj = wrap_in_sync(
+                pyfuncitem,
                 pyfuncitem.obj,
                 _loop=pyfuncitem.funcargs["event_loop"],
                 timeout=timeout,
@@ -351,7 +365,7 @@ def pytest_pyfunc_call(pyfuncitem):
     yield
 
 
-def wrap_in_sync(func, _loop, timeout):
+def wrap_in_sync(node, func, _loop, timeout):
     """Return a sync wrapper around an async function executing it in the
     current event loop."""
 
@@ -367,7 +381,7 @@ def wrap_in_sync(func, _loop, timeout):
         if coro is not None:
             if timeout:
                 coro = asyncio.wait_for(coro, timeout=timeout)
-            task = asyncio.ensure_future(coro, loop=_loop)
+            node._asyncio_task = task = asyncio.ensure_future(coro, loop=_loop)
 
             try:
                 _loop.run_until_complete(task)
@@ -378,6 +392,8 @@ def wrap_in_sync(func, _loop, timeout):
                 if task.done() and not task.cancelled():
                     task.exception()
                 raise
+            finally:
+                node._asyncio_task = None
 
     inner._raw_test_func = func
     return inner

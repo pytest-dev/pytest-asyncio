@@ -247,6 +247,12 @@ automatically to *async* test functions.
 .. |pytestmark| replace:: ``pytestmark``
 .. _pytestmark: http://doc.pytest.org/en/latest/example/markers.html#marking-whole-classes-or-modules
 
+Timeout protection
+------------------
+
+Sometime tests can work much slowly than expected or even hang.
+
+
 Note about unittest
 -------------------
 
