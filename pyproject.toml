@@ -1,7 +1,6 @@
 [build-system]
 requires = [
-  # sync with setup.py until we discard non-pep-517/518
-  "setuptools>=45.0",
-  "wheel",
+  "setuptools>=51.0",
+  "wheel>=0.36",
 ]
 build-backend = "setuptools.build_meta"
