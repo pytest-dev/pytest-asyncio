@@ -29,7 +29,9 @@ else
 endif
 
 test:
-	pytest tests
+	coverage run -m pytest tests
+	coverage xml
+	coverage report
 
 install:
 	pip install -U pre-commit

@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  tests:
+  test:
     name: "Python ${{ matrix.python-version }}"
     runs-on: "ubuntu-latest"
     env:
@@ -34,17 +34,22 @@ jobs:
       - name: "Run tox targets for ${{ matrix.python-version }}"
         run: "python -m tox"
 
-      # We always use a modern Python version for combining coverage to prevent
-      # parsing errors in older versions for modern code.
-      - uses: "actions/setup-python@v2"
-        with:
-          python-version: "3.9"
+      - name: Prepare coverage artifact
+        if: ${{ contains(env.USING_COVERAGE, matrix.python-version) }}
+        uses: aio-libs/prepare-coverage@v21.9.1
 
-      - name: "Upload coverage to Codecov"
-        if: "contains(env.USING_COVERAGE, matrix.python-version)"
-        uses: "codecov/codecov-action@v1"
+  check:
+    name: Check
+    if: always()
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@release/v1
         with:
-          fail_ci_if_error: true
+          jobs: ${{ toJSON(needs) }}
+      - name: Upload coverage
+        uses: aio-libs/upload-coverage@v21.9.4
 
   package:
     name: "Build & verify package"
