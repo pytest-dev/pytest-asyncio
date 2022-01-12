@@ -2,72 +2,72 @@
 name: CI
 
 on:
-  push:
-    branches: ["master"]
-  pull_request:
-    branches: ["master"]
-  workflow_dispatch:
+    push:
+        branches: [master]
+    pull_request:
+        branches: [master]
+    workflow_dispatch:
 
 jobs:
-  test:
-    name: "Python ${{ matrix.python-version }}"
-    runs-on: "ubuntu-latest"
-    env:
-      USING_COVERAGE: "3.7,3.8,3.9,3.10"
+    test:
+        name: Python ${{ matrix.python-version }}
+        runs-on: ubuntu-latest
+        env:
+            USING_COVERAGE: 3.7,3.8,3.9,3.10
 
-    strategy:
-      matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        strategy:
+            matrix:
+                python-version: ['3.7', '3.8', '3.9', '3.10']
 
-    steps:
-      - uses: "actions/checkout@v2"
-      - uses: "actions/setup-python@v2"
-        with:
-          python-version: "${{ matrix.python-version }}"
-      - name: "Install dependencies"
-        run: |
-          set -xe
-          python -VV
-          python -m site
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade coverage[toml] virtualenv tox tox-gh-actions
-      - name: "Run tox targets for ${{ matrix.python-version }}"
-        run: "python -m tox"
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/setup-python@v2
+              with:
+                  python-version: ${{ matrix.python-version }}
+            - name: Install dependencies
+              run: |
+                  set -xe
+                  python -VV
+                  python -m site
+                  python -m pip install --upgrade pip
+                  python -m pip install --upgrade coverage[toml] virtualenv tox tox-gh-actions
+            - name: Run tox targets for ${{ matrix.python-version }}
+              run: python -m tox
 
-      - name: Prepare coverage artifact
-        if: ${{ contains(env.USING_COVERAGE, matrix.python-version) }}
-        uses: aio-libs/prepare-coverage@v21.9.1
+            - name: Prepare coverage artifact
+              if: ${{ contains(env.USING_COVERAGE, matrix.python-version) }}
+              uses: aio-libs/prepare-coverage@v21.9.1
 
-  check:
-    name: Check
-    if: always()
-    needs: [test]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Decide whether the needed jobs succeeded or failed
-        uses: re-actors/alls-green@release/v1
-        with:
-          jobs: ${{ toJSON(needs) }}
-      - name: Upload coverage
-        uses: aio-libs/upload-coverage@v21.9.4
+    check:
+        name: Check
+        if: always()
+        needs: [test]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Decide whether the needed jobs succeeded or failed
+              uses: re-actors/alls-green@release/v1
+              with:
+                  jobs: ${{ toJSON(needs) }}
+            - name: Upload coverage
+              uses: aio-libs/upload-coverage@v21.9.4
 
-  package:
-    name: "Build & verify package"
-    runs-on: "ubuntu-latest"
+    package:
+        name: Build & verify package
+        runs-on: ubuntu-latest
 
-    steps:
-      - uses: "actions/checkout@v2"
-      - uses: "actions/setup-python@v2"
-        with:
-          python-version: "3.9"
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/setup-python@v2
+              with:
+                  python-version: '3.9'
 
-      - name: "Install poetry, check-wheel-content, and twine"
-        run: "python -m pip install build check-wheel-contents twine"
-      - name: "Build package"
-        run: "python -m build"
-      - name: "List result"
-        run: "ls -l dist"
-      - name: "Check wheel contents"
-        run: "check-wheel-contents dist/*.whl"
-      - name: "Check long_description"
-        run: "python -m twine check dist/*"
+            - name: Install poetry, check-wheel-content, and twine
+              run: python -m pip install build check-wheel-contents twine
+            - name: Build package
+              run: python -m build
+            - name: List result
+              run: ls -l dist
+            - name: Check wheel contents
+              run: check-wheel-contents dist/*.whl
+            - name: Check long_description
+              run: python -m twine check dist/*
