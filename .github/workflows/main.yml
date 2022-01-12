@@ -17,11 +17,12 @@ jobs:
       prerelease: ${{ steps.version.outputs.prerelease }}
     steps:
       - uses: "actions/checkout@v2"
+        fetch-depth: 0
       - uses: "actions/setup-python@v2"
         with:
           python-version: "3.9"
 
-      - name: "Install poetry, check-wheel-content, and twine"
+      - name: "Install check-wheel-content, and twine"
         run: "python -m pip install build check-wheel-contents tox twine"
       - name: "Build package"
         run: "python -m build"
@@ -53,6 +54,7 @@ jobs:
 
     steps:
       - uses: "actions/checkout@v2"
+        fetch-depth: 0
       - uses: "actions/setup-python@v2"
         with:
           python-version: "${{ matrix.python-version }}"
@@ -89,26 +91,27 @@ jobs:
     needs: [lint, check]
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2.4.0
-    - name: Download disctributions
-      uses: actions/download-artifact@v2
-      with:
-        name: dist
-        path: dist
-    - name: Collected dists
-      run: |
-        tree dist
-    - name: PyPI upload
-      uses: pypa/gh-action-pypi-publish@v1.4.2
-      with:
-        packages_dir: dist
-        password: ${{ secrets.PYPI_API_TOKEN }}
-    - name: GitHub Release
-      uses: ncipollo/release-action@v1
-      with:
-        name: 'pytest-asyncio ${{ needs.lint.outputs.version }}'
-        artifacts: dist
-        bodyFile: README.rst
-        prerelease: ${{ needs.lint.outputs.prerelease }}
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout
+        uses: actions/checkout@v2.4.0
+        fetch-depth: 0
+      - name: Download disctributions
+        uses: actions/download-artifact@v2
+        with:
+          name: dist
+          path: dist
+      - name: Collected dists
+        run: |
+          tree dist
+      - name: PyPI upload
+        uses: pypa/gh-action-pypi-publish@v1.4.2
+        with:
+          packages_dir: dist
+          password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          name: 'pytest-asyncio ${{ needs.lint.outputs.version }}'
+          artifacts: dist
+          bodyFile: README.rst
+          prerelease: ${{ needs.lint.outputs.prerelease }}
+          token: ${{ secrets.GITHUB_TOKEN }}
