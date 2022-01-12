@@ -94,7 +94,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2.4.0
         fetch-depth: 0
-      - name: Download disctributions
+      - name: Download distributions
         uses: actions/download-artifact@v2
         with:
           name: dist
