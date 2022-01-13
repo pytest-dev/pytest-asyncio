@@ -101,7 +101,7 @@ jobs:
         steps:
             - name: Install pandoc
               run: |
-                  apt install pandoc
+                  sudo apt-get install -y pandoc
             - name: Checkout
               uses: actions/checkout@v2.4.0
               with:
