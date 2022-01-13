@@ -2,131 +2,131 @@
 name: CI
 
 on:
-    push:
-        branches: [master]
-        tags: [v*]
-    pull_request:
-        branches: [master]
-    workflow_dispatch:
+  push:
+    branches: [master]
+    tags: [v*]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
 
 jobs:
-    lint:
-        name: Run linters
-        runs-on: ubuntu-latest
-        outputs:
-            version: ${{ steps.version.outputs.version }}
-            prerelease: ${{ steps.version.outputs.prerelease }}
-        steps:
-            - uses: actions/checkout@v2
-              with:
-                  fetch-depth: 0
-            - uses: actions/setup-python@v2
-              with:
-                  python-version: '3.9'
-            - name: Install GitHub matcher for ActionLint checker
-              run: |
-                  echo "::add-matcher::.github/actionlint-matcher.json"
-            - name: Install check-wheel-content, and twine
-              run: python -m pip install build check-wheel-contents tox twine
-            - name: Build package
-              run: python -m build
-            - name: Run tox for linter
-              run: python -m tox -e lint
-            - name: List result
-              run: ls -l dist
-            - name: Check wheel contents
-              run: check-wheel-contents dist/*.whl
-            - name: Check long_description
-              run: python -m twine check dist/*
-            - name: Get version info
-              id: version
-              run: tox -e version-info
-            - name: Upload artifacts
-              uses: actions/upload-artifact@v2
-              with:
-                  name: dist
-                  path: dist
+  lint:
+    name: Run linters
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+    - name: Install GitHub matcher for ActionLint checker
+      run: |
+        echo "::add-matcher::.github/actionlint-matcher.json"
+    - name: Install check-wheel-content, and twine
+      run: python -m pip install build check-wheel-contents tox twine
+    - name: Build package
+      run: python -m build
+    - name: Run tox for linter
+      run: python -m tox -e lint
+    - name: List result
+      run: ls -l dist
+    - name: Check wheel contents
+      run: check-wheel-contents dist/*.whl
+    - name: Check long_description
+      run: python -m twine check dist/*
+    - name: Get version info
+      id: version
+      run: tox -e version-info
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: dist
+        path: dist
 
-    test:
-        name: Python ${{ matrix.python-version }}
-        runs-on: ubuntu-latest
-        env:
-            USING_COVERAGE: 3.7,3.8,3.9,3.10
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    env:
+      USING_COVERAGE: 3.7,3.8,3.9,3.10
 
-        strategy:
-            matrix:
-                python-version: ['3.7', '3.8', '3.9', '3.10']
+    strategy:
+      matrix:
+        python-version: ['3.7', '3.8', '3.9', '3.10']
 
-        steps:
-            - uses: actions/checkout@v2
-              with:
-                  fetch-depth: 0
-            - uses: actions/setup-python@v2
-              with:
-                  python-version: ${{ matrix.python-version }}
-            - name: Install dependencies
-              run: |
-                  set -xe
-                  python -VV
-                  python -m site
-                  python -m pip install --upgrade pip
-                  python -m pip install --upgrade coverage[toml] virtualenv tox tox-gh-actions
-            - name: Run tox targets for ${{ matrix.python-version }}
-              run: python -m tox
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        set -xe
+        python -VV
+        python -m site
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade coverage[toml] virtualenv tox tox-gh-actions
+    - name: Run tox targets for ${{ matrix.python-version }}
+      run: python -m tox
 
-            - name: Prepare coverage artifact
-              if: ${{ contains(env.USING_COVERAGE, matrix.python-version) }}
-              uses: aio-libs/prepare-coverage@v21.9.1
+    - name: Prepare coverage artifact
+      if: ${{ contains(env.USING_COVERAGE, matrix.python-version) }}
+      uses: aio-libs/prepare-coverage@v21.9.1
 
-    check:
-        name: Check
-        if: always()
-        needs: [lint, test]
-        runs-on: ubuntu-latest
-        steps:
-            - name: Decide whether the needed jobs succeeded or failed
-              uses: re-actors/alls-green@release/v1
-              with:
-                  jobs: ${{ toJSON(needs) }}
-            - name: Upload coverage
-              uses: aio-libs/upload-coverage@v21.9.4
+  check:
+    name: Check
+    if: always()
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Decide whether the needed jobs succeeded or failed
+      uses: re-actors/alls-green@release/v1
+      with:
+        jobs: ${{ toJSON(needs) }}
+    - name: Upload coverage
+      uses: aio-libs/upload-coverage@v21.9.4
 
-    deploy:
-        name: Deploy
-        environment: release
+  deploy:
+    name: Deploy
+    environment: release
         # Run only on pushing a tag
-        if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
-        needs: [lint, check]
-        runs-on: ubuntu-latest
-        steps:
-            - name: Install pandoc
-              run: |
-                  sudo apt-get install -y pandoc
-            - name: Checkout
-              uses: actions/checkout@v2.4.0
-              with:
-                  fetch-depth: 0
-            - name: Download distributions
-              uses: actions/download-artifact@v2
-              with:
-                  name: dist
-                  path: dist
-            - name: Collected dists
-              run: |
-                  tree dist
-            - name: Convert README.rst to Markdown
-              run: |
-                  pandoc -s -o README.md README.rst
-            - name: PyPI upload
-              uses: pypa/gh-action-pypi-publish@v1.4.2
-              with:
-                  packages_dir: dist
-                  password: ${{ secrets.PYPI_API_TOKEN }}
-            - name: GitHub Release
-              uses: ncipollo/release-action@v1
-              with:
-                  name: pytest-asyncio ${{ needs.lint.outputs.version }}
-                  artifacts: dist/*
-                  bodyFile: README.md
-                  prerelease: ${{ needs.lint.outputs.prerelease }}
-                  token: ${{ secrets.GITHUB_TOKEN }}
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    needs: [lint, check]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install pandoc
+      run: |
+        sudo apt-get install -y pandoc
+    - name: Checkout
+      uses: actions/checkout@v2.4.0
+      with:
+        fetch-depth: 0
+    - name: Download distributions
+      uses: actions/download-artifact@v2
+      with:
+        name: dist
+        path: dist
+    - name: Collected dists
+      run: |
+        tree dist
+    - name: Convert README.rst to Markdown
+      run: |
+        pandoc -s -o README.md README.rst
+    - name: PyPI upload
+      uses: pypa/gh-action-pypi-publish@v1.4.2
+      with:
+        packages_dir: dist
+        password: ${{ secrets.PYPI_API_TOKEN }}
+    - name: GitHub Release
+      uses: ncipollo/release-action@v1
+      with:
+        name: pytest-asyncio ${{ needs.lint.outputs.version }}
+        artifacts: dist/*
+        bodyFile: README.md
+        prerelease: ${{ needs.lint.outputs.prerelease }}
+        token: ${{ secrets.GITHUB_TOKEN }}
