@@ -256,7 +256,7 @@ or an async framework such as `asynctest <https://asynctest.readthedocs.io/en/la
 
 Changelog
 ---------
-0.17.0 (UNRELEASED)
+0.17.0 (22-01-13)
 ~~~~~~~~~~~~~~~~~~~
 - `pytest-asyncio` no longer alters existing event loop policies. `#168 <https://github.com/pytest-dev/pytest-asyncio/issues/168>`_, `#188 <https://github.com/pytest-dev/pytest-asyncio/issues/168>`_
 - Drop support for Python 3.6
