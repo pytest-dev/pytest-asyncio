@@ -288,7 +288,7 @@ def pytest_pyfunc_call(pyfuncitem):
     where the wrapped test coroutine is executed in an event loop.
     """
     if "asyncio" in pyfuncitem.keywords:
-        if getattr(pyfuncitem.obj, "is_hypothesis_test", False):
+        if _is_hypothesis_test(pyfuncitem.obj):
             pyfuncitem.obj.hypothesis.inner_test = wrap_in_sync(
                 pyfuncitem.obj.hypothesis.inner_test,
                 _loop=pyfuncitem.funcargs["event_loop"],
@@ -298,6 +298,10 @@ def pytest_pyfunc_call(pyfuncitem):
                 pyfuncitem.obj, _loop=pyfuncitem.funcargs["event_loop"]
             )
     yield
+
+
+def _is_hypothesis_test(function) -> bool:
+    return getattr(function, "is_hypothesis_test", False)
 
 
 def wrap_in_sync(func, _loop):
