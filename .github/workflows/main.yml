@@ -120,7 +120,7 @@ jobs:
               uses: ncipollo/release-action@v1
               with:
                   name: pytest-asyncio ${{ needs.lint.outputs.version }}
-                  artifacts: dist
+                  artifacts: dist/*
                   bodyFile: README.rst
                   prerelease: ${{ needs.lint.outputs.prerelease }}
                   token: ${{ secrets.GITHUB_TOKEN }}
