@@ -99,6 +99,9 @@ jobs:
         needs: [lint, check]
         runs-on: ubuntu-latest
         steps:
+            - name: Install pandoc
+              run: |
+                  apt install pandoc
             - name: Checkout
               uses: actions/checkout@v2.4.0
               with:
@@ -111,6 +114,9 @@ jobs:
             - name: Collected dists
               run: |
                   tree dist
+            - name: Convert README.rst to Markdown
+              run: |
+                  pandoc -s -o README.md README.rst
             - name: PyPI upload
               uses: pypa/gh-action-pypi-publish@v1.4.2
               with:
@@ -121,6 +127,6 @@ jobs:
               with:
                   name: pytest-asyncio ${{ needs.lint.outputs.version }}
                   artifacts: dist/*
-                  bodyFile: README.rst
+                  bodyFile: README.md
                   prerelease: ${{ needs.lint.outputs.prerelease }}
                   token: ${{ secrets.GITHUB_TOKEN }}
