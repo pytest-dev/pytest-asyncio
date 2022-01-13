@@ -2,6 +2,7 @@
 sync shim for Hypothesis.
 """
 import asyncio
+from textwrap import dedent
 
 import pytest
 from hypothesis import given, strategies as st
@@ -40,3 +41,48 @@ async def test_can_use_fixture_provided_event_loop(event_loop, n):
     semaphore = asyncio.Semaphore(value=0)
     event_loop.call_soon(semaphore.release)
     await semaphore.acquire()
+
+
+def test_async_auto_marked(pytester):
+    pytester.makepyfile(
+        dedent(
+            """\
+        import asyncio
+        import pytest
+        from hypothesis import given
+        import hypothesis.strategies as st
+
+        pytest_plugins = 'pytest_asyncio'
+
+        @given(n=st.integers())
+        async def test_hypothesis(n: int):
+            assert isinstance(n, int)
+        """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=auto")
+    result.assert_outcomes(passed=1)
+
+
+def test_sync_not_auto_marked(pytester):
+    """Assert that synchronous Hypothesis functions are not marked with asyncio"""
+    pytester.makepyfile(
+        dedent(
+            """\
+        import asyncio
+        import pytest
+        from hypothesis import given
+        import hypothesis.strategies as st
+
+        pytest_plugins = 'pytest_asyncio'
+
+        @given(n=st.integers())
+        def test_hypothesis(request, n: int):
+            markers = [marker.name for marker in request.node.own_markers]
+            assert "asyncio" not in markers
+            assert isinstance(n, int)
+        """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=auto")
+    result.assert_outcomes(passed=1)

@@ -115,7 +115,13 @@ def pytest_configure(config):
 @pytest.mark.tryfirst
 def pytest_pycollect_makeitem(collector, name, obj):
     """A pytest hook to collect asyncio coroutines."""
-    if collector.funcnamefilter(name) and _is_coroutine(obj):
+    if not collector.funcnamefilter(name):
+        return
+    if (
+        _is_coroutine(obj)
+        or _is_hypothesis_test(obj)
+        and _hypothesis_test_wraps_coroutine(obj)
+    ):
         item = pytest.Function.from_parent(collector, name=name)
         if "asyncio" in item.keywords:
             return list(collector._genfunctions(name, obj))
@@ -126,6 +132,10 @@ def pytest_pycollect_makeitem(collector, name, obj):
                 for elem in ret:
                     elem.add_marker("asyncio")
                 return ret
+
+
+def _hypothesis_test_wraps_coroutine(function):
+    return _is_coroutine(function.hypothesis.inner_test)
 
 
 class FixtureStripper:
