@@ -53,7 +53,6 @@ def pytest_addoption(parser, pluginmanager):
     parser.addini(
         "asyncio_mode",
         help="default value for --asyncio-mode",
-        type="string",
         default="legacy",
     )
 

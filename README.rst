@@ -259,6 +259,7 @@ Changelog
 0.17.1 (UNRELEASED)
 ~~~~~~~~~~~~~~~~~~~
 - Fixes a bug that prevents async Hypothesis tests from working without explicit ``asyncio`` marker when ``--asyncio-mode=auto`` is set. `#258 <https://github.com/pytest-dev/pytest-asyncio/issues/258>`_
+- Relax ``asyncio_mode`` type definition; it allows to support pytest 5.4+. `#263 <https://github.com/pytest-dev/pytest-asyncio/issues/263>`_
 
 0.17.0 (22-01-13)
 ~~~~~~~~~~~~~~~~~~~
