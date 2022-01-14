@@ -8,6 +8,7 @@ import socket
 import warnings
 from typing import (
     Any,
+    AsyncIterator,
     Awaitable,
     Callable,
     Dict,
@@ -25,10 +26,18 @@ from typing import (
 import pytest
 from typing_extensions import Literal
 
+_R = TypeVar("_R")
+
 _ScopeName = Literal["session", "package", "module", "class", "function"]
 _T = TypeVar("_T")
 
-FixtureFunction = TypeVar("FixtureFunction", bound=Callable[..., object])
+SimpleFixtureFunction = TypeVar(
+    "SimpleFixtureFunction", bound=Callable[..., Awaitable[_R]]
+)
+FactoryFixtureFunction = TypeVar(
+    "FactoryFixtureFunction", bound=Callable[..., AsyncIterator[_R]]
+)
+FixtureFunction = Union[SimpleFixtureFunction, FactoryFixtureFunction]
 FixtureFunctionMarker = Callable[[FixtureFunction], FixtureFunction]
 
 Config = Any  # pytest < 7.0
