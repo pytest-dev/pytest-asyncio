@@ -115,7 +115,13 @@ def pytest_configure(config):
 @pytest.mark.tryfirst
 def pytest_pycollect_makeitem(collector, name, obj):
     """A pytest hook to collect asyncio coroutines."""
-    if collector.funcnamefilter(name) and _is_coroutine(obj):
+    if not collector.funcnamefilter(name):
+        return
+    if (
+        _is_coroutine(obj)
+        or _is_hypothesis_test(obj)
+        and _hypothesis_test_wraps_coroutine(obj)
+    ):
         item = pytest.Function.from_parent(collector, name=name)
         if "asyncio" in item.keywords:
             return list(collector._genfunctions(name, obj))
@@ -126,6 +132,10 @@ def pytest_pycollect_makeitem(collector, name, obj):
                 for elem in ret:
                     elem.add_marker("asyncio")
                 return ret
+
+
+def _hypothesis_test_wraps_coroutine(function):
+    return _is_coroutine(function.hypothesis.inner_test)
 
 
 class FixtureStripper:
@@ -288,7 +298,7 @@ def pytest_pyfunc_call(pyfuncitem):
     where the wrapped test coroutine is executed in an event loop.
     """
     if "asyncio" in pyfuncitem.keywords:
-        if getattr(pyfuncitem.obj, "is_hypothesis_test", False):
+        if _is_hypothesis_test(pyfuncitem.obj):
             pyfuncitem.obj.hypothesis.inner_test = wrap_in_sync(
                 pyfuncitem.obj.hypothesis.inner_test,
                 _loop=pyfuncitem.funcargs["event_loop"],
@@ -298,6 +308,10 @@ def pytest_pyfunc_call(pyfuncitem):
                 pyfuncitem.obj, _loop=pyfuncitem.funcargs["event_loop"]
             )
     yield
+
+
+def _is_hypothesis_test(function) -> bool:
+    return getattr(function, "is_hypothesis_test", False)
 
 
 def wrap_in_sync(func, _loop):
