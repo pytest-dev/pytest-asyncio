@@ -188,6 +188,13 @@ def pytest_configure(config: Config) -> None:
 
 
 @pytest.mark.tryfirst
+def pytest_report_header(config: Config) -> List[str]:
+    """Add asyncio config to pytest header."""
+    mode = _get_asyncio_mode(config)
+    return [f"asyncio: mode={mode}"]
+
+
+@pytest.mark.tryfirst
 def pytest_pycollect_makeitem(
     collector: Union[pytest.Module, pytest.Class], name: str, obj: object
 ) -> Union[
