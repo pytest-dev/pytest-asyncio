@@ -4,11 +4,11 @@
 
 from textwrap import dedent
 
-pytest_plugins = "pytester"
+pytest_plugins = "testdir"
 
 
-def test_auto_mode_cmdline(pytester):
-    pytester.makepyfile(
+def test_auto_mode_cmdline(testdir):
+    testdir.makepyfile(
         dedent(
             """\
         import asyncio
@@ -29,7 +29,7 @@ def test_auto_mode_cmdline(pytester):
     )
     # runpytest_subprocess() is required to don't pollute the output
     # with flaky restart information
-    result = pytester.runpytest_subprocess()
+    result = testdir.runpytest_subprocess("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
     result.stdout.fnmatch_lines(
         [
