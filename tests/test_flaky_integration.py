@@ -1,10 +1,6 @@
 """Tests for the Flaky integration, which retries failed tests.
 """
-
-
 from textwrap import dedent
-
-pytest_plugins = "testdir"
 
 
 def test_auto_mode_cmdline(testdir):

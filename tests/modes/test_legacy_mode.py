@@ -1,8 +1,5 @@
 from textwrap import dedent
 
-pytest_plugins = "testdir"
-
-
 LEGACY_MODE = (
     "The 'asyncio_mode' default value will change to 'strict' in future, "
     "please explicitly use 'asyncio_mode=strict' or 'asyncio_mode=auto' "

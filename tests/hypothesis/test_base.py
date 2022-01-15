@@ -7,8 +7,6 @@ from textwrap import dedent
 import pytest
 from hypothesis import given, strategies as st
 
-pytest_plugins = "testdir"
-
 
 @pytest.fixture(scope="module")
 def event_loop():

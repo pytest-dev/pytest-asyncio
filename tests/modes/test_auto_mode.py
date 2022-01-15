@@ -1,7 +1,5 @@
 from textwrap import dedent
 
-pytest_plugins = "testdir"
-
 
 def test_auto_mode_cmdline(testdir):
     testdir.makepyfile(
