@@ -259,6 +259,7 @@ Changelog
 0.17.1 (UNRELEASED)
 ~~~~~~~~~~~~~~~~~~~
 - Fixes a bug that prevents async Hypothesis tests from working without explicit ``asyncio`` marker when ``--asyncio-mode=auto`` is set. `#258 <https://github.com/pytest-dev/pytest-asyncio/issues/258>`_
+- Fixed a bug that closes the default event loop if the loop doesn't exist `#257 <https://github.com/pytest-dev/pytest-asyncio/issues/257>`_
 
 0.17.0 (22-01-13)
 ~~~~~~~~~~~~~~~~~~~
