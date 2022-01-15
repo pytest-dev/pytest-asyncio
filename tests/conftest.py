@@ -2,6 +2,8 @@ import asyncio
 
 import pytest
 
+pytest_plugins = "pytester"
+
 
 @pytest.fixture
 def dependent_fixture(event_loop):
