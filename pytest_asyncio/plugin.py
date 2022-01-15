@@ -249,8 +249,13 @@ def pytest_fixture_post_finalizer(fixturedef: FixtureDef, request: SubRequest) -
     """Called after fixture teardown"""
     if fixturedef.argname == "event_loop":
         policy = asyncio.get_event_loop_policy()
-        # Clean up existing loop to avoid ResourceWarnings
-        policy.get_event_loop().close()
+        try:
+            loop = policy.get_event_loop()
+        except RuntimeError:
+            loop = None
+        if loop is not None:
+            # Clean up existing loop to avoid ResourceWarnings
+            loop.close()
         new_loop = policy.new_event_loop()  # Replace existing event loop
         # Ensure subsequent calls to get_event_loop() succeed
         policy.set_event_loop(new_loop)
