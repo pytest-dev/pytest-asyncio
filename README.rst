@@ -256,7 +256,7 @@ or an async framework such as `asynctest <https://asynctest.readthedocs.io/en/la
 
 Changelog
 ---------
-0.17.1 (UNRELEASED)
+0.17.1 (22-01-16)
 ~~~~~~~~~~~~~~~~~~~
 - Fixes a bug that prevents async Hypothesis tests from working without explicit ``asyncio`` marker when ``--asyncio-mode=auto`` is set. `#258 <https://github.com/pytest-dev/pytest-asyncio/issues/258>`_
 - Fixed a bug that closes the default event loop if the loop doesn't exist `#257 <https://github.com/pytest-dev/pytest-asyncio/issues/257>`_
