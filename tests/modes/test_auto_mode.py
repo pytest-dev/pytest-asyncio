@@ -1,10 +1,8 @@
 from textwrap import dedent
 
-pytest_plugins = "pytester"
 
-
-def test_auto_mode_cmdline(pytester):
-    pytester.makepyfile(
+def test_auto_mode_cmdline(testdir):
+    testdir.makepyfile(
         dedent(
             """\
         import asyncio
@@ -17,12 +15,12 @@ def test_auto_mode_cmdline(pytester):
         """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=auto")
+    result = testdir.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
 
 
-def test_auto_mode_cfg(pytester):
-    pytester.makepyfile(
+def test_auto_mode_cfg(testdir):
+    testdir.makepyfile(
         dedent(
             """\
         import asyncio
@@ -35,13 +33,13 @@ def test_auto_mode_cfg(pytester):
         """
         )
     )
-    pytester.makefile(".ini", pytest="[pytest]\nasyncio_mode = auto\n")
-    result = pytester.runpytest()
+    testdir.makefile(".ini", pytest="[pytest]\nasyncio_mode = auto\n")
+    result = testdir.runpytest()
     result.assert_outcomes(passed=1)
 
 
-def test_auto_mode_async_fixture(pytester):
-    pytester.makepyfile(
+def test_auto_mode_async_fixture(testdir):
+    testdir.makepyfile(
         dedent(
             """\
         import asyncio
@@ -60,12 +58,12 @@ def test_auto_mode_async_fixture(pytester):
         """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=auto")
+    result = testdir.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
 
 
-def test_auto_mode_method_fixture(pytester):
-    pytester.makepyfile(
+def test_auto_mode_method_fixture(testdir):
+    testdir.makepyfile(
         dedent(
             """\
         import asyncio
@@ -87,5 +85,5 @@ def test_auto_mode_method_fixture(pytester):
         """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=auto")
+    result = testdir.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)

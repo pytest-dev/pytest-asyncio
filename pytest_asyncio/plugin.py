@@ -90,7 +90,6 @@ def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager) -> None
     parser.addini(
         "asyncio_mode",
         help="default value for --asyncio-mode",
-        type="string",
         default="legacy",
     )
 
@@ -461,7 +460,7 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
 
 
 @pytest.fixture
-def event_loop(request: pytest.FixtureRequest) -> Iterator[asyncio.AbstractEventLoop]:
+def event_loop(request: "pytest.FixtureRequest") -> Iterator[asyncio.AbstractEventLoop]:
     """Create an instance of the default event loop for each test case."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
