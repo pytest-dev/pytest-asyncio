@@ -232,7 +232,6 @@ def _hypothesis_test_wraps_coroutine(function: Any) -> bool:
 class FixtureStripper:
     """Include additional Fixture, and then strip them"""
 
-    REQUEST = "request"
     EVENT_LOOP = "event_loop"
 
     def __init__(self, fixturedef: FixtureDef) -> None:
@@ -330,14 +329,10 @@ def pytest_fixture_setup(
 
         fixture_stripper = FixtureStripper(fixturedef)
         fixture_stripper.add(FixtureStripper.EVENT_LOOP)
-        fixture_stripper.add(FixtureStripper.REQUEST)
 
         def wrapper(*args, **kwargs):
             loop = fixture_stripper.get_and_strip_from(
                 FixtureStripper.EVENT_LOOP, kwargs
-            )
-            request = fixture_stripper.get_and_strip_from(
-                FixtureStripper.REQUEST, kwargs
             )
 
             gen_obj = generator(*args, **kwargs)
@@ -452,7 +447,7 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
         if "event_loop" in fixturenames:
             fixturenames.remove("event_loop")
         fixturenames.insert(0, "event_loop")
-    obj = getattr(item, 'obj', None)
+    obj = getattr(item, "obj", None)
     if (
         item.get_closest_marker("asyncio") is not None
         and not getattr(obj, "hypothesis", False)
