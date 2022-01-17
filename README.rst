@@ -261,6 +261,7 @@ Changelog
 ~~~~~~~~~~~~~~~~~~~
 
 - Require ``typing-extensions`` on Python<3.8 only. `#269 <https://github.com/pytest-dev/pytest-asyncio/issues/269>`_
+- Fix a regression in tests collection introduced by 0.17.1, the plugin works fine with non-python tests again. `#267 <https://github.com/pytest-dev/pytest-asyncio/issues/267>`_
 
 
 0.17.1 (22-01-16)
