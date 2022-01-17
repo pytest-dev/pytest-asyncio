@@ -5,6 +5,7 @@ import enum
 import functools
 import inspect
 import socket
+import sys
 import warnings
 from typing import (
     Any,
@@ -24,7 +25,11 @@ from typing import (
 )
 
 import pytest
-from typing_extensions import Literal
+
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
 
 _R = TypeVar("_R")
 
