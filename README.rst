@@ -256,6 +256,13 @@ or an async framework such as `asynctest <https://asynctest.readthedocs.io/en/la
 
 Changelog
 ---------
+
+0.17.2 (22-01-17)
+~~~~~~~~~~~~~~~~~~~
+
+- Require ``typing-extensions`` on Python<3.8 only. `#269 <https://github.com/pytest-dev/pytest-asyncio/issues/269>`_
+
+
 0.17.1 (22-01-16)
 ~~~~~~~~~~~~~~~~~~~
 - Fixes a bug that prevents async Hypothesis tests from working without explicit ``asyncio`` marker when ``--asyncio-mode=auto`` is set. `#258 <https://github.com/pytest-dev/pytest-asyncio/issues/258>`_
