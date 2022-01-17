@@ -452,7 +452,7 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
         if "event_loop" in fixturenames:
             fixturenames.remove("event_loop")
         fixturenames.insert(0, "event_loop")
-    obj = item.obj  # type: ignore[attr-defined]
+    obj = getattr(item, 'obj', None)
     if (
         item.get_closest_marker("asyncio") is not None
         and not getattr(obj, "hypothesis", False)
