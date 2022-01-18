@@ -264,7 +264,7 @@ def pytest_fixture_post_finalizer(fixturedef: FixtureDef, request: SubRequest) -
             loop = policy.get_event_loop()
         except RuntimeError:
             loop = None
-        if loop is not None:
+        if loop is not None and not loop.is_running():
             # Clean up existing loop to avoid ResourceWarnings
             loop.close()
         new_loop = policy.new_event_loop()  # Replace existing event loop
