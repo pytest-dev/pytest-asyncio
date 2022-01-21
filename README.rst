@@ -262,7 +262,23 @@ or an async framework such as `asynctest <https://asynctest.readthedocs.io/en/la
 
 Changelog
 ---------
-0.17.0 (UNRELEASED)
+
+0.17.2 (22-01-17)
+~~~~~~~~~~~~~~~~~~~
+
+- Require ``typing-extensions`` on Python<3.8 only. `#269 <https://github.com/pytest-dev/pytest-asyncio/issues/269>`_
+- Fix a regression in tests collection introduced by 0.17.1, the plugin works fine with non-python tests again. `#267 <https://github.com/pytest-dev/pytest-asyncio/issues/267>`_
+
+
+0.17.1 (22-01-16)
+~~~~~~~~~~~~~~~~~~~
+- Fixes a bug that prevents async Hypothesis tests from working without explicit ``asyncio`` marker when ``--asyncio-mode=auto`` is set. `#258 <https://github.com/pytest-dev/pytest-asyncio/issues/258>`_
+- Fixed a bug that closes the default event loop if the loop doesn't exist `#257 <https://github.com/pytest-dev/pytest-asyncio/issues/257>`_
+- Added type annotations. `#198 <https://github.com/pytest-dev/pytest-asyncio/issues/198>`_
+- Show asyncio mode in pytest report headers. `#266 <https://github.com/pytest-dev/pytest-asyncio/issues/266>`_
+- Relax ``asyncio_mode`` type definition; it allows to support pytest 6.1+. `#262 <https://github.com/pytest-dev/pytest-asyncio/issues/262>`_
+
+0.17.0 (22-01-13)
 ~~~~~~~~~~~~~~~~~~~
 - `pytest-asyncio` no longer alters existing event loop policies. `#168 <https://github.com/pytest-dev/pytest-asyncio/issues/168>`_, `#188 <https://github.com/pytest-dev/pytest-asyncio/issues/168>`_
 - Drop support for Python 3.6
@@ -270,6 +286,7 @@ Changelog
 - Added `flaky <https://pypi.org/project/flaky/>`_ to test dependencies
 - Added ``unused_udp_port`` and ``unused_udp_port_factory`` fixtures (similar to ``unused_tcp_port`` and ``unused_tcp_port_factory`` counterparts. `#99 <https://github.com/pytest-dev/pytest-asyncio/issues/99>`_
 - Added the plugin modes: *strict*, *auto*, and *legacy*. See `documentation <https://github.com/pytest-dev/pytest-asyncio#modes>`_ for details. `#125 <https://github.com/pytest-dev/pytest-asyncio/issues/125>`_
+- Correctly process ``KeyboardInterrupt`` during async fixture setup phase `#219 <https://github.com/pytest-dev/pytest-asyncio/issues/219>`_
 
 0.16.0 (2021-10-16)
 ~~~~~~~~~~~~~~~~~~~

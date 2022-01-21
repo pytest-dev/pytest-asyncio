@@ -5,9 +5,66 @@ import enum
 import functools
 import inspect
 import socket
+import sys
 import warnings
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    AsyncIterator,
+    Awaitable,
+    Callable,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    TypeVar,
+    Union,
+    overload,
+)
 
 import pytest
+from pluggy import PluginValidationError
+
+from ._runner import Runner, _get_runner, _install_runner
+
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
+
+
+if TYPE_CHECKING:
+    from pytest_timeout import Settings
+
+
+try:
+    pass
+
+    HAS_TIMEOUT_SUPPORT = True
+except ImportError:
+    HAS_TIMEOUT_SUPPORT = False
+
+_R = TypeVar("_R")
+
+_ScopeName = Literal["session", "package", "module", "class", "function"]
+_T = TypeVar("_T")
+
+SimpleFixtureFunction = TypeVar(
+    "SimpleFixtureFunction", bound=Callable[..., Awaitable[_R]]
+)
+FactoryFixtureFunction = TypeVar(
+    "FactoryFixtureFunction", bound=Callable[..., AsyncIterator[_R]]
+)
+FixtureFunction = Union[SimpleFixtureFunction, FactoryFixtureFunction]
+FixtureFunctionMarker = Callable[[FixtureFunction], FixtureFunction]
+
+Config = Any  # pytest < 7.0
+PytestPluginManager = Any  # pytest < 7.0
+FixtureDef = Any  # pytest < 7.0
+Parser = Any  # pytest < 7.0
+SubRequest = Any  # pytest < 7.0
 
 
 class Mode(str, enum.Enum):
@@ -40,13 +97,8 @@ both pytest-asyncio and pytest-trio are used in the same project)
 auto-handling is disabled but pytest_asyncio.fixture usage is not enforced
 """
 
-ASYNCIO_TIMEOUT_HELP = """\
-Timeout in seconds after which the test coroutine \
-shall be cancelled and marked as failed, 0 for no-timeout
-"""
 
-
-def pytest_addoption(parser, pluginmanager):
+def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager) -> None:
     group = parser.getgroup("asyncio")
     group.addoption(
         "--asyncio-mode",
@@ -58,25 +110,49 @@ def pytest_addoption(parser, pluginmanager):
     parser.addini(
         "asyncio_mode",
         help="default value for --asyncio-mode",
-        type="string",
         default="legacy",
     )
-    group.addoption(
-        "--asyncio-timeout",
-        dest="asyncio_timeout",
-        type=float,
-        help=ASYNCIO_TIMEOUT_HELP,
-        default=None,
-    )
-    parser.addini(
-        "asyncio_timeout",
-        type="string",
-        help="default value for --asyncio-timeout",
-        default=0,
-    )
 
 
-def fixture(fixture_function=None, **kwargs):
+@overload
+def fixture(
+    fixture_function: FixtureFunction,
+    *,
+    scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]" = ...,
+    params: Optional[Iterable[object]] = ...,
+    autouse: bool = ...,
+    ids: Optional[
+        Union[
+            Iterable[Union[None, str, float, int, bool]],
+            Callable[[Any], Optional[object]],
+        ]
+    ] = ...,
+    name: Optional[str] = ...,
+) -> FixtureFunction:
+    ...
+
+
+@overload
+def fixture(
+    fixture_function: None = ...,
+    *,
+    scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]" = ...,
+    params: Optional[Iterable[object]] = ...,
+    autouse: bool = ...,
+    ids: Optional[
+        Union[
+            Iterable[Union[None, str, float, int, bool]],
+            Callable[[Any], Optional[object]],
+        ]
+    ] = ...,
+    name: Optional[str] = None,
+) -> FixtureFunctionMarker:
+    ...
+
+
+def fixture(
+    fixture_function: Optional[FixtureFunction] = None, **kwargs: Any
+) -> Union[FixtureFunction, FixtureFunctionMarker]:
     if fixture_function is not None:
         _set_explicit_asyncio_mark(fixture_function)
         return pytest.fixture(fixture_function, **kwargs)
@@ -84,41 +160,41 @@ def fixture(fixture_function=None, **kwargs):
     else:
 
         @functools.wraps(fixture)
-        def inner(fixture_function):
+        def inner(fixture_function: FixtureFunction) -> FixtureFunction:
             return fixture(fixture_function, **kwargs)
 
         return inner
 
 
-def _has_explicit_asyncio_mark(obj):
+def _has_explicit_asyncio_mark(obj: Any) -> bool:
     obj = getattr(obj, "__func__", obj)  # instance method maybe?
     return getattr(obj, "_force_asyncio_fixture", False)
 
 
-def _set_explicit_asyncio_mark(obj):
+def _set_explicit_asyncio_mark(obj: Any) -> None:
     if hasattr(obj, "__func__"):
         # instance method, check the function object
         obj = obj.__func__
     obj._force_asyncio_fixture = True
 
 
-def _is_coroutine(obj):
+def _is_coroutine(obj: Any) -> bool:
     """Check to see if an object is really an asyncio coroutine."""
     return asyncio.iscoroutinefunction(obj) or inspect.isgeneratorfunction(obj)
 
 
-def _is_coroutine_or_asyncgen(obj):
+def _is_coroutine_or_asyncgen(obj: Any) -> bool:
     return _is_coroutine(obj) or inspect.isasyncgenfunction(obj)
 
 
-def _get_asyncio_mode(config):
+def _get_asyncio_mode(config: Config) -> Mode:
     val = config.getoption("asyncio_mode")
     if val is None:
         val = config.getini("asyncio_mode")
     return Mode(val)
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     """Inject documentation."""
     config.addinivalue_line(
         "markers",
@@ -131,9 +207,26 @@ def pytest_configure(config):
 
 
 @pytest.mark.tryfirst
-def pytest_pycollect_makeitem(collector, name, obj):
+def pytest_report_header(config: Config) -> List[str]:
+    """Add asyncio config to pytest header."""
+    mode = _get_asyncio_mode(config)
+    return [f"asyncio: mode={mode}"]
+
+
+@pytest.mark.tryfirst
+def pytest_pycollect_makeitem(
+    collector: Union[pytest.Module, pytest.Class], name: str, obj: object
+) -> Union[
+    None, pytest.Item, pytest.Collector, List[Union[pytest.Item, pytest.Collector]]
+]:
     """A pytest hook to collect asyncio coroutines."""
-    if collector.funcnamefilter(name) and _is_coroutine(obj):
+    if not collector.funcnamefilter(name):
+        return None
+    if (
+        _is_coroutine(obj)
+        or _is_hypothesis_test(obj)
+        and _hypothesis_test_wraps_coroutine(obj)
+    ):
         item = pytest.Function.from_parent(collector, name=name)
         if "asyncio" in item.keywords:
             return list(collector._genfunctions(name, obj))
@@ -143,20 +236,24 @@ def pytest_pycollect_makeitem(collector, name, obj):
                 ret = list(collector._genfunctions(name, obj))
                 for elem in ret:
                     elem.add_marker("asyncio")
-                return ret
+                return ret  # type: ignore[return-value]
+    return None
+
+
+def _hypothesis_test_wraps_coroutine(function: Any) -> bool:
+    return _is_coroutine(function.hypothesis.inner_test)
 
 
 class FixtureStripper:
     """Include additional Fixture, and then strip them"""
 
-    REQUEST = "request"
     EVENT_LOOP = "event_loop"
 
-    def __init__(self, fixturedef):
+    def __init__(self, fixturedef: FixtureDef) -> None:
         self.fixturedef = fixturedef
-        self.to_strip = set()
+        self.to_strip: Set[str] = set()
 
-    def add(self, name):
+    def add(self, name: str) -> None:
         """Add fixture name to fixturedef
         and record in to_strip list (If not previously included)"""
         if name in self.fixturedef.argnames:
@@ -164,7 +261,7 @@ class FixtureStripper:
         self.fixturedef.argnames += (name,)
         self.to_strip.add(name)
 
-    def get_and_strip_from(self, name, data_dict):
+    def get_and_strip_from(self, name: str, data_dict: Dict[str, _T]) -> _T:
         """Strip name from data, and return value"""
         result = data_dict[name]
         if name in self.to_strip:
@@ -173,23 +270,31 @@ class FixtureStripper:
 
 
 @pytest.hookimpl(trylast=True)
-def pytest_fixture_post_finalizer(fixturedef, request):
+def pytest_fixture_post_finalizer(fixturedef: FixtureDef, request: SubRequest) -> None:
     """Called after fixture teardown"""
     if fixturedef.argname == "event_loop":
         policy = asyncio.get_event_loop_policy()
-        # Clean up existing loop to avoid ResourceWarnings
-        policy.get_event_loop().close()
+        try:
+            loop = policy.get_event_loop()
+        except RuntimeError:
+            loop = None
+        if loop is not None:
+            # Clean up existing loop to avoid ResourceWarnings
+            loop.close()
         new_loop = policy.new_event_loop()  # Replace existing event loop
         # Ensure subsequent calls to get_event_loop() succeed
         policy.set_event_loop(new_loop)
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_fixture_setup(fixturedef, request):
+def pytest_fixture_setup(
+    fixturedef: FixtureDef, request: SubRequest
+) -> Optional[object]:
     """Adjust the event loop policy when an event loop is produced."""
     if fixturedef.argname == "event_loop":
         outcome = yield
         loop = outcome.get_result()
+        _install_runner(request.node, loop)
         policy = asyncio.get_event_loop_policy()
         try:
             old_loop = policy.get_event_loop()
@@ -207,8 +312,7 @@ def pytest_fixture_setup(fixturedef, request):
         yield
         return
 
-    node = request.node
-    config = node.config
+    config = request.node.config
     asyncio_mode = _get_asyncio_mode(config)
 
     if not _has_explicit_asyncio_mark(func):
@@ -241,31 +345,21 @@ def pytest_fixture_setup(fixturedef, request):
 
         fixture_stripper = FixtureStripper(fixturedef)
         fixture_stripper.add(FixtureStripper.EVENT_LOOP)
-        fixture_stripper.add(FixtureStripper.REQUEST)
 
         def wrapper(*args, **kwargs):
-            loop = fixture_stripper.get_and_strip_from(
-                FixtureStripper.EVENT_LOOP, kwargs
-            )
-            request = fixture_stripper.get_and_strip_from(
-                FixtureStripper.REQUEST, kwargs
-            )
+            fixture_stripper.get_and_strip_from(FixtureStripper.EVENT_LOOP, kwargs)
 
             gen_obj = generator(*args, **kwargs)
+            runner = _get_runner(request.node)
 
             async def setup():
-                node._asyncio_task = asyncio.get_running_loop()
-                try:
-                    res = await gen_obj.__anext__()
-                    return res
-                finally:
-                    node._asyncio_task = None
+                res = await gen_obj.__anext__()
+                return res
 
             def finalizer():
                 """Yield again, to finalize."""
 
                 async def async_finalizer():
-                    node._asyncio_task = asyncio.get_running_loop()
                     try:
                         await gen_obj.__anext__()
                     except StopAsyncIteration:
@@ -274,13 +368,12 @@ def pytest_fixture_setup(fixturedef, request):
                         msg = "Async generator fixture didn't stop."
                         msg += "Yield only once."
                         raise ValueError(msg)
-                    finally:
-                        node._asyncio_task = None
 
-                loop.run_until_complete(async_finalizer())
+                runner.run(async_finalizer())
 
+            result = runner.run(setup())
             request.addfinalizer(finalizer)
-            return loop.run_until_complete(setup())
+            return result
 
         fixturedef.func = wrapper
     elif inspect.iscoroutinefunction(func):
@@ -290,56 +383,21 @@ def pytest_fixture_setup(fixturedef, request):
         fixture_stripper.add(FixtureStripper.EVENT_LOOP)
 
         def wrapper(*args, **kwargs):
-            loop = fixture_stripper.get_and_strip_from(
-                FixtureStripper.EVENT_LOOP, kwargs
-            )
+            fixture_stripper.get_and_strip_from(FixtureStripper.EVENT_LOOP, kwargs)
+            runner = _get_runner(request.node)
 
             async def setup():
-                node._asyncio_task = asyncio.get_running_loop()
-                try:
-                    res = await coro(*args, **kwargs)
-                    return res
-                finally:
-                    node._asyncio_task = None
+                res = await coro(*args, **kwargs)
+                return res
 
-            return loop.run_until_complete(setup())
+            return runner.run(setup())
 
         fixturedef.func = wrapper
     yield
 
 
-def _get_timeout(obj):
-    """
-    Get the timeout for the provided test function.
-
-    Priority:
-
-    * Marker keyword arguments `asyncio_timeout` and `timeout`
-    * CLI
-    * INI file
-    """
-    marker = obj.get_closest_marker("asyncio")
-    timeout = marker.kwargs.get("asyncio_timeout", marker.kwargs.get("timeout"))
-
-    if not timeout:
-        timeout = obj._request.config.getvalue("asyncio_timeout")
-    if not timeout:
-        timeout = obj._request.config.getini("asyncio_timeout")
-
-    if not timeout:
-        return None
-
-    try:
-        return float(timeout)
-    except (TypeError, ValueError):
-        raise ValueError(
-            f"Invalid asyncio timeout {timeout!r} provided, "
-            "a float-like value is expected."
-        ) from None
-
-
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_pyfunc_call(pyfuncitem):
+def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> Optional[object]:
     """
     Pytest hook called before a test case is run.
 
@@ -347,68 +405,61 @@ def pytest_pyfunc_call(pyfuncitem):
     where the wrapped test coroutine is executed in an event loop.
     """
     if "asyncio" in pyfuncitem.keywords:
-        timeout = _get_timeout(pyfuncitem)
-        if getattr(pyfuncitem.obj, "is_hypothesis_test", False):
+        runner = _get_runner(pyfuncitem)
+        if _is_hypothesis_test(pyfuncitem.obj):
             pyfuncitem.obj.hypothesis.inner_test = wrap_in_sync(
-                pyfuncitem,
                 pyfuncitem.obj.hypothesis.inner_test,
-                _loop=pyfuncitem.funcargs["event_loop"],
-                timeout=timeout,
+                __runner=runner,
             )
         else:
             pyfuncitem.obj = wrap_in_sync(
-                pyfuncitem,
                 pyfuncitem.obj,
-                _loop=pyfuncitem.funcargs["event_loop"],
-                timeout=timeout,
+                __runner=runner,
             )
     yield
 
 
-def wrap_in_sync(node, func, _loop, timeout):
+def _is_hypothesis_test(function: Any) -> bool:
+    return getattr(function, "is_hypothesis_test", False)
+
+
+def wrap_in_sync(func: Callable[..., Awaitable[Any]], __runner: Runner):
     """Return a sync wrapper around an async function executing it in the
     current event loop."""
 
     # if the function is already wrapped, we rewrap using the original one
     # not using __wrapped__ because the original function may already be
     # a wrapped one
-    if hasattr(func, "_raw_test_func"):
-        func = func._raw_test_func
+    raw_func = getattr(func, "_raw_test_func", None)
+    if raw_func is not None:
+        func = raw_func
 
     @functools.wraps(func)
     def inner(**kwargs):
         coro = func(**kwargs)
         if coro is not None:
-            if timeout:
-                coro = asyncio.wait_for(coro, timeout=timeout)
-            node._asyncio_task = task = asyncio.ensure_future(coro, loop=_loop)
+            # FIXME: add a warning if non-async function is marked
+            # with @pytest.mark.async.
+            # To automark please use async_mode = auto instead
+            # Maybe do nothing in legacy mode
+            __runner.run_test(coro)
 
-            try:
-                _loop.run_until_complete(task)
-            except BaseException:
-                # run_until_complete doesn't get the result from exceptions
-                # that are not subclasses of `Exception`. Consume all
-                # exceptions to prevent asyncio's warning from logging.
-                if task.done() and not task.cancelled():
-                    task.exception()
-                raise
-            finally:
-                node._asyncio_task = None
-
-    inner._raw_test_func = func
+    inner._raw_test_func = func  # type: ignore[attr-defined]
     return inner
 
 
-def pytest_runtest_setup(item):
+def pytest_runtest_setup(item: pytest.Item) -> None:
     if "asyncio" in item.keywords:
+        fixturenames = item.fixturenames  # type: ignore[attr-defined]
         # inject an event loop fixture for all async tests
-        if "event_loop" in item.fixturenames:
-            item.fixturenames.remove("event_loop")
-        item.fixturenames.insert(0, "event_loop")
+        if "event_loop" in fixturenames:
+            fixturenames.remove("event_loop")
+        fixturenames.insert(0, "event_loop")
+    obj = getattr(item, "obj", None)
     if (
         item.get_closest_marker("asyncio") is not None
-        and not getattr(item.obj, "hypothesis", False)
-        and getattr(item.obj, "is_hypothesis_test", False)
+        and not getattr(obj, "hypothesis", False)
+        and getattr(obj, "is_hypothesis_test", False)
     ):
         pytest.fail(
             "test function `%r` is using Hypothesis, but pytest-asyncio "
@@ -416,15 +467,43 @@ def pytest_runtest_setup(item):
         )
 
 
+if HAS_TIMEOUT_SUPPORT:
+    # Install hooks only if pytest-timeout is installed
+    try:
+
+        @pytest.mark.tryfirst
+        def pytest_timeout_set_timer(
+            item: pytest.Item, settings: "Settings"
+        ) -> Optional[object]:
+            if item.get_closest_marker("asyncio") is None:
+                return None
+            runner = _get_runner(item)
+            runner.set_timer(settings.timeout)
+            return True
+
+        @pytest.mark.tryfirst
+        def pytest_timeout_cancel_timer(item: pytest.Item) -> Optional[object]:
+            if item.get_closest_marker("asyncio") is None:
+                return None
+            runner = _get_runner(item)
+            runner.cancel_timer()
+            return True
+
+    except PluginValidationError:  # pragma: no cover
+        raise RuntimeError(
+            "pytest-asyncio requires pytest-timeout>=2.1.0, please upgrade"
+        )
+
+
 @pytest.fixture
-def event_loop(request):
+def event_loop(request: "pytest.FixtureRequest") -> Iterator[asyncio.AbstractEventLoop]:
     """Create an instance of the default event loop for each test case."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
 
 
-def _unused_port(socket_type):
+def _unused_port(socket_type: int) -> int:
     """Find an unused localhost port from 1024-65535 and return it."""
     with contextlib.closing(socket.socket(type=socket_type)) as sock:
         sock.bind(("127.0.0.1", 0))
@@ -432,17 +511,17 @@ def _unused_port(socket_type):
 
 
 @pytest.fixture
-def unused_tcp_port():
+def unused_tcp_port() -> int:
     return _unused_port(socket.SOCK_STREAM)
 
 
 @pytest.fixture
-def unused_udp_port():
+def unused_udp_port() -> int:
     return _unused_port(socket.SOCK_DGRAM)
 
 
 @pytest.fixture(scope="session")
-def unused_tcp_port_factory():
+def unused_tcp_port_factory() -> Callable[[], int]:
     """A factory function, producing different unused TCP ports."""
     produced = set()
 
@@ -461,7 +540,7 @@ def unused_tcp_port_factory():
 
 
 @pytest.fixture(scope="session")
-def unused_udp_port_factory():
+def unused_udp_port_factory() -> Callable[[], int]:
     """A factory function, producing different unused UDP ports."""
     produced = set()
 

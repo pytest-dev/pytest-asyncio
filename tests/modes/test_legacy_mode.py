@@ -1,8 +1,5 @@
 from textwrap import dedent
 
-pytest_plugins = "pytester"
-
-
 LEGACY_MODE = (
     "The 'asyncio_mode' default value will change to 'strict' in future, "
     "please explicitly use 'asyncio_mode=strict' or 'asyncio_mode=auto' "
@@ -18,8 +15,8 @@ LEGACY_ASYNCIO_FIXTURE = (
 ).format(name="*")
 
 
-def test_warning_for_legacy_mode_cmdline(pytester):
-    pytester.makepyfile(
+def test_warning_for_legacy_mode_cmdline(testdir):
+    testdir.makepyfile(
         dedent(
             """\
         import asyncio
@@ -33,13 +30,13 @@ def test_warning_for_legacy_mode_cmdline(pytester):
         """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=legacy")
+    result = testdir.runpytest("--asyncio-mode=legacy")
     assert result.parseoutcomes()["warnings"] == 1
     result.stdout.fnmatch_lines(["*" + LEGACY_MODE + "*"])
 
 
-def test_warning_for_legacy_mode_cfg(pytester):
-    pytester.makepyfile(
+def test_warning_for_legacy_mode_cfg(testdir):
+    testdir.makepyfile(
         dedent(
             """\
         import asyncio
@@ -53,15 +50,15 @@ def test_warning_for_legacy_mode_cfg(pytester):
         """
         )
     )
-    pytester.makefile(".ini", pytest="[pytest]\nasyncio_mode = legacy\n")
-    result = pytester.runpytest()
+    testdir.makefile(".ini", pytest="[pytest]\nasyncio_mode = legacy\n")
+    result = testdir.runpytest()
     assert result.parseoutcomes()["warnings"] == 1
     result.stdout.fnmatch_lines(["*" + LEGACY_MODE + "*"])
     result.stdout.no_fnmatch_line("*" + LEGACY_ASYNCIO_FIXTURE + "*")
 
 
-def test_warning_for_legacy_fixture(pytester):
-    pytester.makepyfile(
+def test_warning_for_legacy_fixture(testdir):
+    testdir.makepyfile(
         dedent(
             """\
         import asyncio
@@ -81,13 +78,13 @@ def test_warning_for_legacy_fixture(pytester):
         """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=legacy")
+    result = testdir.runpytest("--asyncio-mode=legacy")
     assert result.parseoutcomes()["warnings"] == 2
     result.stdout.fnmatch_lines(["*" + LEGACY_ASYNCIO_FIXTURE + "*"])
 
 
-def test_warning_for_legacy_method_fixture(pytester):
-    pytester.makepyfile(
+def test_warning_for_legacy_method_fixture(testdir):
+    testdir.makepyfile(
         dedent(
             """\
         import asyncio
@@ -110,6 +107,6 @@ def test_warning_for_legacy_method_fixture(pytester):
         """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=legacy")
+    result = testdir.runpytest("--asyncio-mode=legacy")
     assert result.parseoutcomes()["warnings"] == 2
     result.stdout.fnmatch_lines(["*" + LEGACY_ASYNCIO_FIXTURE + "*"])

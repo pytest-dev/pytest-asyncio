@@ -29,3 +29,9 @@ def test_3():
     current_loop = asyncio.get_event_loop_policy().get_event_loop()
     # Now the event loop from test_2 should have been cleaned up
     assert loop is not current_loop
+
+
+def test_4(event_loop):
+    # If a test sets the loop to None -- pytest_fixture_post_finalizer()
+    # still should work
+    asyncio.get_event_loop_policy().set_event_loop(None)

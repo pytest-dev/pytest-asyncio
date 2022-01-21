@@ -23,13 +23,16 @@ clean-test: ## remove test and coverage artifacts
 lint:
 # CI env-var is set by GitHub actions
 ifdef CI
-	pre-commit run --all-files --show-diff-on-failure
+	python -m pre_commit run --all-files --show-diff-on-failure
 else
-	pre-commit run --all-files
+	python -m pre_commit run --all-files
 endif
+	python -m mypy pytest_asyncio --show-error-codes
 
 test:
-	pytest tests
+	coverage run -m pytest tests
+	coverage xml
+	coverage report
 
 install:
 	pip install -U pre-commit
