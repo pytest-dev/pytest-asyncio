@@ -437,8 +437,9 @@ def wrap_in_sync(
                 pytest.PytestWarning(
                     f"The test {pyfuncitem} is marked with '@pytest.mark.asyncio' "
                     "but it is not an async function. "
-                    "Please remove asyncio marker, "
-                    "use 'asyncio_mode = auto' for autocollection."
+                    "Please remove asyncio marker. "
+                    "If the test is not marked explicitly, "
+                    "check for global markers applied via 'pytestmark'."
                 )
             )
             return
