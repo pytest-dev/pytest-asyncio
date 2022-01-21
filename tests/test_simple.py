@@ -268,7 +268,7 @@ def test_warn_asyncio_marker_for_regular_func(testdir):
     """
         ),
     )
-    result = testdir.runpytest_subprocess()
+    result = testdir.runpytest()
     result.assert_outcomes(passed=1)
     result.stdout.fnmatch_lines(
         ["*is marked with '@pytest.mark.asyncio' but it is not an async function.*"]
