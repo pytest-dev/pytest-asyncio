@@ -257,6 +257,11 @@ or an async framework such as `asynctest <https://asynctest.readthedocs.io/en/la
 Changelog
 ---------
 
+0.18.0 (Unreleased)
+~~~~~~~~~~~~~~~~~~~
+
+- Raise a warning if @pytest.mark.asyncio is applied to non-async function. `#275 <https://github.com/pytest-dev/pytest-asyncio/issues/275>`_
+
 0.17.2 (22-01-17)
 ~~~~~~~~~~~~~~~~~~~
 

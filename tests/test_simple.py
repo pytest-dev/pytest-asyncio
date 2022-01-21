@@ -1,5 +1,6 @@
 """Quick'n'dirty unit tests for provided fixtures and markers."""
 import asyncio
+from textwrap import dedent
 
 import pytest
 
@@ -26,14 +27,14 @@ async def test_asyncio_marker():
 
 @pytest.mark.xfail(reason="need a failure", strict=True)
 @pytest.mark.asyncio
-def test_asyncio_marker_fail():
+async def test_asyncio_marker_fail():
     raise AssertionError
 
 
 @pytest.mark.asyncio
-def test_asyncio_marker_with_default_param(a_param=None):
+async def test_asyncio_marker_with_default_param(a_param=None):
     """Test the asyncio pytest marker."""
-    yield  # sleep(0)
+    await asyncio.sleep(0)
 
 
 @pytest.mark.asyncio
@@ -240,3 +241,35 @@ async def test_no_warning_on_skip():
 def test_async_close_loop(event_loop):
     event_loop.close()
     return "ok"
+
+
+def test_warn_asyncio_marker_for_regular_func(testdir):
+    testdir.makepyfile(
+        dedent(
+            """\
+        import pytest
+
+        pytest_plugins = 'pytest_asyncio'
+
+        @pytest.mark.asyncio
+        def test_a():
+            pass
+        """
+        )
+    )
+    testdir.makefile(
+        ".ini",
+        pytest=dedent(
+            """\
+        [pytest]
+        asyncio_mode = strict
+        filterwarnings =
+            default
+    """
+        ),
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines(
+        ["*is marked with '@pytest.mark.asyncio' but it is not an async function.*"]
+    )

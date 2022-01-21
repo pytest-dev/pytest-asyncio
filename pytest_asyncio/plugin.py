@@ -213,7 +213,8 @@ def pytest_pycollect_makeitem(
         and _hypothesis_test_wraps_coroutine(obj)
     ):
         item = pytest.Function.from_parent(collector, name=name)
-        if "asyncio" in item.keywords:
+        marker = item.get_closest_marker("asyncio")
+        if marker is not None:
             return list(collector._genfunctions(name, obj))
         else:
             if _get_asyncio_mode(item.config) == Mode.AUTO:
@@ -390,16 +391,19 @@ def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> Optional[object]:
     Wraps marked tests in a synchronous function
     where the wrapped test coroutine is executed in an event loop.
     """
-    if "asyncio" in pyfuncitem.keywords:
+    marker = pyfuncitem.get_closest_marker("asyncio")
+    if marker is not None:
         funcargs: Dict[str, object] = pyfuncitem.funcargs  # type: ignore[name-defined]
         loop = cast(asyncio.AbstractEventLoop, funcargs["event_loop"])
         if _is_hypothesis_test(pyfuncitem.obj):
             pyfuncitem.obj.hypothesis.inner_test = wrap_in_sync(
+                pyfuncitem,
                 pyfuncitem.obj.hypothesis.inner_test,
                 _loop=loop,
             )
         else:
             pyfuncitem.obj = wrap_in_sync(
+                pyfuncitem,
                 pyfuncitem.obj,
                 _loop=loop,
             )
@@ -410,7 +414,11 @@ def _is_hypothesis_test(function: Any) -> bool:
     return getattr(function, "is_hypothesis_test", False)
 
 
-def wrap_in_sync(func: Callable[..., Awaitable[Any]], _loop: asyncio.AbstractEventLoop):
+def wrap_in_sync(
+    pyfuncitem: pytest.Function,
+    func: Callable[..., Awaitable[Any]],
+    _loop: asyncio.AbstractEventLoop,
+):
     """Return a sync wrapper around an async function executing it in the
     current event loop."""
 
@@ -424,34 +432,44 @@ def wrap_in_sync(func: Callable[..., Awaitable[Any]], _loop: asyncio.AbstractEve
     @functools.wraps(func)
     def inner(**kwargs):
         coro = func(**kwargs)
-        if coro is not None:
-            task = asyncio.ensure_future(coro, loop=_loop)
-            try:
-                _loop.run_until_complete(task)
-            except BaseException:
-                # run_until_complete doesn't get the result from exceptions
-                # that are not subclasses of `Exception`. Consume all
-                # exceptions to prevent asyncio's warning from logging.
-                if task.done() and not task.cancelled():
-                    task.exception()
-                raise
+        if not inspect.isawaitable(coro):
+            pyfuncitem.warn(
+                pytest.PytestWarning(
+                    f"The test {pyfuncitem} is marked with '@pytest.mark.asyncio' "
+                    "but it is not an async function. "
+                    "Please remove asyncio marker. "
+                    "If the test is not marked explicitly, "
+                    "check for global markers applied via 'pytestmark'."
+                )
+            )
+            return
+        task = asyncio.ensure_future(coro, loop=_loop)
+        try:
+            _loop.run_until_complete(task)
+        except BaseException:
+            # run_until_complete doesn't get the result from exceptions
+            # that are not subclasses of `Exception`. Consume all
+            # exceptions to prevent asyncio's warning from logging.
+            if task.done() and not task.cancelled():
+                task.exception()
+            raise
 
     inner._raw_test_func = func  # type: ignore[attr-defined]
     return inner
 
 
 def pytest_runtest_setup(item: pytest.Item) -> None:
-    if "asyncio" in item.keywords:
-        fixturenames = item.fixturenames  # type: ignore[attr-defined]
-        # inject an event loop fixture for all async tests
-        if "event_loop" in fixturenames:
-            fixturenames.remove("event_loop")
-        fixturenames.insert(0, "event_loop")
+    marker = item.get_closest_marker("asyncio")
+    if marker is None:
+        return
+    fixturenames = item.fixturenames  # type: ignore[attr-defined]
+    # inject an event loop fixture for all async tests
+    if "event_loop" in fixturenames:
+        fixturenames.remove("event_loop")
+    fixturenames.insert(0, "event_loop")
     obj = getattr(item, "obj", None)
-    if (
-        item.get_closest_marker("asyncio") is not None
-        and not getattr(obj, "hypothesis", False)
-        and getattr(obj, "is_hypothesis_test", False)
+    if not getattr(obj, "hypothesis", False) and getattr(
+        obj, "is_hypothesis_test", False
     ):
         pytest.fail(
             "test function `%r` is using Hypothesis, but pytest-asyncio "
