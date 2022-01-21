@@ -434,7 +434,7 @@ def wrap_in_sync(
         coro = func(**kwargs)
         if not inspect.isawaitable(coro):
             pyfuncitem.warn(
-                UserWarning(
+                pytest.PytestWarning(
                     f"The test {pyfuncitem} is marked with '@pytest.mark.asyncio' "
                     "but it is not an async function. "
                     "Please remove asyncio marker, "
