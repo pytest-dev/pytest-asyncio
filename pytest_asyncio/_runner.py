@@ -29,13 +29,14 @@ class Runner:
             raise
 
     def set_timer(self, timeout: Union[int, float]) -> None:
-        assert self._timeout_hande is None
+        if self._timeout_hande is not None:
+            self._timeout_hande.cancel()
         self._timeout_reached = False
         self._timeout_hande = self._loop.call_later(timeout, self._on_timeout)
 
     def cancel_timer(self) -> None:
-        assert self._timeout_hande is not None
-        self._timeout_hande.cancel()
+        if self._timeout_hande is not None:
+            self._timeout_hande.cancel()
         self._timeout_reached = False
         self._timeout_hande = None
 

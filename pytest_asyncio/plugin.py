@@ -294,6 +294,7 @@ def pytest_fixture_setup(
     if fixturedef.argname == "event_loop":
         outcome = yield
         loop = outcome.get_result()
+        print("\ninstall runner", request.node, id(request.node), id(loop))
         _install_runner(request.node, loop)
         policy = asyncio.get_event_loop_policy()
         try:
