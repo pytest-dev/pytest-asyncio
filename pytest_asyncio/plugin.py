@@ -334,6 +334,7 @@ def pytest_fixture_setup(
         generator = func
 
         fixture_stripper = FixtureStripper(fixturedef)
+        # loop is required for correct fixture dependencies order
         fixture_stripper.add(FixtureStripper.EVENT_LOOP)
         fixture_stripper.add(FixtureStripper.REQUEST)
 
@@ -375,6 +376,7 @@ def pytest_fixture_setup(
         coro = func
 
         fixture_stripper = FixtureStripper(fixturedef)
+        # loop is required for correct fixture dependencies order
         fixture_stripper.add(FixtureStripper.EVENT_LOOP)
         fixture_stripper.add(FixtureStripper.REQUEST)
 
