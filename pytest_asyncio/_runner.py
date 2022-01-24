@@ -1,5 +1,5 @@
 import asyncio
-from typing import Awaitable, TypeVar, Union
+from typing import Awaitable, List, TypeVar
 
 import pytest
 
@@ -7,14 +7,47 @@ _R = TypeVar("_R")
 
 
 class Runner:
-    def __init__(self, loop: asyncio.AbstractEventLoop) -> None:
-        self._loop = loop
-        self._task = None
-        self._timeout_hande = None
-        self._timeout_reached = False
+    __slots__ = ("_loop", "_node", "_children")
 
-    def run(self, coro: Awaitable[_R]) -> _R:
-        return self._loop.run_until_complete(self._async_wrapper(coro))
+    def __init__(self, node: pytest.Item, loop: asyncio.AbstractEventLoop) -> None:
+        self._node = node
+        # children nodes that uses asyncio
+        # the list can be reset if the current node re-assigns the loop
+        self._children: List[Runner] = []
+        self._set_loop(loop)
+
+    @classmethod
+    def install(
+        cls, request: pytest.FixtureRequest, loop: asyncio.AbstractEventLoop
+    ) -> None:
+        node = request.node
+        print("\n+++++++++", id(node))
+        if hasattr(request, "param"):
+            print("@@@@@@@@@", request.param)
+        runner = getattr(node, "_asyncio_runner", None)
+        if runner is None:
+            runner = cls(node, loop)
+            node._asyncio_runner = runner
+        else:
+            # parametrized non-function scope loop was recalculated
+            # with other params or precessors
+            runner._set_loop(loop)
+        request.addfinalizer(runner._uninstall)
+
+    @classmethod
+    def get(cls, node: pytest.Item) -> "Runner":
+        print("!!!!!!!!!", id(node), type(node))
+        runner = getattr(node, "_asyncio_runner", None)
+        if runner is not None:
+            return runner
+        parent_node = node.parent
+        if parent_node is None:
+            # should never happen if pytest_fixture_setup works correctly
+            raise RuntimeError("Cannot find a node with installed loop")
+        parent_runner = cls.get(parent_node)
+        runner = cls(node, parent_runner._loop)
+        node._asyncio_runner = runner
+        return runner
 
     def run_test(self, coro: Awaitable[None]) -> None:
         task = asyncio.ensure_future(coro, loop=self._loop)
@@ -28,62 +61,16 @@ class Runner:
                 task.exception()
             raise
 
-    def set_timer(self, timeout: Union[int, float]) -> None:
-        if self._timeout_hande is not None:
-            self._timeout_hande.cancel()
-        self._timeout_reached = False
-        self._timeout_hande = self._loop.call_later(timeout, self._on_timeout)
+    def _set_loop(self, loop: asyncio.AbstractEventLoop) -> None:
+        self._loop = loop
+        # cleanup children runners, recreate them on the next run
+        for child in self._children:
+            child._uninstall()
+        self._children.clear()
 
-    def cancel_timer(self) -> None:
-        if self._timeout_hande is not None:
-            self._timeout_hande.cancel()
-        self._timeout_reached = False
-        self._timeout_hande = None
+    def _uninstall(self) -> None:
+        print("\n---------", id(self._node))
+        delattr(self._node, "_asyncio_runner")
 
-    async def _async_wrapper(self, coro: Awaitable[_R]) -> _R:
-        if self._timeout_reached:
-            # timeout can happen in a gap between tasks execution,
-            # it should be handled anyway
-            raise asyncio.TimeoutError()
-        task = asyncio.current_task()
-        assert self._task is None
-        self._task = task
-        try:
-            return await coro
-        except asyncio.CancelledError:
-            if self._timeout_reached:
-                raise asyncio.TimeoutError()
-        finally:
-            self._task = None
-
-    def _on_timeout(self) -> None:
-        # the plugin is optional,
-        # pytest-asyncio should work fine without pytest-timeout
-        # That's why the lazy import is required here
-        import pytest_timeout
-
-        if pytest_timeout.is_debugging():
-            return
-        self._timeout_reached = True
-        if self._task is not None:
-            self._task.cancel()
-
-
-def _install_runner(item: pytest.Item, loop: asyncio.AbstractEventLoop) -> None:
-    item._pytest_asyncio_runner = Runner(loop)
-
-
-def _get_runner(item: pytest.Item) -> Runner:
-    runner = getattr(item, "_pytest_asyncio_runner", None)
-    if runner is not None:
-        return runner
-    else:
-        parent = item.parent
-        if parent is not None:
-            parent_runner = _get_runner(parent)
-            runner = item._pytest_asyncio_runner = Runner(parent_runner._loop)
-            return runner
-        else:  # pragma: no cover
-            # can happen only if the plugin is broken and no event_loop fixture
-            # dependency was installed.
-            raise RuntimeError(f"There is no event_loop associated with {item}")
+    def run(self, coro: Awaitable[_R]) -> _R:
+        return self._loop.run_until_complete(coro)

@@ -8,7 +8,6 @@ import socket
 import sys
 import warnings
 from typing import (
-    TYPE_CHECKING,
     Any,
     AsyncIterator,
     Awaitable,
@@ -25,26 +24,14 @@ from typing import (
 )
 
 import pytest
-from pluggy import PluginValidationError
 
-from ._runner import Runner, _get_runner, _install_runner
+from ._runner import Runner
 
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
     from typing_extensions import Literal
 
-
-if TYPE_CHECKING:
-    from pytest_timeout import Settings
-
-
-try:
-    pass
-
-    HAS_TIMEOUT_SUPPORT = True
-except ImportError:
-    HAS_TIMEOUT_SUPPORT = False
 
 _R = TypeVar("_R")
 
@@ -292,10 +279,11 @@ def pytest_fixture_setup(
 ) -> Optional[object]:
     """Adjust the event loop policy when an event loop is produced."""
     if fixturedef.argname == "event_loop":
+        # a marker for future runners lookup
+        # The lookup doesn't go deeper than a node with this marker set.
         outcome = yield
         loop = outcome.get_result()
-        print("\ninstall runner", request.node, id(request.node), id(loop))
-        _install_runner(request.node, loop)
+        Runner.install(request, loop)
         policy = asyncio.get_event_loop_policy()
         try:
             old_loop = policy.get_event_loop()
@@ -349,9 +337,9 @@ def pytest_fixture_setup(
 
         def wrapper(*args, **kwargs):
             fixture_stripper.get_and_strip_from(FixtureStripper.EVENT_LOOP, kwargs)
+            runner = Runner.get(request.node)
 
             gen_obj = generator(*args, **kwargs)
-            runner = _get_runner(request.node)
 
             async def setup():
                 res = await gen_obj.__anext__()
@@ -385,7 +373,7 @@ def pytest_fixture_setup(
 
         def wrapper(*args, **kwargs):
             fixture_stripper.get_and_strip_from(FixtureStripper.EVENT_LOOP, kwargs)
-            runner = _get_runner(request.node)
+            runner = Runner.get(request.node)
 
             async def setup():
                 res = await coro(*args, **kwargs)
@@ -406,7 +394,7 @@ def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> Optional[object]:
     where the wrapped test coroutine is executed in an event loop.
     """
     if "asyncio" in pyfuncitem.keywords:
-        runner = _get_runner(pyfuncitem)
+        runner = Runner.get(pyfuncitem)
         if _is_hypothesis_test(pyfuncitem.obj):
             pyfuncitem.obj.hypothesis.inner_test = wrap_in_sync(
                 pyfuncitem.obj.hypothesis.inner_test,
@@ -465,34 +453,6 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
         pytest.fail(
             "test function `%r` is using Hypothesis, but pytest-asyncio "
             "only works with Hypothesis 3.64.0 or later." % item
-        )
-
-
-if HAS_TIMEOUT_SUPPORT:
-    # Install hooks only if pytest-timeout is installed
-    try:
-
-        @pytest.mark.tryfirst
-        def pytest_timeout_set_timer(
-            item: pytest.Item, settings: "Settings"
-        ) -> Optional[object]:
-            if item.get_closest_marker("asyncio") is None:
-                return None
-            runner = _get_runner(item)
-            runner.set_timer(settings.timeout)
-            return True
-
-        @pytest.mark.tryfirst
-        def pytest_timeout_cancel_timer(item: pytest.Item) -> Optional[object]:
-            if item.get_closest_marker("asyncio") is None:
-                return None
-            runner = _get_runner(item)
-            runner.cancel_timer()
-            return True
-
-    except PluginValidationError:  # pragma: no cover
-        raise RuntimeError(
-            "pytest-asyncio requires pytest-timeout>=2.1.0, please upgrade"
         )
 
 
