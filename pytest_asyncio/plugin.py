@@ -235,6 +235,7 @@ class FixtureStripper:
     """Include additional Fixture, and then strip them"""
 
     EVENT_LOOP = "event_loop"
+    REQUEST = "request"
 
     def __init__(self, fixturedef: FixtureDef) -> None:
         self.fixturedef = fixturedef
@@ -271,7 +272,6 @@ def pytest_fixture_post_finalizer(fixturedef: FixtureDef, request: SubRequest) -
         new_loop = policy.new_event_loop()  # Replace existing event loop
         # Ensure subsequent calls to get_event_loop() succeed
         policy.set_event_loop(new_loop)
-        Runner.uninstall(request)
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -279,8 +279,6 @@ def pytest_fixture_setup(
     fixturedef: FixtureDef, request: SubRequest
 ) -> Optional[object]:
     """Adjust the event loop policy when an event loop is produced."""
-    if hasattr(request, "param"):
-        print("@@@@@@@@@", fixturedef.argname, request.param)
     if fixturedef.argname == "event_loop":
         # a marker for future runners lookup
         # The lookup doesn't go deeper than a node with this marker set.
@@ -337,9 +335,13 @@ def pytest_fixture_setup(
 
         fixture_stripper = FixtureStripper(fixturedef)
         fixture_stripper.add(FixtureStripper.EVENT_LOOP)
+        fixture_stripper.add(FixtureStripper.REQUEST)
 
         def wrapper(*args, **kwargs):
             fixture_stripper.get_and_strip_from(FixtureStripper.EVENT_LOOP, kwargs)
+            request = fixture_stripper.get_and_strip_from(
+                FixtureStripper.REQUEST, kwargs
+            )
             runner = Runner.get(request.node)
 
             gen_obj = generator(*args, **kwargs)
@@ -373,9 +375,13 @@ def pytest_fixture_setup(
 
         fixture_stripper = FixtureStripper(fixturedef)
         fixture_stripper.add(FixtureStripper.EVENT_LOOP)
+        fixture_stripper.add(FixtureStripper.REQUEST)
 
         def wrapper(*args, **kwargs):
             fixture_stripper.get_and_strip_from(FixtureStripper.EVENT_LOOP, kwargs)
+            request = fixture_stripper.get_and_strip_from(
+                FixtureStripper.REQUEST, kwargs
+            )
             runner = Runner.get(request.node)
 
             async def setup():

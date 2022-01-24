@@ -36,6 +36,6 @@ async def fixture_with_params(request):
 
 
 @pytest.mark.asyncio
-async def test_fixture_with_params(fixture_with_params):
+async def test_fixture_with_params(request, fixture_with_params):
     await asyncio.sleep(0)
     assert fixture_with_params % 2 == 0

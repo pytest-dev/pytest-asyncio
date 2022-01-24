@@ -21,29 +21,25 @@ class Runner:
         cls, request: pytest.FixtureRequest, loop: asyncio.AbstractEventLoop
     ) -> None:
         node = request.node
-        print("\n+++++++++", id(node))
-        #        if hasattr(request, "param"):
-        #            print("@@@@@@@@@", request.param)
         runner = getattr(node, "_asyncio_runner", None)
         if runner is None:
             runner = cls(node, loop)
             node._asyncio_runner = runner
         else:
             # parametrized non-function scope loop was recalculated
-            # with other params or precessors
+            # with other params of precessors
             runner._set_loop(loop)
+        request.addfinalizer(runner._uninstall)
 
     @classmethod
     def uninstall(cls, request: pytest.FixtureRequest) -> None:
         node = request.node
-        print("#########", id(node), type(node))
         runner = getattr(node, "_asyncio_runner", None)
         assert runner is not None
-        runner._uninstall
+        runner._uninstall()
 
     @classmethod
     def get(cls, node: pytest.Item) -> "Runner":
-        print("!!!!!!!!!", id(node), type(node))
         runner = getattr(node, "_asyncio_runner", None)
         if runner is not None:
             return runner
@@ -76,7 +72,6 @@ class Runner:
         self._children.clear()
 
     def _uninstall(self) -> None:
-        print("\n---------", id(self._node))
         delattr(self._node, "_asyncio_runner")
 
     def run(self, coro: Awaitable[_R]) -> _R:
