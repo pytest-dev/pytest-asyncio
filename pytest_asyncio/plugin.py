@@ -339,6 +339,7 @@ def pytest_fixture_setup(
 
         def wrapper(*args, **kwargs):
             fixture_stripper.get_and_strip_from(FixtureStripper.EVENT_LOOP, kwargs)
+            # Late binding is crucial here
             request = fixture_stripper.get_and_strip_from(
                 FixtureStripper.REQUEST, kwargs
             )
@@ -379,6 +380,7 @@ def pytest_fixture_setup(
 
         def wrapper(*args, **kwargs):
             fixture_stripper.get_and_strip_from(FixtureStripper.EVENT_LOOP, kwargs)
+            # Late binding is crucial here
             request = fixture_stripper.get_and_strip_from(
                 FixtureStripper.REQUEST, kwargs
             )
