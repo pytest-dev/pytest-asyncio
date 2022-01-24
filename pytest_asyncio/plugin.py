@@ -271,6 +271,7 @@ def pytest_fixture_post_finalizer(fixturedef: FixtureDef, request: SubRequest) -
         new_loop = policy.new_event_loop()  # Replace existing event loop
         # Ensure subsequent calls to get_event_loop() succeed
         policy.set_event_loop(new_loop)
+        Runner.uninstall(request)
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -278,6 +279,8 @@ def pytest_fixture_setup(
     fixturedef: FixtureDef, request: SubRequest
 ) -> Optional[object]:
     """Adjust the event loop policy when an event loop is produced."""
+    if hasattr(request, "param"):
+        print("@@@@@@@@@", fixturedef.argname, request.param)
     if fixturedef.argname == "event_loop":
         # a marker for future runners lookup
         # The lookup doesn't go deeper than a node with this marker set.
