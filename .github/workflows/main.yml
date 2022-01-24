@@ -76,7 +76,7 @@ jobs:
 
     - name: Prepare coverage artifact
       if: ${{ contains(env.USING_COVERAGE, matrix.python-version) }}
-      uses: aio-libs/prepare-coverage@v21.9.1
+      uses: aio-libs/prepare-coverage@v22.1.2
 
   check:
     name: Check
