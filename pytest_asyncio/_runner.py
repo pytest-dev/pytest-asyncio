@@ -50,6 +50,7 @@ class Runner:
         parent_runner = cls.get(parent_node)
         runner = cls(node, parent_runner._loop)
         node._asyncio_runner = runner
+        node.addfinalizer(runner._uninstall)
         return runner
 
     def run_test(self, coro: Awaitable[None]) -> None:
@@ -64,6 +65,9 @@ class Runner:
                 task.exception()
             raise
 
+    def run(self, coro: Awaitable[_R]) -> _R:
+        return self._loop.run_until_complete(coro)
+
     def _set_loop(self, loop: asyncio.AbstractEventLoop) -> None:
         self._loop = loop
         # cleanup children runners, recreate them on the next run
@@ -73,6 +77,3 @@ class Runner:
 
     def _uninstall(self) -> None:
         delattr(self._node, "_asyncio_runner")
-
-    def run(self, coro: Awaitable[_R]) -> _R:
-        return self._loop.run_until_complete(coro)
