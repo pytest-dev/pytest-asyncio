@@ -1,19 +1,25 @@
 import asyncio
-from typing import Awaitable, List, TypeVar
+import contextlib
+from typing import Awaitable, List, Optional, TypeVar
 
+import aioloop_proxy
 import pytest
 
 _R = TypeVar("_R")
 
 
 class Runner:
-    __slots__ = ("_loop", "_node", "_children")
+    __slots__ = ("_loop", "_node", "_children", "_loop_proxy_cm")
 
     def __init__(self, node: pytest.Item, loop: asyncio.AbstractEventLoop) -> None:
         self._node = node
         # children nodes that uses asyncio
         # the list can be reset if the current node re-assigns the loop
         self._children: List[Runner] = []
+        self._loop_proxy_cm: Optional[
+            "contextlib.AbstractContextManager[asyncio.AbstractEventLoop]"
+        ] = None
+        self._loop: Optional[asyncio.AbstractEventLoop] = None
         self._set_loop(loop)
 
     @classmethod
@@ -69,11 +75,19 @@ class Runner:
         return self._loop.run_until_complete(coro)
 
     def _set_loop(self, loop: asyncio.AbstractEventLoop) -> None:
-        self._loop = loop
+        assert loop is not None
+        if self._loop_proxy_cm is not None:
+            self._loop_proxy_cm.__exit__(None, None, None)
+        self._loop_proxy_cm = aioloop_proxy.proxy(loop)
+        self._loop = self._loop_proxy_cm.__enter__()
         # cleanup children runners, recreate them on the next run
         for child in self._children:
             child._uninstall()
         self._children.clear()
 
     def _uninstall(self) -> None:
+        if self._loop_proxy_cm is not None:
+            self._loop_proxy_cm.__exit__(None, None, None)
+        self._loop_proxy_cm = None
+        self._loop = None
         delattr(self._node, "_asyncio_runner")
