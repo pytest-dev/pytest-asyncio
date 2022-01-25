@@ -261,6 +261,7 @@ Changelog
 ~~~~~~~~~~~~~~~~~~~
 
 - Raise a warning if @pytest.mark.asyncio is applied to non-async function. `#275 <https://github.com/pytest-dev/pytest-asyncio/issues/275>`_
+- Support parametrized ``event_loop`` fixture. `#278 <https://github.com/pytest-dev/pytest-asyncio/issues/278>`_
 
 0.17.2 (22-01-17)
 ~~~~~~~~~~~~~~~~~~~
