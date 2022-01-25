@@ -6,6 +6,7 @@ TESTS_COUNT = 0
 
 
 def teardown_module():
+    # parametrized 2 * 2 times: 2 for 'event_loop' and 2 for 'fix'
     assert TESTS_COUNT == 4
 
 
