@@ -198,7 +198,7 @@ def pytest_report_header(config: Config) -> List[str]:
     return [f"asyncio: mode={mode}"]
 
 
-def _add_fixture_argnames(config: Config, holder: Set[FixtureDef]) -> None:
+def _preprocess_async_fixtures(config: Config, holder: Set[FixtureDef]) -> None:
     asyncio_mode = _get_asyncio_mode(config)
     fixturemanager = config.pluginmanager.get_plugin("funcmanage")
     for fixtures in fixturemanager._arg2fixturedefs.values():
@@ -324,7 +324,7 @@ def pytest_pycollect_makeitem(
         or _is_hypothesis_test(obj)
         and _hypothesis_test_wraps_coroutine(obj)
     ):
-        _add_fixture_argnames(collector.config, _HOLDER)
+        _preprocess_async_fixtures(collector.config, _HOLDER)
         item = pytest.Function.from_parent(collector, name=name)
         marker = item.get_closest_marker("asyncio")
         if marker is not None:
