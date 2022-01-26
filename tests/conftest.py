@@ -1,5 +1,6 @@
 import asyncio
 
+import aioloop_proxy
 import pytest
 
 pytest_plugins = "pytester"
@@ -30,3 +31,13 @@ def factory_involving_factories_fixture(unused_tcp_port_factory):
         return unused_tcp_port_factory()
 
     return factory
+
+
+@pytest.fixture(scope="session")
+def original_loop():
+    def func(loop_proxy: aioloop_proxy.LoopProxy) -> asyncio.AbstractEventLoop:
+        while isinstance(loop_proxy, aioloop_proxy.LoopProxy):
+            loop_proxy = loop_proxy.get_parent_loop()
+        return loop_proxy
+
+    return func
