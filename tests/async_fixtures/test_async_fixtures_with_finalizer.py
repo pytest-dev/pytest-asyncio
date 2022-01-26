@@ -55,10 +55,12 @@ async def port_with_get_event_loop_finalizer(request, event_loop):
         current_loop.run_until_complete(port_afinalizer())
 
     # nested loop proxy is different than explicitly set by
-    # loop_policy.set_event_loop().  it is really not a big prblem because async
-    # functions always have the correct 'get_running_loop()' already.
+    # loop_policy.set_event_loop().
+    # It is really not a big problem because async functions
+    # always have the correct 'get_running_loop()' already.
     worker = asyncio.ensure_future(
-        asyncio.sleep(0.2), loop=asyncio.get_event_loop_policy().get_event_loop()
+        asyncio.sleep(0.2),
+        loop=asyncio.get_event_loop_policy().get_event_loop(),
     )
     request.addfinalizer(functools.partial(port_finalizer, worker))
     return True
