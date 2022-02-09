@@ -69,7 +69,7 @@ The mode can be set by ``asyncio_mode`` configuration option in `configuration f
    [pytest]
    asyncio_mode = auto
 
-The value can be overriden by command-line option for ``pytest`` invocation:
+The value can be overridden by command-line option for ``pytest`` invocation:
 
 .. code-block:: bash
 
@@ -91,7 +91,7 @@ plugin.
 This mode requires the simplest tests and fixtures configuration and is
 recommended for default usage *unless* the same project and its test suite should
 execute tests from different async frameworks, e.g. ``asyncio`` and ``trio``.  In this
-case, auto-handling can break tests designed for other framework; plase use *strict*
+case, auto-handling can break tests designed for other framework; please use *strict*
 mode instead.
 
 Strict mode
