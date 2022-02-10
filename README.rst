@@ -257,7 +257,7 @@ or an async framework such as `asynctest <https://asynctest.readthedocs.io/en/la
 Changelog
 ---------
 
-0.18.1 (UNRELEASED)
+0.18.1 (22-02-10)
 ~~~~~~~~~~~~~~~~~~~
 - Fixes a regression that prevented async fixtures from working in synchronous tests. `#286 <https://github.com/pytest-dev/pytest-asyncio/issues/286>`_
 
