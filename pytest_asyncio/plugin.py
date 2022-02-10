@@ -319,12 +319,12 @@ def pytest_pycollect_makeitem(
     """A pytest hook to collect asyncio coroutines."""
     if not collector.funcnamefilter(name):
         return None
+    _preprocess_async_fixtures(collector.config, _HOLDER)
     if (
         _is_coroutine(obj)
         or _is_hypothesis_test(obj)
         and _hypothesis_test_wraps_coroutine(obj)
     ):
-        _preprocess_async_fixtures(collector.config, _HOLDER)
         item = pytest.Function.from_parent(collector, name=name)
         marker = item.get_closest_marker("asyncio")
         if marker is not None:
