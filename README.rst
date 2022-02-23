@@ -257,6 +257,11 @@ or an async framework such as `asynctest <https://asynctest.readthedocs.io/en/la
 Changelog
 ---------
 
+0.18.2 (Unreleased)
+~~~~~~~~~~~~~~~~~~~
+- Fix asyncio auto mode not marking static methods. `#295 <https://github.com/pytest-dev/pytest-asyncio/issues/295>`_
+
+
 0.18.1 (22-02-10)
 ~~~~~~~~~~~~~~~~~~~
 - Fixes a regression that prevented async fixtures from working in synchronous tests. `#286 <https://github.com/pytest-dev/pytest-asyncio/issues/286>`_
