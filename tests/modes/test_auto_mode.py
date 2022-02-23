@@ -87,3 +87,53 @@ def test_auto_mode_method_fixture(testdir):
     )
     result = testdir.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
+
+
+def test_auto_mode_static_method(testdir):
+    testdir.makepyfile(
+        dedent(
+            """\
+        import asyncio
+
+        pytest_plugins = 'pytest_asyncio'
+
+
+        class TestA:
+
+            @staticmethod
+            async def test_a():
+                await asyncio.sleep(0)
+        """
+        )
+    )
+    result = testdir.runpytest("--asyncio-mode=auto")
+    result.assert_outcomes(passed=1)
+
+
+def test_auto_mode_static_method_fixture(testdir):
+    testdir.makepyfile(
+        dedent(
+            """\
+        import asyncio
+        import pytest
+
+        pytest_plugins = 'pytest_asyncio'
+
+
+        class TestA:
+
+            @staticmethod
+            @pytest.fixture
+            async def fixture_a():
+                await asyncio.sleep(0)
+                return 1
+
+            @staticmethod
+            async def test_a(fixture_a):
+                await asyncio.sleep(0)
+                assert fixture_a == 1
+        """
+        )
+    )
+    result = testdir.runpytest("--asyncio-mode=auto")
+    result.assert_outcomes(passed=1)

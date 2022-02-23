@@ -320,6 +320,9 @@ def pytest_pycollect_makeitem(
     if not collector.funcnamefilter(name):
         return None
     _preprocess_async_fixtures(collector.config, _HOLDER)
+    if isinstance(obj, staticmethod):
+        # staticmethods need to be unwrapped.
+        obj = obj.__func__
     if (
         _is_coroutine(obj)
         or _is_hypothesis_test(obj)
