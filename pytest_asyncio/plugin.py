@@ -432,8 +432,8 @@ def wrap_in_sync(
         func = raw_func
 
     @functools.wraps(func)
-    def inner(**kwargs):
-        coro = func(**kwargs)
+    def inner(*args, **kwargs):
+        coro = func(*args, **kwargs)
         if not inspect.isawaitable(coro):
             pyfuncitem.warn(
                 pytest.PytestWarning(

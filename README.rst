@@ -260,6 +260,7 @@ Changelog
 0.18.2 (Unreleased)
 ~~~~~~~~~~~~~~~~~~~
 - Fix asyncio auto mode not marking static methods. `#295 <https://github.com/pytest-dev/pytest-asyncio/issues/295>`_
+- Fix a compatibility issue with Hypothesis 6.39.0. `#302 <https://github.com/pytest-dev/pytest-asyncio/issues/302>`_
 
 
 0.18.1 (22-02-10)
