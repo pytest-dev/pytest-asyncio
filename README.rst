@@ -257,7 +257,7 @@ or an async framework such as `asynctest <https://asynctest.readthedocs.io/en/la
 Changelog
 ---------
 
-0.18.2 (Unreleased)
+0.18.2 (22-03-03)
 ~~~~~~~~~~~~~~~~~~~
 - Fix asyncio auto mode not marking static methods. `#295 <https://github.com/pytest-dev/pytest-asyncio/issues/295>`_
 - Fix a compatibility issue with Hypothesis 6.39.0. `#302 <https://github.com/pytest-dev/pytest-asyncio/issues/302>`_
