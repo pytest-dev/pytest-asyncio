@@ -210,7 +210,11 @@ def _preprocess_async_fixtures(config: Config, holder: Set[FixtureDef]) -> None:
                 # Nothing to do with a regular fixture function
                 continue
             if not _has_explicit_asyncio_mark(func):
-                if asyncio_mode == Mode.AUTO:
+                if asyncio_mode == Mode.STRICT:
+                    # Ignore async fixtures without explicit asyncio mark in strict mode
+                    # This applies to pytest_trio fixtures, for example
+                    continue
+                elif asyncio_mode == Mode.AUTO:
                     # Enforce asyncio mode if 'auto'
                     _set_explicit_asyncio_mark(func)
                 elif asyncio_mode == Mode.LEGACY:
