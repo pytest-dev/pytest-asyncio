@@ -1,30 +1,31 @@
+=========
 Changelog
----------
+=========
 
 0.18.2 (22-03-03)
-~~~~~~~~~~~~~~~~~~~
+=================
 - Fix asyncio auto mode not marking static methods. `#295 <https://github.com/pytest-dev/pytest-asyncio/issues/295>`_
 - Fix a compatibility issue with Hypothesis 6.39.0. `#302 <https://github.com/pytest-dev/pytest-asyncio/issues/302>`_
 
 0.18.1 (22-02-10)
-~~~~~~~~~~~~~~~~~~~
+=================
 - Fixes a regression that prevented async fixtures from working in synchronous tests. `#286 <https://github.com/pytest-dev/pytest-asyncio/issues/286>`_
 
 0.18.0 (22-02-07)
-~~~~~~~~~~~~~~~~~~~
+=================
 
 - Raise a warning if @pytest.mark.asyncio is applied to non-async function. `#275 <https://github.com/pytest-dev/pytest-asyncio/issues/275>`_
 - Support parametrized ``event_loop`` fixture. `#278 <https://github.com/pytest-dev/pytest-asyncio/issues/278>`_
 
 0.17.2 (22-01-17)
-~~~~~~~~~~~~~~~~~~~
+=================
 
 - Require ``typing-extensions`` on Python<3.8 only. `#269 <https://github.com/pytest-dev/pytest-asyncio/issues/269>`_
 - Fix a regression in tests collection introduced by 0.17.1, the plugin works fine with non-python tests again. `#267 <https://github.com/pytest-dev/pytest-asyncio/issues/267>`_
 
 
 0.17.1 (22-01-16)
-~~~~~~~~~~~~~~~~~~~
+=================
 - Fixes a bug that prevents async Hypothesis tests from working without explicit ``asyncio`` marker when ``--asyncio-mode=auto`` is set. `#258 <https://github.com/pytest-dev/pytest-asyncio/issues/258>`_
 - Fixed a bug that closes the default event loop if the loop doesn't exist `#257 <https://github.com/pytest-dev/pytest-asyncio/issues/257>`_
 - Added type annotations. `#198 <https://github.com/pytest-dev/pytest-asyncio/issues/198>`_
@@ -32,7 +33,7 @@ Changelog
 - Relax ``asyncio_mode`` type definition; it allows to support pytest 6.1+. `#262 <https://github.com/pytest-dev/pytest-asyncio/issues/262>`_
 
 0.17.0 (22-01-13)
-~~~~~~~~~~~~~~~~~~~
+=================
 - `pytest-asyncio` no longer alters existing event loop policies. `#168 <https://github.com/pytest-dev/pytest-asyncio/issues/168>`_, `#188 <https://github.com/pytest-dev/pytest-asyncio/issues/168>`_
 - Drop support for Python 3.6
 - Fixed an issue when pytest-asyncio was used in combination with `flaky` or inherited asynchronous Hypothesis tests. `#178 <https://github.com/pytest-dev/pytest-asyncio/issues/178>`_ `#231 <https://github.com/pytest-dev/pytest-asyncio/issues/231>`_
@@ -42,17 +43,17 @@ Changelog
 - Correctly process ``KeyboardInterrupt`` during async fixture setup phase `#219 <https://github.com/pytest-dev/pytest-asyncio/issues/219>`_
 
 0.16.0 (2021-10-16)
-~~~~~~~~~~~~~~~~~~~
+===================
 - Add support for Python 3.10
 
 0.15.1 (2021-04-22)
-~~~~~~~~~~~~~~~~~~~
+===================
 - Hotfix for errors while closing event loops while replacing them.
   `#209 <https://github.com/pytest-dev/pytest-asyncio/issues/209>`_
   `#210 <https://github.com/pytest-dev/pytest-asyncio/issues/210>`_
 
 0.15.0 (2021-04-19)
-~~~~~~~~~~~~~~~~~~~
+===================
 - Add support for Python 3.9
 - Abandon support for Python 3.5. If you still require support for Python 3.5, please use pytest-asyncio v0.14 or earlier.
 - Set ``unused_tcp_port_factory`` fixture scope to 'session'.
@@ -61,17 +62,17 @@ Changelog
   `#208 <https://github.com/pytest-dev/pytest-asyncio/issues/208>`_
 
 0.14.0 (2020-06-24)
-~~~~~~~~~~~~~~~~~~~
+===================
 - Fix `#162 <https://github.com/pytest-dev/pytest-asyncio/issues/162>`_, and ``event_loop`` fixture behavior now is coherent on all scopes.
   `#164 <https://github.com/pytest-dev/pytest-asyncio/pull/164>`_
 
 0.12.0 (2020-05-04)
-~~~~~~~~~~~~~~~~~~~
+===================
 - Run the event loop fixture as soon as possible. This helps with fixtures that have an implicit dependency on the event loop.
   `#156 <https://github.com/pytest-dev/pytest-asyncio/pull/156>`_
 
 0.11.0 (2020-04-20)
-~~~~~~~~~~~~~~~~~~~
+===================
 - Test on 3.8, drop 3.3 and 3.4. Stick to 0.10 for these versions.
   `#152 <https://github.com/pytest-dev/pytest-asyncio/pull/152>`_
 - Use the new Pytest 5.4.0 Function API. We therefore depend on pytest >= 5.4.0.
@@ -80,7 +81,7 @@ Changelog
   `#126 <https://github.com/pytest-dev/pytest-asyncio/pull/126>`_
 
 0.10.0 (2019-01-08)
-~~~~~~~~~~~~~~~~~~~~
+====================
 - ``pytest-asyncio`` integrates with `Hypothesis <https://hypothesis.readthedocs.io>`_
   to support ``@given`` on async test functions using ``asyncio``.
   `#102 <https://github.com/pytest-dev/pytest-asyncio/pull/102>`_
@@ -88,24 +89,24 @@ Changelog
   `#105 <https://github.com/pytest-dev/pytest-asyncio/pull/105>`_
 
 0.9.0 (2018-07-28)
-~~~~~~~~~~~~~~~~~~
+==================
 - Python 3.7 support.
 - Remove ``event_loop_process_pool`` fixture and
   ``pytest.mark.asyncio_process_pool`` marker (see
   https://bugs.python.org/issue34075 for deprecation and removal details)
 
 0.8.0 (2017-09-23)
-~~~~~~~~~~~~~~~~~~
+==================
 - Improve integration with other packages (like aiohttp) with more careful event loop handling.
   `#64 <https://github.com/pytest-dev/pytest-asyncio/pull/64>`_
 
 0.7.0 (2017-09-08)
-~~~~~~~~~~~~~~~~~~
+==================
 - Python versions pre-3.6 can use the async_generator library for async fixtures.
   `#62 <https://github.com/pytest-dev/pytest-asyncio/pull/62>`
 
 0.6.0 (2017-05-28)
-~~~~~~~~~~~~~~~~~~
+==================
 - Support for Python versions pre-3.5 has been dropped.
 - ``pytestmark`` now works on both module and class level.
 - The ``forbid_global_loop`` parameter has been removed.
@@ -115,7 +116,7 @@ Changelog
   `#51 <https://github.com/pytest-dev/pytest-asyncio/pull/51>`_
 
 0.5.0 (2016-09-07)
-~~~~~~~~~~~~~~~~~~
+==================
 - Introduced a changelog.
   `#31 <https://github.com/pytest-dev/pytest-asyncio/issues/31>`_
 - The ``event_loop`` fixture is again responsible for closing itself.
@@ -130,12 +131,12 @@ Changelog
   `#29 <https://github.com/pytest-dev/pytest-asyncio/issues/29>`_
 
 0.4.1 (2016-06-01)
-~~~~~~~~~~~~~~~~~~
+==================
 - Fix a bug preventing the propagation of exceptions from the plugin.
   `#25 <https://github.com/pytest-dev/pytest-asyncio/issues/25>`_
 
 0.4.0 (2016-05-30)
-~~~~~~~~~~~~~~~~~~
+==================
 - Make ``event_loop`` fixtures simpler to override by closing them in the
   plugin, instead of directly in the fixture.
   `#21 <https://github.com/pytest-dev/pytest-asyncio/pull/21>`_
@@ -143,15 +144,15 @@ Changelog
   `#21 <https://github.com/pytest-dev/pytest-asyncio/pull/21>`_
 
 0.3.0 (2015-12-19)
-~~~~~~~~~~~~~~~~~~
+==================
 - Support for Python 3.5 ``async``/``await`` syntax.
   `#17 <https://github.com/pytest-dev/pytest-asyncio/pull/17>`_
 
 0.2.0 (2015-08-01)
-~~~~~~~~~~~~~~~~~~
+==================
 - ``unused_tcp_port_factory`` fixture.
   `#10 <https://github.com/pytest-dev/pytest-asyncio/issues/10>`_
 
 0.1.1 (2015-04-23)
-~~~~~~~~~~~~~~~~~~
+==================
 Initial release.
