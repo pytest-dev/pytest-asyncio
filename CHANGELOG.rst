@@ -2,6 +2,10 @@
 Changelog
 =========
 
+UNRELEASED
+=================
+- Adds `pytest-trio <https://pypi.org/project/pytest-trio/>`_ to the test dependencies
+
 0.18.2 (22-03-03)
 =================
 - Fix asyncio auto mode not marking static methods. `#295 <https://github.com/pytest-dev/pytest-asyncio/issues/295>`_
