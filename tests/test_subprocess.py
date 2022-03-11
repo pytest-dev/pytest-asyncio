@@ -15,17 +15,8 @@ if sys.platform == "win32":
         loop.close()
 
 
-@pytest.mark.asyncio(forbid_global_loop=False)
+@pytest.mark.asyncio
 async def test_subprocess(event_loop):
-    """Starting a subprocess should be possible."""
-    proc = await asyncio.subprocess.create_subprocess_exec(
-        sys.executable, "--version", stdout=asyncio.subprocess.PIPE
-    )
-    await proc.communicate()
-
-
-@pytest.mark.asyncio(forbid_global_loop=True)
-async def test_subprocess_forbid(event_loop):
     """Starting a subprocess should be possible."""
     proc = await asyncio.subprocess.create_subprocess_exec(
         sys.executable, "--version", stdout=asyncio.subprocess.PIPE
