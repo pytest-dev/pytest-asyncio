@@ -3,6 +3,7 @@ import asyncio
 import contextlib
 import enum
 import functools
+import gc
 import inspect
 import socket
 import sys
@@ -488,7 +489,19 @@ def event_loop(request: "pytest.FixtureRequest") -> Iterator[asyncio.AbstractEve
     """Create an instance of the default event loop for each test case."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
-    loop.close()
+    # Cleanup code copied from the implementation of asyncio.run()
+    try:
+        asyncio.runners._cancel_all_tasks(loop)
+        loop.run_until_complete(loop.shutdown_asyncgens())
+        if sys.version_info >= (3, 9):
+            loop.run_until_complete(loop.shutdown_default_executor())
+    finally:
+        loop.close()
+        # Call the garbage collector to trigger ResourceWarning's as soon
+        # as possible (these are triggered in various __del__ methods).
+        # Without this, resources opened in one test can fail other tests
+        # when the warning is generated.
+        gc.collect()
 
 
 def _unused_port(socket_type: int) -> int:
