@@ -2,6 +2,11 @@
 Changelog
 =========
 
+UNRELEASED
+=================
+- Adds `pytest-trio <https://pypi.org/project/pytest-trio/>`_ to the test dependencies
+- Fixes a bug that caused pytest-asyncio to try to set up async pytest_trio fixtures in strict mode. `#298 <https://github.com/pytest-dev/pytest-asyncio/issues/298>`_
+
 0.18.2 (22-03-03)
 =================
 - Fix asyncio auto mode not marking static methods. `#295 <https://github.com/pytest-dev/pytest-asyncio/issues/295>`_
