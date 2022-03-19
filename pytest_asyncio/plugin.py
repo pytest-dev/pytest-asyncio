@@ -491,10 +491,11 @@ def event_loop(request: "pytest.FixtureRequest") -> Iterator[asyncio.AbstractEve
     yield loop
     # Cleanup code copied from the implementation of asyncio.run()
     try:
-        asyncio.runners._cancel_all_tasks(loop)
-        loop.run_until_complete(loop.shutdown_asyncgens())
-        if sys.version_info >= (3, 9):
-            loop.run_until_complete(loop.shutdown_default_executor())
+        if not loop.is_closed():
+            asyncio.runners._cancel_all_tasks(loop)
+            loop.run_until_complete(loop.shutdown_asyncgens())
+            if sys.version_info >= (3, 9):
+                loop.run_until_complete(loop.shutdown_default_executor())
     finally:
         loop.close()
         # Call the garbage collector to trigger ResourceWarning's as soon
