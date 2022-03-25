@@ -2,7 +2,7 @@
 Changelog
 =========
 
-UNRELEASED
+0.18.3 (22-03-25)
 =================
 - Adds `pytest-trio <https://pypi.org/project/pytest-trio/>`_ to the test dependencies
 - Fixes a bug that caused pytest-asyncio to try to set up async pytest_trio fixtures in strict mode. `#298 <https://github.com/pytest-dev/pytest-asyncio/issues/298>`_
