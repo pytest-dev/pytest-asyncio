@@ -361,8 +361,15 @@ def pytest_fixture_post_finalizer(fixturedef: FixtureDef, request: SubRequest) -
         except RuntimeError:
             loop = None
         if loop is not None:
-            # Clean up existing loop to avoid ResourceWarnings
-            loop.close()
+            # Cleanup code based on the implementation of asyncio.run()
+            try:
+                if not loop.is_closed():
+                    asyncio.runners._cancel_all_tasks(loop)
+                    loop.run_until_complete(loop.shutdown_asyncgens())
+                    if sys.version_info >= (3, 9):
+                        loop.run_until_complete(loop.shutdown_default_executor())
+            finally:
+                loop.close()
         new_loop = policy.new_event_loop()  # Replace existing event loop
         # Ensure subsequent calls to get_event_loop() succeed
         policy.set_event_loop(new_loop)
@@ -487,22 +494,13 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
 @pytest.fixture
 def event_loop(request: "pytest.FixtureRequest") -> Iterator[asyncio.AbstractEventLoop]:
     """Create an instance of the default event loop for each test case."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    # Cleanup code copied from the implementation of asyncio.run()
-    try:
-        if not loop.is_closed():
-            asyncio.runners._cancel_all_tasks(loop)
-            loop.run_until_complete(loop.shutdown_asyncgens())
-            if sys.version_info >= (3, 9):
-                loop.run_until_complete(loop.shutdown_default_executor())
-    finally:
-        loop.close()
-        # Call the garbage collector to trigger ResourceWarning's as soon
-        # as possible (these are triggered in various __del__ methods).
-        # Without this, resources opened in one test can fail other tests
-        # when the warning is generated.
-        gc.collect()
+    return asyncio.get_event_loop_policy().new_event_loop()
+    # Call the garbage collector to trigger ResourceWarning's as soon
+    # as possible (these are triggered in various __del__ methods).
+    # Without this, resources opened in one test can fail other tests
+    # when the warning is generated.
+    gc.collect()
+    # Event loop cleanup handled by pytest_fixture_post_finalizer
 
 
 def _unused_port(socket_type: int) -> int:
