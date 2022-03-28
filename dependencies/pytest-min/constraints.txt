@@ -5,7 +5,7 @@ flaky==3.7.0
 hypothesis==6.39.6
 idna==3.3
 iniconfig==1.1.1
-mypy==0.931
+mypy==0.942
 mypy-extensions==0.4.3
 outcome==1.1.0
 packaging==21.3
