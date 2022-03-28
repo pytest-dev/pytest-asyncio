@@ -2,9 +2,15 @@
 version: 2
 updates:
 - package-ecosystem: pip
-  directory: /
+  directory: /dependencies/default
   schedule:
-    interval: daily
+    interval: weekly
+  open-pull-requests-limit: 10
+  target-branch: master
+- package-ecosystem: pip
+  directory: /dependencies/pytest-min
+  schedule:
+    interval: weekly
   open-pull-requests-limit: 10
   target-branch: master
 - package-ecosystem: github-actions
