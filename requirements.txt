@@ -1,0 +1,3 @@
+# Always adjust install_requires in setup.cfg when changing runtime dependencies
+pytest==6.2.5
+typing-extensions >= 3.7.2; python_version < "3.8"
