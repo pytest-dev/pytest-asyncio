@@ -2,6 +2,10 @@
 Changelog
 =========
 
+UNRELEASED
+=================
+- Removes `setup.py` since all relevant configuration is present `setup.cfg`. Users requiring an editable installation of pytest-asyncio need to use pip v21.1 or newer. `#283 <https://github.com/pytest-dev/pytest-asyncio/issues/283>`_
+
 0.18.3 (22-03-25)
 =================
 - Adds `pytest-trio <https://pypi.org/project/pytest-trio/>`_ to the test dependencies
