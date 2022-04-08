@@ -42,7 +42,7 @@ jobs:
       id: version
       run: tox -e version-info
     - name: Upload artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: dist
         path: dist
