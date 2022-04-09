@@ -9,7 +9,7 @@ mypy==0.942
 mypy-extensions==0.4.3
 outcome==1.1.0
 packaging==21.3
-pluggy==0.13.1
+pluggy==1.0.0
 py==1.11.0
 pyparsing==3.0.7
 pytest==6.1.0
