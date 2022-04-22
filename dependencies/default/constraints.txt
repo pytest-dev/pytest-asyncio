@@ -2,7 +2,7 @@ async-generator==1.10
 attrs==21.4.0
 coverage==6.3.2
 flaky==3.7.0
-hypothesis==6.42.3
+hypothesis==6.43.3
 idna==3.3
 importlib-metadata==4.11.3
 iniconfig==1.1.1
