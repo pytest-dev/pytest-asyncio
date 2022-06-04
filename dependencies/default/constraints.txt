@@ -6,7 +6,7 @@ hypothesis==6.46.9
 idna==3.3
 importlib-metadata==4.11.4
 iniconfig==1.1.1
-mypy==0.950
+mypy==0.960
 mypy-extensions==0.4.3
 outcome==1.1.0
 packaging==21.3
