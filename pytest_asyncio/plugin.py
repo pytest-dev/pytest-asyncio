@@ -95,7 +95,7 @@ def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager) -> None
     parser.addini(
         "asyncio_mode",
         help="default value for --asyncio-mode",
-        default="legacy",
+        default="strict",
     )
 
 
