@@ -8,7 +8,7 @@ importlib-metadata==4.11.4
 iniconfig==1.1.1
 mypy==0.961
 mypy-extensions==0.4.3
-outcome==1.1.0
+outcome==1.2.0
 packaging==21.3
 pluggy==1.0.0
 py==1.11.0
