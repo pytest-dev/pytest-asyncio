@@ -153,9 +153,8 @@ event loop. This will take effect even if you're using the
         yield loop
         loop.close()
 
-If the ``pytest.mark.asyncio`` marker is applied, a pytest hook will
-ensure the produced loop is set as the default global loop.
-Fixtures depending on the ``event_loop`` fixture can expect the policy to be properly modified when they run.
+If the ``pytest.mark.asyncio`` marker is applied to a test function, the ``event_loop``
+fixture will be requested automatically by the test function.
 
 ``unused_tcp_port``
 ~~~~~~~~~~~~~~~~~~~
