@@ -140,18 +140,20 @@ for treating test functions like coroutines.
         resp = event_loop.run_until_complete(http_client(url))
         assert b"HTTP/1.1 200 OK" in resp
 
-This fixture can be easily overridden in any of the standard pytest locations
-(e.g. directly in the test file, or in ``conftest.py``) to use a non-default
-event loop. This will take effect even if you're using the
-``pytest.mark.asyncio`` marker and not the ``event_loop`` fixture directly.
+The ``event_loop`` fixture can be overridden in any of the standard pytest locations,
+e.g. directly in the test file, or in ``conftest.py``. This allows redefining the
+fixture scope, for example:
 
 .. code-block:: python
 
-    @pytest.fixture
+    @pytest.fixture(scope="session")
     def event_loop():
-        loop = MyCustomLoop()
+        policy = asyncio.get_event_loop_policy()
+        loop = policy.new_event_loop()
         yield loop
         loop.close()
+
+If you need to change the type of the event loop, prefer setting a custom event loop policy over  redefining the ``event_loop`` fixture.
 
 If the ``pytest.mark.asyncio`` marker is applied to a test function, the ``event_loop``
 fixture will be requested automatically by the test function.
