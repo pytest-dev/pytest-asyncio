@@ -123,18 +123,15 @@ Fixtures
 
 ``event_loop``
 ~~~~~~~~~~~~~~
-Creates and injects a new instance of the default asyncio event loop. By
-default, the loop will be closed at the end of the test (i.e. the default
-fixture scope is ``function``).
+Creates a new asyncio event loop based on the current event loop policy. The new loop
+is available as the return value of this fixture or via `asyncio.get_running_loop <https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.get_running_loop>`__.
+The event loop is closed when the fixture scope ends. The fixture scope defaults
+to ``function`` scope.
 
 Note that just using the ``event_loop`` fixture won't make your test function
 a coroutine. You'll need to interact with the event loop directly, using methods
 like ``event_loop.run_until_complete``. See the ``pytest.mark.asyncio`` marker
 for treating test functions like coroutines.
-
-Simply using this fixture will not set the generated event loop as the
-default asyncio event loop, or change the asyncio event loop policy in any way.
-Use ``pytest.mark.asyncio`` for this purpose.
 
 .. code-block:: python
 
@@ -143,22 +140,23 @@ Use ``pytest.mark.asyncio`` for this purpose.
         resp = event_loop.run_until_complete(http_client(url))
         assert b"HTTP/1.1 200 OK" in resp
 
-This fixture can be easily overridden in any of the standard pytest locations
-(e.g. directly in the test file, or in ``conftest.py``) to use a non-default
-event loop. This will take effect even if you're using the
-``pytest.mark.asyncio`` marker and not the ``event_loop`` fixture directly.
+The ``event_loop`` fixture can be overridden in any of the standard pytest locations,
+e.g. directly in the test file, or in ``conftest.py``. This allows redefining the
+fixture scope, for example:
 
 .. code-block:: python
 
-    @pytest.fixture
+    @pytest.fixture(scope="session")
     def event_loop():
-        loop = MyCustomLoop()
+        policy = asyncio.get_event_loop_policy()
+        loop = policy.new_event_loop()
         yield loop
         loop.close()
 
-If the ``pytest.mark.asyncio`` marker is applied, a pytest hook will
-ensure the produced loop is set as the default global loop.
-Fixtures depending on the ``event_loop`` fixture can expect the policy to be properly modified when they run.
+If you need to change the type of the event loop, prefer setting a custom event loop policy over  redefining the ``event_loop`` fixture.
+
+If the ``pytest.mark.asyncio`` marker is applied to a test function, the ``event_loop``
+fixture will be requested automatically by the test function.
 
 ``unused_tcp_port``
 ~~~~~~~~~~~~~~~~~~~
