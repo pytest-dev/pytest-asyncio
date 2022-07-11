@@ -6,7 +6,7 @@ UNRELEASED
 =================
 - BREAKING: The default ``asyncio_mode`` is now *strict*. `#293 <https://github.com/pytest-dev/pytest-asyncio/issues/293>`_
 - Removes `setup.py` since all relevant configuration is present `setup.cfg`. Users requiring an editable installation of pytest-asyncio need to use pip v21.1 or newer. `#283 <https://github.com/pytest-dev/pytest-asyncio/issues/283>`_
-- Add support for Python 3.11.
+- Declare support for Python 3.11.
 
 0.18.3 (22-03-25)
 =================
