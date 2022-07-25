@@ -118,7 +118,7 @@ jobs:
       run: |
         pandoc -s -o README.md README.rst
     - name: PyPI upload
-      uses: pypa/gh-action-pypi-publish@v1.5.0
+      uses: pypa/gh-action-pypi-publish@v1.5.1
       with:
         packages_dir: dist
         password: ${{ secrets.PYPI_API_TOKEN }}
