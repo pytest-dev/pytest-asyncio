@@ -1,5 +1,5 @@
 async-generator==1.10
-attrs==21.4.0
+attrs==22.1.0
 coverage==6.4.3
 flaky==3.7.0
 hypothesis==6.54.1
