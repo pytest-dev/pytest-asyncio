@@ -2,6 +2,10 @@
 Changelog
 =========
 
+UNRELEASED
+=================
+- Fixed an issue which prevented fixture setup from being cached. `#404 <https://github.com/pytest-dev/pytest-asyncio/pull/404>`_
+
 0.19.0 (22-07-13)
 =================
 - BREAKING: The default ``asyncio_mode`` is now *strict*. `#293 <https://github.com/pytest-dev/pytest-asyncio/issues/293>`_
