@@ -203,7 +203,7 @@ def _preprocess_async_fixtures(config: Config, holder: Set[FixtureDef]) -> None:
     fixturemanager = config.pluginmanager.get_plugin("funcmanage")
     for fixtures in fixturemanager._arg2fixturedefs.values():
         for fixturedef in fixtures:
-            if fixturedef is holder:
+            if fixturedef in holder:
                 continue
             func = fixturedef.func
             if not _is_coroutine_or_asyncgen(func):
