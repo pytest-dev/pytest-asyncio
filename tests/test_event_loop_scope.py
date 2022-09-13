@@ -34,4 +34,7 @@ def test_3():
 def test_4(event_loop):
     # If a test sets the loop to None -- pytest_fixture_post_finalizer()
     # still should work
+
+    # Close to avoid ResourceWarning about unclosed socket as a side effect
+    event_loop.close()
     asyncio.get_event_loop_policy().set_event_loop(None)
