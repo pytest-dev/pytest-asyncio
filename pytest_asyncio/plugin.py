@@ -494,7 +494,7 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
 @pytest.fixture
 def event_loop(request: "pytest.FixtureRequest") -> Iterator[asyncio.AbstractEventLoop]:
     """Create an instance of the default event loop for each test case."""
-    return asyncio.get_event_loop_policy().new_event_loop()
+    yield asyncio.get_event_loop_policy().new_event_loop()
     # Call the garbage collector to trigger ResourceWarning's as soon
     # as possible (these are triggered in various __del__ methods).
     # Without this, resources opened in one test can fail other tests
