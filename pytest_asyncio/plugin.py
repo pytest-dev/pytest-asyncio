@@ -364,7 +364,9 @@ def pytest_fixture_post_finalizer(fixturedef: FixtureDef, request: SubRequest) -
             # Cleanup code based on the implementation of asyncio.run()
             try:
                 if not loop.is_closed():
-                    asyncio.runners._cancel_all_tasks(loop)
+                    asyncio.runners._cancel_all_tasks(  # type: ignore[attr-defined]
+                        loop
+                    )
                     loop.run_until_complete(loop.shutdown_asyncgens())
                     if sys.version_info >= (3, 9):
                         loop.run_until_complete(loop.shutdown_default_executor())
