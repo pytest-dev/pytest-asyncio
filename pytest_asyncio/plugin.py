@@ -288,7 +288,7 @@ def _wrap_asyncgen(func: Callable[..., AsyncIterator[_R]]) -> Callable[..., _R]:
                     msg += "Yield only once."
                     raise ValueError(msg)
 
-            _loop_run_threadsafe(event_loop,async_finalizer())
+            _loop_run_threadsafe(event_loop, async_finalizer())
 
         result = _loop_run_threadsafe(event_loop, setup())
         request.addfinalizer(finalizer)
