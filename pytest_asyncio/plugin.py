@@ -288,9 +288,9 @@ def _wrap_asyncgen(func: Callable[..., AsyncIterator[_R]]) -> Callable[..., _R]:
                     msg += "Yield only once."
                     raise ValueError(msg)
 
-            event_loop.run_until_complete(async_finalizer())
+            _loop_run_threadsafe(event_loop,async_finalizer())
 
-        result = event_loop.run_until_complete(setup())
+        result = _loop_run_threadsafe(event_loop, setup())
         request.addfinalizer(finalizer)
         return result
 
@@ -306,7 +306,7 @@ def _wrap_async(func: Callable[..., Awaitable[_R]]) -> Callable[..., _R]:
             res = await func(**_add_kwargs(func, kwargs, event_loop, request))
             return res
 
-        return event_loop.run_until_complete(setup())
+        return _loop_run_threadsafe(event_loop, setup())
 
     return _async_fixture_wrapper
 
@@ -449,19 +449,38 @@ def wrap_in_sync(
                 )
             )
             return
-        task = asyncio.ensure_future(coro, loop=_loop)
-        try:
-            _loop.run_until_complete(task)
-        except BaseException:
-            # run_until_complete doesn't get the result from exceptions
-            # that are not subclasses of `Exception`. Consume all
-            # exceptions to prevent asyncio's warning from logging.
-            if task.done() and not task.cancelled():
-                task.exception()
-            raise
+        if _is_loop_on_different_thread(_loop):
+            asyncio.run_coroutine_threadsafe(coro, _loop).result()
+        else:
+            task = asyncio.ensure_future(coro, loop=_loop)
+            try:
+                _loop.run_until_complete(task)
+            except BaseException:
+                # run_until_complete doesn't get the result from exceptions
+                # that are not subclasses of `Exception`. Consume all
+                # exceptions to prevent asyncio's warning from logging.
+                if task.done() and not task.cancelled():
+                    task.exception()
+                raise
 
     inner._raw_test_func = func  # type: ignore[attr-defined]
     return inner
+
+
+def _is_loop_on_different_thread(loop):
+    try:
+        current_loop = asyncio.get_running_loop()
+    except RuntimeError:
+        # No loop is running
+        current_loop = None
+    return loop.is_running() and current_loop != loop
+
+
+def _loop_run_threadsafe(loop, coro):
+    if _is_loop_on_different_thread(loop):
+        return asyncio.run_coroutine_threadsafe(coro, loop).result()
+    else:
+        return loop.run_until_complete(coro)
 
 
 def pytest_runtest_setup(item: pytest.Item) -> None:
