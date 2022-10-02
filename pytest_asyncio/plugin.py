@@ -306,6 +306,8 @@ def pytest_collection_modifyitems(
       - Hypothesis tests wrapping coroutines
 
     """
+    if _get_asyncio_mode(config) != Mode.AUTO:
+        return
     function_items = (item for item in items if isinstance(item, Function))
     for function_item in function_items:
         function = function_item.obj
@@ -317,8 +319,7 @@ def pytest_collection_modifyitems(
             or _is_hypothesis_test(function)
             and _hypothesis_test_wraps_coroutine(function)
         ):
-            if _get_asyncio_mode(config) == Mode.AUTO:
-                function_item.add_marker("asyncio")
+            function_item.add_marker("asyncio")
 
 
 def _hypothesis_test_wraps_coroutine(function: Any) -> bool:
