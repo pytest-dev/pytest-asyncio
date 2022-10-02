@@ -42,7 +42,7 @@ async def test_fixture_with_params(fixture_with_params):
     assert fixture_with_params % 2 == 0
 
 
-@pytest.mark.parametrize("mode", ("auto", "strict", "legacy"))
+@pytest.mark.parametrize("mode", ("auto", "strict"))
 def test_sync_function_uses_async_fixture(testdir, mode):
     testdir.makepyfile(
         dedent(
