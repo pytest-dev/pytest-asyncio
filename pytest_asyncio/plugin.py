@@ -24,6 +24,7 @@ from typing import (
 )
 
 import pytest
+from pytest import Function, Session, Item
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -281,7 +282,7 @@ _HOLDER: Set[FixtureDef] = set()
 
 @pytest.mark.tryfirst
 def pytest_pycollect_makeitem(
-    collector: Union[pytest.Module, pytest.Class], name: str, obj: object
+        collector: Union[pytest.Module, pytest.Class], name: str, obj: object
 ) -> Union[
     None, pytest.Item, pytest.Collector, List[Union[pytest.Item, pytest.Collector]]
 ]:
@@ -289,26 +290,35 @@ def pytest_pycollect_makeitem(
     if not collector.funcnamefilter(name):
         return None
     _preprocess_async_fixtures(collector.config, _HOLDER)
-    if isinstance(obj, staticmethod):
-        # staticmethods need to be unwrapped.
-        obj = obj.__func__
-    if (
-        _is_coroutine(obj)
-        or _is_hypothesis_test(obj)
-        and _hypothesis_test_wraps_coroutine(obj)
-    ):
-        item = pytest.Function.from_parent(collector, name=name)
-        marker = item.get_closest_marker("asyncio")
-        if marker is not None:
-            return list(collector._genfunctions(name, obj))
-        else:
-            if _get_asyncio_mode(item.config) == Mode.AUTO:
-                # implicitly add asyncio marker if asyncio mode is on
-                ret = list(collector._genfunctions(name, obj))
-                for elem in ret:
-                    elem.add_marker("asyncio")
-                return ret  # type: ignore[return-value]
     return None
+
+
+def pytest_collection_modifyitems(
+    session: Session, config: Config, items: List[Item]
+) -> None:
+    """
+    Marks collected async test items as `asyncio` tests.
+
+    The mark is only applied in `AUTO` mode. It is applied to:
+
+      - coroutines
+      - staticmethods wrapping coroutines
+      - Hypothesis tests wrapping coroutines
+
+    """
+    function_items = (item for item in items if isinstance(item, Function))
+    for function_item in function_items:
+        function = function_item.obj
+        if isinstance(function, staticmethod):
+            # staticmethods need to be unwrapped.
+            function = function.__func__
+        if (
+            _is_coroutine(function)
+            or _is_hypothesis_test(function)
+            and _hypothesis_test_wraps_coroutine(function)
+        ):
+            if _get_asyncio_mode(config) == Mode.AUTO:
+                function_item.add_marker("asyncio")
 
 
 def _hypothesis_test_wraps_coroutine(function: Any) -> bool:
