@@ -6,7 +6,6 @@ import functools
 import inspect
 import socket
 import sys
-import warnings
 from typing import (
     Any,
     AsyncIterator,
@@ -55,22 +54,6 @@ SubRequest = Any  # pytest < 7.0
 class Mode(str, enum.Enum):
     AUTO = "auto"
     STRICT = "strict"
-    LEGACY = "legacy"
-
-
-LEGACY_MODE = DeprecationWarning(
-    "The 'asyncio_mode' default value will change to 'strict' in future, "
-    "please explicitly use 'asyncio_mode=strict' or 'asyncio_mode=auto' "
-    "in pytest configuration file."
-)
-
-LEGACY_ASYNCIO_FIXTURE = (
-    "'@pytest.fixture' is applied to {name} "
-    "in 'legacy' mode, "
-    "please replace it with '@pytest_asyncio.fixture' as a preparation "
-    "for switching to 'strict' mode (or use 'auto' mode to seamlessly handle "
-    "all these fixtures as asyncio-driven)."
-)
 
 
 ASYNCIO_MODE_HELP = """\
@@ -78,8 +61,6 @@ ASYNCIO_MODE_HELP = """\
 'strict' - for autoprocessing disabling (useful if different async frameworks \
 should be tested together, e.g. \
 both pytest-asyncio and pytest-trio are used in the same project)
-'legacy' - for keeping compatibility with pytest-asyncio<0.17: \
-auto-handling is disabled but pytest_asyncio.fixture usage is not enforced
 """
 
 
@@ -187,8 +168,6 @@ def pytest_configure(config: Config) -> None:
         "mark the test as a coroutine, it will be "
         "run using an asyncio event loop",
     )
-    if _get_asyncio_mode(config) == Mode.LEGACY:
-        config.issue_config_time_warning(LEGACY_MODE, stacklevel=2)
 
 
 @pytest.mark.tryfirst
@@ -217,20 +196,6 @@ def _preprocess_async_fixtures(config: Config, holder: Set[FixtureDef]) -> None:
                 elif asyncio_mode == Mode.AUTO:
                     # Enforce asyncio mode if 'auto'
                     _set_explicit_asyncio_mark(func)
-                elif asyncio_mode == Mode.LEGACY:
-                    _set_explicit_asyncio_mark(func)
-                    try:
-                        code = func.__code__
-                    except AttributeError:
-                        code = func.__func__.__code__
-                    name = (
-                        f"<fixture {func.__qualname__}, file={code.co_filename}, "
-                        f"line={code.co_firstlineno}>"
-                    )
-                    warnings.warn(
-                        LEGACY_ASYNCIO_FIXTURE.format(name=name),
-                        DeprecationWarning,
-                    )
 
             to_add = []
             for name in ("request", "event_loop"):

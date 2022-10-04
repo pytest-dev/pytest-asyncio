@@ -57,8 +57,7 @@ This is enough for pytest to pick up pytest-asyncio.
 Modes
 -----
 
-Starting from ``pytest-asyncio>=0.17``, three modes are provided: *auto*, *strict* and
-*legacy*. Starting from ``pytest-asyncio>=0.19`` the *strict* mode is the default.
+Pytest-asyncio provides two modes: *auto* and *strict* with *strict* mode being the default.
 
 The mode can be set by ``asyncio_mode`` configuration option in `configuration file
 <https://docs.pytest.org/en/latest/reference/customize.html>`_:
@@ -105,18 +104,6 @@ Please use this mode if multiple async frameworks should be combined in the same
 suite.
 
 This mode is used by default for the sake of project inter-compatibility.
-
-
-Legacy mode
-~~~~~~~~~~~
-
-This mode follows rules used by ``pytest-asyncio<0.17``: tests are not auto-marked but
-fixtures are.
-
-Deprecation warnings are emitted with suggestion to either switching to ``auto`` mode
-or using ``strict`` mode with ``@pytest_asyncio.fixture`` decorators.
-
-The default was changed to ``strict`` in ``pytest-asyncio>=0.19``.
 
 
 Fixtures
@@ -204,7 +191,7 @@ to redefine the ``event_loop`` fixture to have the same or broader scope.
 Async fixtures need the event loop, and so must have the same or narrower scope
 than the ``event_loop`` fixture.
 
-*auto* and *legacy* mode automatically converts async fixtures declared with the
+*auto* mode automatically converts async fixtures declared with the
 standard ``@pytest.fixture`` decorator to *asyncio-driven* versions.
 
 
