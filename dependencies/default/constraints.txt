@@ -1,6 +1,6 @@
 async-generator==1.10
 attrs==22.1.0
-coverage==6.4.4
+coverage==6.5.0
 flaky==3.7.0
 hypothesis==6.54.6
 idna==3.4
