@@ -186,11 +186,10 @@ def _preprocess_async_fixtures(
     fixturemanager = config.pluginmanager.get_plugin("funcmanage")
     for fixtures in fixturemanager._arg2fixturedefs.values():
         for fixturedef in fixtures:
-            if fixturedef in processed_fixturedefs:
-                continue
             func = fixturedef.func
-            if not _is_coroutine_or_asyncgen(func):
-                # Nothing to do with a regular fixture function
+            if fixturedef in processed_fixturedefs or not _is_coroutine_or_asyncgen(
+                func
+            ):
                 continue
             if not _is_asyncio_fixture_function(func) and asyncio_mode == Mode.STRICT:
                 # Ignore async fixtures without explicit asyncio mark in strict mode
