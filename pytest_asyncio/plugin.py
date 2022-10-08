@@ -121,7 +121,7 @@ def fixture(
     fixture_function: Optional[FixtureFunction] = None, **kwargs: Any
 ) -> Union[FixtureFunction, FixtureFunctionMarker]:
     if fixture_function is not None:
-        _set_explicit_asyncio_mark(fixture_function)
+        _make_asyncio_fixture_function(fixture_function)
         return pytest.fixture(fixture_function, **kwargs)
 
     else:
@@ -133,12 +133,12 @@ def fixture(
         return inner
 
 
-def _has_explicit_asyncio_mark(obj: Any) -> bool:
+def _is_asyncio_fixture_function(obj: Any) -> bool:
     obj = getattr(obj, "__func__", obj)  # instance method maybe?
     return getattr(obj, "_force_asyncio_fixture", False)
 
 
-def _set_explicit_asyncio_mark(obj: Any) -> None:
+def _make_asyncio_fixture_function(obj: Any) -> None:
     if hasattr(obj, "__func__"):
         # instance method, check the function object
         obj = obj.__func__
@@ -189,14 +189,14 @@ def _preprocess_async_fixtures(config: Config, holder: Set[FixtureDef]) -> None:
             if not _is_coroutine_or_asyncgen(func):
                 # Nothing to do with a regular fixture function
                 continue
-            if not _has_explicit_asyncio_mark(func):
+            if not _is_asyncio_fixture_function(func):
                 if asyncio_mode == Mode.STRICT:
                     # Ignore async fixtures without explicit asyncio mark in strict mode
                     # This applies to pytest_trio fixtures, for example
                     continue
                 elif asyncio_mode == Mode.AUTO:
                     # Enforce asyncio mode if 'auto'
-                    _set_explicit_asyncio_mark(func)
+                    _make_asyncio_fixture_function(func)
 
             to_add = []
             for name in ("request", "event_loop"):
@@ -211,7 +211,7 @@ def _preprocess_async_fixtures(config: Config, holder: Set[FixtureDef]) -> None:
             elif inspect.iscoroutinefunction(func):
                 fixturedef.func = _wrap_async(func)
 
-            assert _has_explicit_asyncio_mark(fixturedef.func)
+            assert _is_asyncio_fixture_function(fixturedef.func)
             holder.add(fixturedef)
 
 
