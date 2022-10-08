@@ -192,13 +192,11 @@ def _preprocess_async_fixtures(
             if not _is_coroutine_or_asyncgen(func):
                 # Nothing to do with a regular fixture function
                 continue
-            if not _is_asyncio_fixture_function(func):
-                if asyncio_mode == Mode.STRICT:
-                    # Ignore async fixtures without explicit asyncio mark in strict mode
-                    # This applies to pytest_trio fixtures, for example
-                    continue
-                # Enforce asyncio mode if 'auto'
-                _make_asyncio_fixture_function(func)
+            if not _is_asyncio_fixture_function(func) and asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                continue
+            _make_asyncio_fixture_function(func)
 
             to_add = []
             for name in ("request", "event_loop"):
