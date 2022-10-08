@@ -178,12 +178,15 @@ def pytest_report_header(config: Config) -> List[str]:
     return [f"asyncio: mode={mode}"]
 
 
-def _preprocess_async_fixtures(config: Config, holder: Set[FixtureDef]) -> None:
+def _preprocess_async_fixtures(
+    config: Config,
+    processed_fixturedefs: Set[FixtureDef],
+) -> None:
     asyncio_mode = _get_asyncio_mode(config)
     fixturemanager = config.pluginmanager.get_plugin("funcmanage")
     for fixtures in fixturemanager._arg2fixturedefs.values():
         for fixturedef in fixtures:
-            if fixturedef in holder:
+            if fixturedef in processed_fixturedefs:
                 continue
             func = fixturedef.func
             if not _is_coroutine_or_asyncgen(func):
@@ -211,7 +214,7 @@ def _preprocess_async_fixtures(config: Config, holder: Set[FixtureDef]) -> None:
                 fixturedef.func = _wrap_async(func)
 
             assert _is_asyncio_fixture_function(fixturedef.func)
-            holder.add(fixturedef)
+            processed_fixturedefs.add(fixturedef)
 
 
 def _add_kwargs(
