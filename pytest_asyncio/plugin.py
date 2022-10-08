@@ -196,15 +196,7 @@ def _preprocess_async_fixtures(
                 # This applies to pytest_trio fixtures, for example
                 continue
             _make_asyncio_fixture_function(func)
-
-            to_add = []
-            for name in ("request", "event_loop"):
-                if name not in fixturedef.argnames:
-                    to_add.append(name)
-
-            if to_add:
-                fixturedef.argnames += tuple(to_add)
-
+            _inject_fixture_argnames(fixturedef)
             if inspect.isasyncgenfunction(func):
                 fixturedef.func = _wrap_asyncgen(func)
             elif inspect.iscoroutinefunction(func):
@@ -212,6 +204,18 @@ def _preprocess_async_fixtures(
 
             assert _is_asyncio_fixture_function(fixturedef.func)
             processed_fixturedefs.add(fixturedef)
+
+
+def _inject_fixture_argnames(fixturedef: FixtureDef) -> None:
+    """
+    Ensures that `request` and `event_loop` are arguments of the specified fixture.
+    """
+    to_add = []
+    for name in ("request", "event_loop"):
+        if name not in fixturedef.argnames:
+            to_add.append(name)
+    if to_add:
+        fixturedef.argnames += tuple(to_add)
 
 
 def _add_kwargs(
