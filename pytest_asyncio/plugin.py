@@ -6,6 +6,7 @@ import functools
 import inspect
 import socket
 import sys
+import warnings
 from typing import (
     Any,
     AsyncIterator,
@@ -168,6 +169,14 @@ def pytest_configure(config: Config) -> None:
         "mark the test as a coroutine, it will be "
         "run using an asyncio event loop",
     )
+
+    if getattr(pytest, "__version_tuple__", (0, 0, 0) < (7,)):
+        warnings.warn(
+            "You're using an outdated version of pytest. Newer releases of "
+            "pytest-asyncio will not be compatible with this pytest version. "
+            "Please update pytest to version 7 or later.",
+            DeprecationWarning,
+        )
 
 
 @pytest.mark.tryfirst

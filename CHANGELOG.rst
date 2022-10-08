@@ -5,6 +5,7 @@ Changelog
 UNRELEASED
 =================
 - BREAKING: Removed *legacy* mode. If you're upgrading from v0.19 and you haven't configured ``asyncio_mode = legacy``, you can upgrade without taking any additional action. If you're upgrading from an earlier version or you have explicitly enabled *legacy* mode, you need to switch to *auto* or *strict* mode before upgrading to this version.
+- Deprecate use of pytest v6.
 - Fixed an issue which prevented fixture setup from being cached. `#404 <https://github.com/pytest-dev/pytest-asyncio/pull/404>`_
 
 0.19.0 (22-07-13)
