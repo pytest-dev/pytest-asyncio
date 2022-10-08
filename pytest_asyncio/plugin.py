@@ -197,11 +197,7 @@ def _preprocess_async_fixtures(
                 continue
             _make_asyncio_fixture_function(func)
             _inject_fixture_argnames(fixturedef)
-            if inspect.isasyncgenfunction(func):
-                fixturedef.func = _wrap_asyncgen(func)
-            elif inspect.iscoroutinefunction(func):
-                fixturedef.func = _wrap_async(func)
-
+            _synchronize_async_fixture(fixturedef)
             assert _is_asyncio_fixture_function(fixturedef.func)
             processed_fixturedefs.add(fixturedef)
 
@@ -216,6 +212,17 @@ def _inject_fixture_argnames(fixturedef: FixtureDef) -> None:
             to_add.append(name)
     if to_add:
         fixturedef.argnames += tuple(to_add)
+
+
+def _synchronize_async_fixture(fixturedef: FixtureDef) -> None:
+    """
+    Wraps the fixture function of an async fixture in a synchronous function.
+    """
+    func = fixturedef.func
+    if inspect.isasyncgenfunction(func):
+        fixturedef.func = _wrap_asyncgen(func)
+    elif inspect.iscoroutinefunction(func):
+        fixturedef.func = _wrap_async(func)
 
 
 def _add_kwargs(
