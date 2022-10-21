@@ -2,6 +2,10 @@
 Changelog
 =========
 
+0.20.1 (22-10-21)
+=================
+- Fixes an issue that warned about using an old version of pytest, even though the most recent version was installed. `#430 <https://github.com/pytest-dev/pytest-asyncio/issues/430>`_
+
 0.20.0 (22-10-21)
 =================
 - BREAKING: Removed *legacy* mode. If you're upgrading from v0.19 and you haven't configured ``asyncio_mode = legacy``, you can upgrade without taking any additional action. If you're upgrading from an earlier version or you have explicitly enabled *legacy* mode, you need to switch to *auto* or *strict* mode before upgrading to this version.
