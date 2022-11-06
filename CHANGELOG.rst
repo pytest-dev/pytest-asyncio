@@ -4,6 +4,7 @@ Changelog
 
 UNRELEASED
 =================
+- Fixes an issue with async fixtures that are defined as methods on a test class not being rebound to the actual test instance. `#197 <https://github.com/pytest-dev/pytest-asyncio/issues/197>`_
 - Replaced usage of deprecated ``@pytest.mark.tryfirst`` with ``@pytest.hookimpl(tryfirst=True)`` `#438 <https://github.com/pytest-dev/pytest-asyncio/pull/438>`_
 
 0.20.1 (22-10-21)

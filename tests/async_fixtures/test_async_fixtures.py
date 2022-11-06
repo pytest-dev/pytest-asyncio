@@ -23,3 +23,15 @@ async def test_async_fixture(async_fixture, mock):
     assert mock.call_count == 1
     assert mock.call_args_list[-1] == unittest.mock.call(START)
     assert async_fixture is RETVAL
+
+
+class TestAsyncFixtureMethod:
+    is_same_instance = False
+
+    @pytest.fixture(autouse=True)
+    async def async_fixture_method(self):
+        self.is_same_instance = True
+
+    @pytest.mark.asyncio
+    async def test_async_fixture_method(self):
+        assert self.is_same_instance

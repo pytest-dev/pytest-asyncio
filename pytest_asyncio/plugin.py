@@ -227,11 +227,10 @@ def _synchronize_async_fixture(fixturedef: FixtureDef) -> None:
     """
     Wraps the fixture function of an async fixture in a synchronous function.
     """
-    func = fixturedef.func
-    if inspect.isasyncgenfunction(func):
-        fixturedef.func = _wrap_asyncgen(func)
-    elif inspect.iscoroutinefunction(func):
-        fixturedef.func = _wrap_async(func)
+    if inspect.isasyncgenfunction(fixturedef.func):
+        _wrap_asyncgen_fixture(fixturedef)
+    elif inspect.iscoroutinefunction(fixturedef.func):
+        _wrap_async_fixture(fixturedef)
 
 
 def _add_kwargs(
@@ -249,14 +248,38 @@ def _add_kwargs(
     return ret
 
 
-def _wrap_asyncgen(func: Callable[..., AsyncIterator[_R]]) -> Callable[..., _R]:
-    @functools.wraps(func)
+def _perhaps_rebind_fixture_func(
+    func: _T, instance: Optional[Any], unittest: bool
+) -> _T:
+    if instance is not None:
+        # The fixture needs to be bound to the actual request.instance
+        # so it is bound to the same object as the test method.
+        unbound, cls = func, None
+        try:
+            unbound, cls = func.__func__, type(func.__self__)  # type: ignore
+        except AttributeError:
+            pass
+        # If unittest is true, the fixture is bound unconditionally.
+        # otherwise, only if the fixture was bound before to an instance of
+        # the same type.
+        if unittest or (cls is not None and isinstance(instance, cls)):
+            func = unbound.__get__(instance)  # type: ignore
+    return func
+
+
+def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
+    fixture = fixturedef.func
+
+    @functools.wraps(fixture)
     def _asyncgen_fixture_wrapper(
         event_loop: asyncio.AbstractEventLoop, request: SubRequest, **kwargs: Any
-    ) -> _R:
+    ):
+        func = _perhaps_rebind_fixture_func(
+            fixture, request.instance, fixturedef.unittest
+        )
         gen_obj = func(**_add_kwargs(func, kwargs, event_loop, request))
 
-        async def setup() -> _R:
+        async def setup():
             res = await gen_obj.__anext__()
             return res
 
@@ -279,21 +302,27 @@ def _wrap_asyncgen(func: Callable[..., AsyncIterator[_R]]) -> Callable[..., _R]:
         request.addfinalizer(finalizer)
         return result
 
-    return _asyncgen_fixture_wrapper
+    fixturedef.func = _asyncgen_fixture_wrapper
 
 
-def _wrap_async(func: Callable[..., Awaitable[_R]]) -> Callable[..., _R]:
-    @functools.wraps(func)
+def _wrap_async_fixture(fixturedef: FixtureDef) -> None:
+    fixture = fixturedef.func
+
+    @functools.wraps(fixture)
     def _async_fixture_wrapper(
         event_loop: asyncio.AbstractEventLoop, request: SubRequest, **kwargs: Any
-    ) -> _R:
-        async def setup() -> _R:
+    ):
+        func = _perhaps_rebind_fixture_func(
+            fixture, request.instance, fixturedef.unittest
+        )
+
+        async def setup():
             res = await func(**_add_kwargs(func, kwargs, event_loop, request))
             return res
 
         return event_loop.run_until_complete(setup())
 
-    return _async_fixture_wrapper
+    fixturedef.func = _async_fixture_wrapper
 
 
 _HOLDER: Set[FixtureDef] = set()
