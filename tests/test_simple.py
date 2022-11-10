@@ -240,7 +240,6 @@ async def test_no_warning_on_skip():
 
 def test_async_close_loop(event_loop):
     event_loop.close()
-    return "ok"
 
 
 def test_warn_asyncio_marker_for_regular_func(testdir):

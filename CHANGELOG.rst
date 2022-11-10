@@ -2,6 +2,10 @@
 Changelog
 =========
 
+UNRELEASED
+=================
+- Replaced usage of deprecated ``@pytest.mark.tryfirst`` with ``@pytest.hookimpl(tryfirst=True)`` `#438 <https://github.com/pytest-dev/pytest-asyncio/pull/438>`_
+
 0.20.1 (22-10-21)
 =================
 - Fixes an issue that warned about using an old version of pytest, even though the most recent version was installed. `#430 <https://github.com/pytest-dev/pytest-asyncio/issues/430>`_

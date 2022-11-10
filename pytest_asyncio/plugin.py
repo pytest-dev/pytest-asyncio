@@ -180,7 +180,7 @@ def pytest_configure(config: Config) -> None:
         )
 
 
-@pytest.mark.tryfirst
+@pytest.hookimpl(tryfirst=True)
 def pytest_report_header(config: Config) -> List[str]:
     """Add asyncio config to pytest header."""
     mode = _get_asyncio_mode(config)
@@ -299,7 +299,7 @@ def _wrap_async(func: Callable[..., Awaitable[_R]]) -> Callable[..., _R]:
 _HOLDER: Set[FixtureDef] = set()
 
 
-@pytest.mark.tryfirst
+@pytest.hookimpl(tryfirst=True)
 def pytest_pycollect_makeitem(
         collector: Union[pytest.Module, pytest.Class], name: str, obj: object
 ) -> Union[
