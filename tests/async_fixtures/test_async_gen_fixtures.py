@@ -36,3 +36,16 @@ async def test_async_gen_fixture_finalized(mock):
         assert mock.call_args_list[-1] == unittest.mock.call(END)
     finally:
         mock.reset_mock()
+
+
+class TestAsyncGenFixtureMethod:
+    is_same_instance = False
+
+    @pytest.fixture(autouse=True)
+    async def async_gen_fixture_method(self):
+        self.is_same_instance = True
+        yield None
+
+    @pytest.mark.asyncio
+    async def test_async_gen_fixture_method(self):
+        assert self.is_same_instance
