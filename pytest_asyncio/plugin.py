@@ -25,7 +25,7 @@ from typing import (
 )
 
 import pytest
-from pytest import Function, Session, Item
+from pytest import Function, Item, Session
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -89,11 +89,10 @@ def fixture(
     scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]" = ...,
     params: Optional[Iterable[object]] = ...,
     autouse: bool = ...,
-    ids: Optional[
-        Union[
-            Iterable[Union[None, str, float, int, bool]],
-            Callable[[Any], Optional[object]],
-        ]
+    ids: Union[
+        Iterable[Union[str, float, int, bool, None]],
+        Callable[[Any], Optional[object]],
+        None,
     ] = ...,
     name: Optional[str] = ...,
 ) -> FixtureFunction:
@@ -107,11 +106,10 @@ def fixture(
     scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]" = ...,
     params: Optional[Iterable[object]] = ...,
     autouse: bool = ...,
-    ids: Optional[
-        Union[
-            Iterable[Union[None, str, float, int, bool]],
-            Callable[[Any], Optional[object]],
-        ]
+    ids: Union[
+        Iterable[Union[str, float, int, bool, None]],
+        Callable[[Any], Optional[object]],
+        None,
     ] = ...,
     name: Optional[str] = None,
 ) -> FixtureFunctionMarker:
@@ -330,9 +328,9 @@ _HOLDER: Set[FixtureDef] = set()
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_pycollect_makeitem(
-        collector: Union[pytest.Module, pytest.Class], name: str, obj: object
+    collector: Union[pytest.Module, pytest.Class], name: str, obj: object
 ) -> Union[
-    None, pytest.Item, pytest.Collector, List[Union[pytest.Item, pytest.Collector]]
+    pytest.Item, pytest.Collector, List[Union[pytest.Item, pytest.Collector]], None
 ]:
     """A pytest hook to collect asyncio coroutines."""
     if not collector.funcnamefilter(name):

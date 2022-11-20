@@ -10,12 +10,11 @@ repos:
   hooks:
   - id: yesqa
 - repo: https://github.com/Zac-HD/shed
-  rev: 0.6.0     # 0.7 does not support Python 3.7
+  rev: 0.10.7
   hooks:
   - id: shed
     args:
     - --refactor
-    - --py37-plus
     types_or:
     - python
     - markdown
