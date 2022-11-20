@@ -283,22 +283,53 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
             res = await gen_obj.__anext__()
             return res
 
+        async def async_finalizer() -> None:
+            try:
+                await gen_obj.__anext__()
+            except StopAsyncIteration:
+                pass
+            else:
+                msg = "Async generator fixture didn't stop."
+                msg += "Yield only once."
+                raise ValueError(msg)
+
+        in_event = asyncio.Event()
+        out_queue = asyncio.Queue()
+
+        async def fixture_runner():
+            try:
+                result = await setup()
+            except Exception as exc:
+                out_queue.put_nowait((None, exc))
+            else:
+                out_queue.put_nowait((result, None))
+            await in_event.wait()
+            try:
+                await async_finalizer()
+            except Exception as exc:
+                out_queue.put_nowait(exc)
+            else:
+                out_queue.put_nowait(None)
+
+        task = event_loop.create_task(fixture_runner())
+
         def finalizer() -> None:
             """Yield again, to finalize."""
 
-            async def async_finalizer() -> None:
+            async def finalize():
+                in_event.set()
                 try:
-                    await gen_obj.__anext__()
-                except StopAsyncIteration:
-                    pass
-                else:
-                    msg = "Async generator fixture didn't stop."
-                    msg += "Yield only once."
-                    raise ValueError(msg)
+                    exc = await out_queue.get()
+                    if exc is not None:
+                        raise exc
+                finally:
+                    await task
 
-            event_loop.run_until_complete(async_finalizer())
+            event_loop.run_until_complete(finalize())
 
-        result = event_loop.run_until_complete(setup())
+        result, exc = event_loop.run_until_complete(out_queue.get())
+        if exc:
+            raise exc
         request.addfinalizer(finalizer)
         return result
 
