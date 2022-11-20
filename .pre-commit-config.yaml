@@ -57,7 +57,7 @@ repos:
     - -ignore
     - 'SC1004:'
 - repo: https://github.com/sirosen/check-jsonschema
-  rev: 0.9.1
+  rev: 0.19.2
   hooks:
   - id: check-github-actions
 ci:
