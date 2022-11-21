@@ -1,32 +1,31 @@
 ---
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.1.0
+  rev: v4.3.0
   hooks:
   - id: check-merge-conflict
     exclude: rst$
 - repo: https://github.com/asottile/yesqa
-  rev: v1.3.0
+  rev: v1.4.0
   hooks:
   - id: yesqa
 - repo: https://github.com/Zac-HD/shed
-  rev: 0.6.0     # 0.7 does not support Python 3.7
+  rev: 0.10.7
   hooks:
   - id: shed
     args:
     - --refactor
-    - --py37-plus
     types_or:
     - python
     - markdown
     - rst
 - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
-  rev: 0.1.1
+  rev: 0.2.2
   hooks:
   - id: yamlfmt
     args: [--mapping, '2', --sequence, '2', --offset, '0']
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.1.0
+  rev: v4.3.0
   hooks:
   - id: trailing-whitespace
   - id: end-of-file-fixer
@@ -37,8 +36,8 @@ repos:
   - id: check-xml
   - id: check-yaml
   - id: debug-statements
-- repo: https://gitlab.com/pycqa/flake8
-  rev: 3.9.2
+- repo: https://github.com/pycqa/flake8
+  rev: 5.0.4
   hooks:
   - id: flake8
     language_version: python3
@@ -47,7 +46,7 @@ repos:
   hooks:
   - id: python-use-type-annotations
 - repo: https://github.com/rhysd/actionlint
-  rev: v1.6.8
+  rev: v1.6.22
   hooks:
   - id: actionlint-docker
     args:
@@ -58,7 +57,7 @@ repos:
     - -ignore
     - 'SC1004:'
 - repo: https://github.com/sirosen/check-jsonschema
-  rev: 0.9.1
+  rev: 0.19.2
   hooks:
   - id: check-github-actions
 ci:

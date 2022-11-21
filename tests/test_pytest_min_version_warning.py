@@ -5,7 +5,7 @@ import pytest
 
 @pytest.mark.skipif(
     pytest.__version__ < "7.0.0",
-    reason="The warning shouldn't be present when run with recent pytest versions"
+    reason="The warning shouldn't be present when run with recent pytest versions",
 )
 @pytest.mark.parametrize("mode", ("auto", "strict"))
 def test_pytest_min_version_warning_is_not_triggered_for_pytest_7(testdir, mode):
