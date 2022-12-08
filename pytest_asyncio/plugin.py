@@ -401,7 +401,9 @@ def pytest_fixture_setup(
         loop = outcome.get_result()
         policy = asyncio.get_event_loop_policy()
         try:
-            old_loop = policy.get_event_loop()
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", DeprecationWarning)
+                old_loop = policy.get_event_loop()
             if old_loop is not loop:
                 old_loop.close()
         except RuntimeError:

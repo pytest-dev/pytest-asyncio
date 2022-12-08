@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.20.3 (22-12-08)
+=================
+- Prevent DeprecationWarning to bubble up on CPython 3.10.9 and 3.11.1.
+  `#460 <https://github.com/pytest-dev/pytest-asyncio/issues/460>`_
+
 0.20.2 (22-11-11)
 =================
 - Fixes an issue with async fixtures that are defined as methods on a test class not being rebound to the actual test instance. `#197 <https://github.com/pytest-dev/pytest-asyncio/issues/197>`_
