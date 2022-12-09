@@ -30,7 +30,7 @@ endif
 	python -m mypy pytest_asyncio
 
 test:
-	coverage run --parallel-mode -m pytest tests
+	coverage run --parallel-mode --omit */_version.py -m pytest tests
 
 install:
 	pip install -U pre-commit
