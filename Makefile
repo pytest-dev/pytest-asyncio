@@ -27,7 +27,7 @@ ifdef CI
 else
 	python -m pre_commit run --all-files
 endif
-	python -m mypy pytest_asyncio --show-error-codes
+	python -m mypy pytest_asyncio
 
 test:
 	coverage run -m pytest tests
