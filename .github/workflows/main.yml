@@ -74,9 +74,12 @@ jobs:
     - name: Run tox targets for ${{ matrix.python-version }}
       run: python -m tox
 
-    - name: Prepare coverage artifact
+    - name: Store coverage data
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-per-interpreter
+        path: .coverage.*
       if: ${{ contains(env.USING_COVERAGE, matrix.python-version) }}
-      uses: aio-libs/prepare-coverage@v21.9.1
 
   check:
     name: Check
@@ -88,8 +91,27 @@ jobs:
       uses: re-actors/alls-green@release/v1
       with:
         jobs: ${{ toJSON(needs) }}
-    - name: Upload coverage
-      uses: aio-libs/upload-coverage@v21.9.4
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+    - name: Install Coverage.py
+      run: |
+        set -xe
+        python -m pip install --upgrade coverage[toml]
+    - name: Download coverage data for all test runs
+      uses: actions/download-artifact@v3
+      with:
+        name: coverage-per-interpreter
+    - name: Combine coverage data and create report
+      run: |
+        coverage combine
+        coverage xml
+    - name: Upload coverage report
+      uses: codecov/codecov-action@v3
+      with:
+        files: coverage.xml
+        fail_ci_if_error: true
 
   deploy:
     name: Deploy
