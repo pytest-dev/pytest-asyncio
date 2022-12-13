@@ -3,7 +3,7 @@ attrs==22.1.0
 coverage==6.5.0
 exceptiongroup==1.0.4
 flaky==3.7.0
-hypothesis==6.60.0
+hypothesis==6.61.0
 idna==3.4
 importlib-metadata==5.1.0
 iniconfig==1.1.1
