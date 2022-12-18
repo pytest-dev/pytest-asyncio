@@ -26,12 +26,14 @@ jobs:
     - name: Install GitHub matcher for ActionLint checker
       run: |
         echo "::add-matcher::.github/actionlint-matcher.json"
+    - name: Install pre-commit
+      run: python -m pip install pre-commit
+    - name: Run pre-commit checks
+      run: pre-commit run --all-files --show-diff-on-failure
     - name: Install check-wheel-content, and twine
       run: python -m pip install build check-wheel-contents tox twine
     - name: Build package
       run: python -m build
-    - name: Run tox for linter
-      run: python -m tox -e lint
     - name: List result
       run: ls -l dist
     - name: Check wheel contents
