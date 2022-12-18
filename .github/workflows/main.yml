@@ -66,8 +66,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
     - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
