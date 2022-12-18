@@ -40,7 +40,7 @@ jobs:
       run: python -m twine check dist/*
     - name: Get version info
       id: version
-      run: tox -e version-info
+      run: tox -qq -e version-info >> $GITHUB_OUTPUT
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
