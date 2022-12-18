@@ -38,9 +38,11 @@ jobs:
       run: check-wheel-contents dist/*.whl
     - name: Check long_description
       run: python -m twine check dist/*
+    - name: Install pytest-asyncio
+      run: pip install .
     - name: Get version info
       id: version
-      run: tox -qq -e version-info >> $GITHUB_OUTPUT
+      run: python ./tools/get-version.py >> $GITHUB_OUTPUT
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
