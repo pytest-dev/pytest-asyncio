@@ -18,8 +18,8 @@ def test_strict_mode_ignores_trio_fixtures(testdir):
         @pytest.mark.trio
         async def test_anything(any_fixture):
             pass
-        """
-        )
+        """,
+        ),
     )
     result = testdir.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)

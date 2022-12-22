@@ -20,8 +20,8 @@ def test_auto_mode_cmdline(testdir):
             await asyncio.sleep(0.1)
             _threshold += 1
             assert _threshold != 1
-        """
-        )
+        """,
+        ),
     )
     # runpytest_subprocess() is required to don't pollute the output
     # with flaky restart information
@@ -39,5 +39,5 @@ def test_auto_mode_cmdline(testdir):
             "test_asyncio_flaky_thing_that_fails_then_succeeds passed 2 "
             "out of the required 2 times. Success!",
             "===End Flaky Test Report===",
-        ]
+        ],
     )

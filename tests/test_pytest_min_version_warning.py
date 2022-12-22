@@ -19,8 +19,8 @@ def test_pytest_min_version_warning_is_not_triggered_for_pytest_7(testdir, mode)
             @pytest.mark.asyncio
             async def test_triggers_pytest_warning():
                 pass
-            """
-        )
+            """,
+        ),
     )
     result = testdir.runpytest(f"--asyncio-mode={mode}")
     result.assert_outcomes(passed=1, warnings=0)

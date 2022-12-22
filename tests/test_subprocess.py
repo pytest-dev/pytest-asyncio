@@ -31,6 +31,8 @@ if sys.platform == "win32":
 async def test_subprocess(event_loop):
     """Starting a subprocess should be possible."""
     proc = await asyncio.subprocess.create_subprocess_exec(
-        sys.executable, "--version", stdout=asyncio.subprocess.PIPE
+        sys.executable,
+        "--version",
+        stdout=asyncio.subprocess.PIPE,
     )
     await proc.communicate()

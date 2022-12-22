@@ -164,9 +164,8 @@ def test_unused_port_factory_duplicate(unused_tcp_port_factory, monkeypatch):
         nonlocal counter
         counter += 1
         if counter < 5:
-            return 10000
-        else:
-            return 10000 + counter
+            return 1000
+        return 10000 + counter
 
     monkeypatch.setattr(pytest_asyncio.plugin, "_unused_port", mock_unused_tcp_port)
 
@@ -184,8 +183,7 @@ def test_unused_udp_port_factory_duplicate(unused_udp_port_factory, monkeypatch)
         counter += 1
         if counter < 5:
             return 10000
-        else:
-            return 10000 + counter
+        return 10000 + counter
 
     monkeypatch.setattr(pytest_asyncio.plugin, "_unused_port", mock_unused_udp_port)
 
@@ -253,8 +251,8 @@ def test_warn_asyncio_marker_for_regular_func(testdir):
         @pytest.mark.asyncio
         def test_a():
             pass
-        """
-        )
+        """,
+        ),
     )
     testdir.makefile(
         ".ini",
@@ -264,11 +262,11 @@ def test_warn_asyncio_marker_for_regular_func(testdir):
         asyncio_mode = strict
         filterwarnings =
             default
-    """
+    """,
         ),
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1)
     result.stdout.fnmatch_lines(
-        ["*is marked with '@pytest.mark.asyncio' but it is not an async function.*"]
+        ["*is marked with '@pytest.mark.asyncio' but it is not an async function.*"],
     )

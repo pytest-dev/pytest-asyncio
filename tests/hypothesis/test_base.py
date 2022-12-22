@@ -5,7 +5,8 @@ import asyncio
 from textwrap import dedent
 
 import pytest
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 
 
 @pytest.fixture(scope="module")
@@ -57,8 +58,8 @@ def test_async_auto_marked(testdir):
         @given(n=st.integers())
         async def test_hypothesis(n: int):
             assert isinstance(n, int)
-        """
-        )
+        """,
+        ),
     )
     result = testdir.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
@@ -81,8 +82,8 @@ def test_sync_not_auto_marked(testdir):
             markers = [marker.name for marker in request.node.own_markers]
             assert "asyncio" not in markers
             assert isinstance(n, int)
-        """
-        )
+        """,
+        ),
     )
     result = testdir.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)

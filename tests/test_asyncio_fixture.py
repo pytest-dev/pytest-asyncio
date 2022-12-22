@@ -57,8 +57,8 @@ def test_sync_function_uses_async_fixture(testdir, mode):
 
         def test_sync_function_uses_async_fixture(always_true):
            assert always_true is True
-        """
-        )
+        """,
+        ),
     )
     result = testdir.runpytest(f"--asyncio-mode={mode}")
     result.assert_outcomes(passed=1)

@@ -7,22 +7,9 @@ import inspect
 import socket
 import sys
 import warnings
-from typing import (
-    Any,
-    AsyncIterator,
-    Awaitable,
-    Callable,
-    Dict,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Set,
-    TypeVar,
-    Union,
-    cast,
-    overload,
-)
+from typing import (Any, AsyncIterator, Awaitable, Callable, Dict, Iterable,
+                    Iterator, List, Optional, Set, TypeVar, Union, cast,
+                    overload)
 
 import pytest
 from pytest import Function, Item, Session
@@ -38,10 +25,12 @@ _ScopeName = Literal["session", "package", "module", "class", "function"]
 _T = TypeVar("_T")
 
 SimpleFixtureFunction = TypeVar(
-    "SimpleFixtureFunction", bound=Callable[..., Awaitable[_R]]
+    "SimpleFixtureFunction",
+    bound=Callable[..., Awaitable[_R]],
 )
 FactoryFixtureFunction = TypeVar(
-    "FactoryFixtureFunction", bound=Callable[..., AsyncIterator[_R]]
+    "FactoryFixtureFunction",
+    bound=Callable[..., AsyncIterator[_R]],
 )
 FixtureFunction = Union[SimpleFixtureFunction, FactoryFixtureFunction]
 FixtureFunctionMarker = Callable[[FixtureFunction], FixtureFunction]
@@ -117,19 +106,18 @@ def fixture(
 
 
 def fixture(
-    fixture_function: Optional[FixtureFunction] = None, **kwargs: Any
+    fixture_function: Optional[FixtureFunction] = None,
+    **kwargs: Any,
 ) -> Union[FixtureFunction, FixtureFunctionMarker]:
     if fixture_function is not None:
         _make_asyncio_fixture_function(fixture_function)
         return pytest.fixture(fixture_function, **kwargs)
 
-    else:
+    @functools.wraps(fixture)
+    def inner(fixture_function: FixtureFunction) -> FixtureFunction:
+        return fixture(fixture_function, **kwargs)
 
-        @functools.wraps(fixture)
-        def inner(fixture_function: FixtureFunction) -> FixtureFunction:
-            return fixture(fixture_function, **kwargs)
-
-        return inner
+    return inner
 
 
 def _is_asyncio_fixture_function(obj: Any) -> bool:
@@ -195,7 +183,7 @@ def _preprocess_async_fixtures(
         for fixturedef in fixtures:
             func = fixturedef.func
             if fixturedef in processed_fixturedefs or not _is_coroutine_or_asyncgen(
-                func
+                func,
             ):
                 continue
             if not _is_asyncio_fixture_function(func) and asyncio_mode == Mode.STRICT:
@@ -247,7 +235,9 @@ def _add_kwargs(
 
 
 def _perhaps_rebind_fixture_func(
-    func: _T, instance: Optional[Any], unittest: bool
+    func: _T,
+    instance: Optional[Any],
+    unittest: bool,
 ) -> _T:
     if instance is not None:
         # The fixture needs to be bound to the actual request.instance
@@ -270,10 +260,14 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
 
     @functools.wraps(fixture)
     def _asyncgen_fixture_wrapper(
-        event_loop: asyncio.AbstractEventLoop, request: SubRequest, **kwargs: Any
+        event_loop: asyncio.AbstractEventLoop,
+        request: SubRequest,
+        **kwargs: Any,
     ):
         func = _perhaps_rebind_fixture_func(
-            fixture, request.instance, fixturedef.unittest
+            fixture,
+            request.instance,
+            fixturedef.unittest,
         )
         gen_obj = func(**_add_kwargs(func, kwargs, event_loop, request))
 
@@ -308,10 +302,14 @@ def _wrap_async_fixture(fixturedef: FixtureDef) -> None:
 
     @functools.wraps(fixture)
     def _async_fixture_wrapper(
-        event_loop: asyncio.AbstractEventLoop, request: SubRequest, **kwargs: Any
+        event_loop: asyncio.AbstractEventLoop,
+        request: SubRequest,
+        **kwargs: Any,
     ):
         func = _perhaps_rebind_fixture_func(
-            fixture, request.instance, fixturedef.unittest
+            fixture,
+            request.instance,
+            fixturedef.unittest,
         )
 
         async def setup():
@@ -328,9 +326,14 @@ _HOLDER: Set[FixtureDef] = set()
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_pycollect_makeitem(
-    collector: Union[pytest.Module, pytest.Class], name: str, obj: object
+    collector: Union[pytest.Module, pytest.Class],
+    name: str,
+    obj: object,
 ) -> Union[
-    pytest.Item, pytest.Collector, List[Union[pytest.Item, pytest.Collector]], None
+    pytest.Item,
+    pytest.Collector,
+    List[Union[pytest.Item, pytest.Collector]],
+    None,
 ]:
     """A pytest hook to collect asyncio coroutines."""
     if not collector.funcnamefilter(name):
@@ -340,7 +343,9 @@ def pytest_pycollect_makeitem(
 
 
 def pytest_collection_modifyitems(
-    session: Session, config: Config, items: List[Item]
+    session: Session,
+    config: Config,
+    items: List[Item],
 ) -> None:
     """
     Marks collected async test items as `asyncio` tests.
@@ -391,7 +396,8 @@ def pytest_fixture_post_finalizer(fixturedef: FixtureDef, request: SubRequest) -
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_fixture_setup(
-    fixturedef: FixtureDef, request: SubRequest
+    fixturedef: FixtureDef,
+    request: SubRequest,
 ) -> Optional[object]:
     """Adjust the event loop policy when an event loop is produced."""
     if fixturedef.argname == "event_loop":
@@ -451,7 +457,6 @@ def wrap_in_sync(
 ):
     """Return a sync wrapper around an async function executing it in the
     current event loop."""
-
     # if the function is already wrapped, we rewrap using the original one
     # not using __wrapped__ because the original function may already be
     # a wrapped one
@@ -469,8 +474,8 @@ def wrap_in_sync(
                     "but it is not an async function. "
                     "Please remove asyncio marker. "
                     "If the test is not marked explicitly, "
-                    "check for global markers applied via 'pytestmark'."
-                )
+                    "check for global markers applied via 'pytestmark'.",
+                ),
             )
             return
         task = asyncio.ensure_future(coro, loop=_loop)
@@ -499,11 +504,13 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
     fixturenames.insert(0, "event_loop")
     obj = getattr(item, "obj", None)
     if not getattr(obj, "hypothesis", False) and getattr(
-        obj, "is_hypothesis_test", False
+        obj,
+        "is_hypothesis_test",
+        False,
     ):
         pytest.fail(
             "test function `%r` is using Hypothesis, but pytest-asyncio "
-            "only works with Hypothesis 3.64.0 or later." % item
+            "only works with Hypothesis 3.64.0 or later." % item,
         )
 
 
