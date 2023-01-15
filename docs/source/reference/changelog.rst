@@ -2,6 +2,10 @@
 Changelog
 =========
 
+UNRELEASED
+=================
+- Drop compatibility with pytest 6.1. Pytest-asyncio now depends on pytest 7.0 or newer.
+
 0.20.3 (22-12-08)
 =================
 - Prevent DeprecationWarning to bubble up on CPython 3.10.9 and 3.11.1.
