@@ -20,15 +20,6 @@ clean-test: ## remove test and coverage artifacts
 	rm -f .coverage
 	rm -fr htmlcov/
 
-lint:
-# CI env-var is set by GitHub actions
-ifdef CI
-	python -m pre_commit run --all-files --show-diff-on-failure
-else
-	python -m pre_commit run --all-files
-endif
-	python -m mypy pytest_asyncio
-
 test:
 	coverage run --parallel-mode --omit */_version.py -m pytest tests
 
