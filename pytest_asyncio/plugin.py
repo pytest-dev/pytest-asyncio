@@ -25,7 +25,15 @@ from typing import (
 )
 
 import pytest
-from pytest import Config, Function, Item, Parser, PytestPluginManager, Session
+from pytest import (
+    Config,
+    FixtureRequest,
+    Function,
+    Item,
+    Parser,
+    PytestPluginManager,
+    Session,
+)
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -497,7 +505,7 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
 
 
 @pytest.fixture
-def event_loop(request: "pytest.FixtureRequest") -> Iterator[asyncio.AbstractEventLoop]:
+def event_loop(request: FixtureRequest) -> Iterator[asyncio.AbstractEventLoop]:
     """Create an instance of the default event loop for each test case."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
