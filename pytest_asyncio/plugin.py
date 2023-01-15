@@ -25,7 +25,7 @@ from typing import (
 )
 
 import pytest
-from pytest import Function, Item, Session
+from pytest import Config, Function, Item, Parser, PytestPluginManager, Session
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -46,10 +46,7 @@ FactoryFixtureFunction = TypeVar(
 FixtureFunction = Union[SimpleFixtureFunction, FactoryFixtureFunction]
 FixtureFunctionMarker = Callable[[FixtureFunction], FixtureFunction]
 
-Config = Any  # pytest < 7.0
-PytestPluginManager = Any  # pytest < 7.0
 FixtureDef = Any  # pytest < 7.0
-Parser = Any  # pytest < 7.0
 SubRequest = Any  # pytest < 7.0
 
 
