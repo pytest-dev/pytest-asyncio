@@ -166,14 +166,6 @@ def pytest_configure(config: Config) -> None:
         "run using an asyncio event loop",
     )
 
-    if getattr(pytest, "version_tuple", (0, 0, 0)) < (7,):
-        warnings.warn(
-            "You're using an outdated version of pytest. Newer releases of "
-            "pytest-asyncio will not be compatible with this pytest version. "
-            "Please update pytest to version 7 or later.",
-            DeprecationWarning,
-        )
-
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_report_header(config: Config) -> List[str]:
