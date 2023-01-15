@@ -54,8 +54,9 @@ FactoryFixtureFunction = TypeVar(
 FixtureFunction = Union[SimpleFixtureFunction, FactoryFixtureFunction]
 FixtureFunctionMarker = Callable[[FixtureFunction], FixtureFunction]
 
-FixtureDef = Any  # pytest < 7.0
-SubRequest = Any  # pytest < 7.0
+# https://github.com/pytest-dev/pytest/pull/9510
+FixtureDef = Any
+SubRequest = Any
 
 
 class Mode(str, enum.Enum):
