@@ -1,37 +1,48 @@
-"""Test the event loop fixture provides a separate loop for each test.
+from textwrap import dedent
 
-These tests need to be run together.
-"""
-import asyncio
-
-import pytest
-
-loop: asyncio.AbstractEventLoop
+from pytest import Pytester
 
 
-def test_1():
-    global loop
-    # The main thread should have a default event loop.
-    loop = asyncio.get_event_loop_policy().get_event_loop()
+def test_event_loop_fixture_finalizer_returns_fresh_loop_after_test(pytester: Pytester):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+
+            import pytest
+
+            loop = asyncio.get_event_loop_policy().get_event_loop()
+
+            @pytest.mark.asyncio
+            async def test_1():
+                # This async test runs in its own event loop
+                global loop
+                running_loop = asyncio.get_event_loop_policy().get_event_loop()
+                # Make sure this test case received a different loop
+                assert running_loop is not loop
+
+            def test_2():
+                # Code outside of pytest-asyncio should not receive a "used" event loop
+                current_loop = asyncio.get_event_loop_policy().get_event_loop()
+                assert not current_loop.is_running()
+                assert not current_loop.is_closed()
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=2)
 
 
-@pytest.mark.asyncio
-async def test_2():
-    global loop
-    running_loop = asyncio.get_event_loop_policy().get_event_loop()
-    # Make sure this test case received a different loop
-    assert running_loop is not loop
-    loop = running_loop  # Store the loop reference for later
+def test_event_loop_fixture_finalizer_can_handle_loop_set_to_none(pytester: Pytester):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
 
-
-def test_3():
-    global loop
-    current_loop = asyncio.get_event_loop_policy().get_event_loop()
-    # Now the event loop from test_2 should have been cleaned up
-    assert loop is not current_loop
-
-
-def test_4(event_loop):
-    # If a test sets the loop to None -- pytest_fixture_post_finalizer()
-    # still should work
-    asyncio.get_event_loop_policy().set_event_loop(None)
+            def test_anything(event_loop):
+                asyncio.get_event_loop_policy().set_event_loop(None)
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)
