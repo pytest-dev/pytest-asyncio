@@ -33,13 +33,53 @@ def test_event_loop_fixture_finalizer_returns_fresh_loop_after_test(pytester: Py
     result.assert_outcomes(passed=2)
 
 
-def test_event_loop_fixture_finalizer_can_handle_loop_set_to_none(pytester: Pytester):
+def test_event_loop_fixture_finalizer_handles_loop_set_to_none_sync(
+    pytester: Pytester,
+):
     pytester.makepyfile(
         dedent(
             """\
             import asyncio
 
-            def test_anything(event_loop):
+            def test_sync(event_loop):
+                asyncio.get_event_loop_policy().set_event_loop(None)
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)
+
+
+def test_event_loop_fixture_finalizer_handles_loop_set_to_none_async_without_fixture(
+    pytester: Pytester,
+):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+            import pytest
+
+            @pytest.mark.asyncio
+            async def test_async_without_explicit_fixture_request():
+                asyncio.get_event_loop_policy().set_event_loop(None)
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)
+
+
+def test_event_loop_fixture_finalizer_handles_loop_set_to_none_async_with_fixture(
+    pytester: Pytester,
+):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+            import pytest
+
+            @pytest.mark.asyncio
+            async def test_async_with_explicit_fixture_request(event_loop):
                 asyncio.get_event_loop_policy().set_event_loop(None)
             """
         )
