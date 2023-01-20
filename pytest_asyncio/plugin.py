@@ -25,7 +25,15 @@ from typing import (
 )
 
 import pytest
-from pytest import Function, Item, Session
+from pytest import (
+    Config,
+    FixtureRequest,
+    Function,
+    Item,
+    Parser,
+    PytestPluginManager,
+    Session,
+)
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -46,11 +54,9 @@ FactoryFixtureFunction = TypeVar(
 FixtureFunction = Union[SimpleFixtureFunction, FactoryFixtureFunction]
 FixtureFunctionMarker = Callable[[FixtureFunction], FixtureFunction]
 
-Config = Any  # pytest < 7.0
-PytestPluginManager = Any  # pytest < 7.0
-FixtureDef = Any  # pytest < 7.0
-Parser = Any  # pytest < 7.0
-SubRequest = Any  # pytest < 7.0
+# https://github.com/pytest-dev/pytest/pull/9510
+FixtureDef = Any
+SubRequest = Any
 
 
 class Mode(str, enum.Enum):
@@ -168,14 +174,6 @@ def pytest_configure(config: Config) -> None:
         "mark the test as a coroutine, it will be "
         "run using an asyncio event loop",
     )
-
-    if getattr(pytest, "version_tuple", (0, 0, 0)) < (7,):
-        warnings.warn(
-            "You're using an outdated version of pytest. Newer releases of "
-            "pytest-asyncio will not be compatible with this pytest version. "
-            "Please update pytest to version 7 or later.",
-            DeprecationWarning,
-        )
 
 
 @pytest.hookimpl(tryfirst=True)
@@ -508,7 +506,7 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
 
 
 @pytest.fixture
-def event_loop(request: "pytest.FixtureRequest") -> Iterator[asyncio.AbstractEventLoop]:
+def event_loop(request: FixtureRequest) -> Iterator[asyncio.AbstractEventLoop]:
     """Create an instance of the default event loop for each test case."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
