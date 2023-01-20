@@ -7,7 +7,7 @@ Welcome to pytest-asyncio!
   :hidden:
 
   concepts
-  reference
+  reference/index
   support
 
 pytest-asyncio is a `pytest <https://docs.pytest.org/en/latest/contents.html>`_ plugin. It facilitates testing of code that uses the `asyncio <https://docs.python.org/3/library/asyncio.html>`_ library.
