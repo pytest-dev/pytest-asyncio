@@ -372,7 +372,12 @@ def _hypothesis_test_wraps_coroutine(function: Any) -> bool:
 
 @pytest.hookimpl(trylast=True)
 def pytest_fixture_post_finalizer(fixturedef: FixtureDef, request: SubRequest) -> None:
-    """Called after fixture teardown"""
+    """
+    Called after fixture teardown.
+
+    Note that this function may be called multiple times for any specific fixture.
+    see https://github.com/pytest-dev/pytest/issues/5848
+    """
     if fixturedef.argname == "event_loop":
         policy = asyncio.get_event_loop_policy()
         try:
@@ -382,8 +387,13 @@ def pytest_fixture_post_finalizer(fixturedef: FixtureDef, request: SubRequest) -
         if loop is not None:
             # Clean up existing loop to avoid ResourceWarnings
             loop.close()
-        new_loop = policy.new_event_loop()  # Replace existing event loop
-        # Ensure subsequent calls to get_event_loop() succeed
+        # At this point, the event loop for the current thread is closed.
+        # When a user calls asyncio.get_event_loop(), they will get a closed loop.
+        # In order to avoid this side effect from pytest-asyncio, we need to replace
+        # the current loop with a fresh one.
+        # Note that we cannot set the loop to None, because get_event_loop only creates
+        # a new loop, when set_event_loop has not been called.
+        new_loop = policy.new_event_loop()
         policy.set_event_loop(new_loop)
 
 
