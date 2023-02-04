@@ -408,6 +408,9 @@ def pytest_fixture_setup(
 def _add_finalizers(fixturedef: FixtureDef, *finalizers: Callable[[], object]) -> None:
     """
     Regsiters the specified fixture finalizers in the fixture.
+
+    Finalizers need to specified in the exact order in which they should be invoked.
+
     :param fixturedef: Fixture definition which finalizers should be added to
     :param finalizers: Finalizers to be added
     """
