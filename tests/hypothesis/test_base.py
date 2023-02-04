@@ -6,6 +6,7 @@ from textwrap import dedent
 
 import pytest
 from hypothesis import given, strategies as st
+from pytest import Pytester
 
 
 @pytest.fixture(scope="module")
@@ -43,8 +44,8 @@ async def test_can_use_fixture_provided_event_loop(event_loop, n):
     await semaphore.acquire()
 
 
-def test_async_auto_marked(testdir):
-    testdir.makepyfile(
+def test_async_auto_marked(pytester: Pytester):
+    pytester.makepyfile(
         dedent(
             """\
         import asyncio
@@ -60,13 +61,13 @@ def test_async_auto_marked(testdir):
         """
         )
     )
-    result = testdir.runpytest("--asyncio-mode=auto")
+    result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
 
 
-def test_sync_not_auto_marked(testdir):
+def test_sync_not_auto_marked(pytester: Pytester):
     """Assert that synchronous Hypothesis functions are not marked with asyncio"""
-    testdir.makepyfile(
+    pytester.makepyfile(
         dedent(
             """\
         import asyncio
@@ -84,5 +85,5 @@ def test_sync_not_auto_marked(testdir):
         """
         )
     )
-    result = testdir.runpytest("--asyncio-mode=auto")
+    result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
