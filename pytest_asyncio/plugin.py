@@ -382,6 +382,7 @@ def pytest_fixture_setup(
         # for each fixture, whereas the hook may be invoked multiple times for
         # any specific fixture.
         # see https://github.com/pytest-dev/pytest/issues/5848
+        fixturedef.addfinalizer(_provide_clean_event_loop)
         fixturedef.addfinalizer(_close_event_loop)
         outcome = yield
         loop = outcome.get_result()
@@ -429,12 +430,16 @@ def _close_event_loop() -> None:
                 source=loop,
             )
         loop.close()
+
+
+def _provide_clean_event_loop() -> None:
     # At this point, the event loop for the current thread is closed.
     # When a user calls asyncio.get_event_loop(), they will get a closed loop.
     # In order to avoid this side effect from pytest-asyncio, we need to replace
     # the current loop with a fresh one.
     # Note that we cannot set the loop to None, because get_event_loop only creates
     # a new loop, when set_event_loop has not been called.
+    policy = asyncio.get_event_loop_policy()
     new_loop = policy.new_event_loop()
     policy.set_event_loop(new_loop)
 
