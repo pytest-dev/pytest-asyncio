@@ -382,8 +382,11 @@ def pytest_fixture_setup(
         # for each fixture, whereas the hook may be invoked multiple times for
         # any specific fixture.
         # see https://github.com/pytest-dev/pytest/issues/5848
-        fixturedef.addfinalizer(_provide_clean_event_loop)
-        fixturedef.addfinalizer(_close_event_loop)
+        _add_finalizers(
+            fixturedef,
+            _close_event_loop,
+            _provide_clean_event_loop,
+        )
         outcome = yield
         loop = outcome.get_result()
         policy = asyncio.get_event_loop_policy()
@@ -400,6 +403,16 @@ def pytest_fixture_setup(
         return
 
     yield
+
+
+def _add_finalizers(fixturedef: FixtureDef, *finalizers: Callable[[], object]) -> None:
+    """
+    Regsiters the specified fixture finalizers in the fixture.
+    :param fixturedef: Fixture definition which finalizers should be added to
+    :param finalizers: Finalizers to be added
+    """
+    for finalizer in reversed(finalizers):
+        fixturedef.addfinalizer(finalizer)
 
 
 _UNCLOSED_EVENT_LOOP_WARNING = dedent(
