@@ -86,3 +86,31 @@ def test_event_loop_fixture_finalizer_handles_loop_set_to_none_async_with_fixtur
     )
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
+
+
+def test_event_loop_fixture_finalizer_raises_warning_when_loop_is_unclosed(
+    pytester: Pytester,
+):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+            import pytest
+            import pytest_asyncio
+
+            pytest_plugins = 'pytest_asyncio'
+
+            @pytest.fixture
+            def event_loop():
+                loop = asyncio.get_event_loop_policy().new_event_loop()
+                yield loop
+
+            @pytest.mark.asyncio
+            async def test_ends_with_unclosed_loop():
+                pass
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
+    result.assert_outcomes(passed=1, warnings=1)
+    result.stdout.fnmatch_lines("*unclosed event loop*")

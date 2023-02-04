@@ -7,6 +7,7 @@ import inspect
 import socket
 import sys
 import warnings
+from textwrap import dedent
 from typing import (
     Any,
     AsyncIterator,
@@ -400,6 +401,17 @@ def pytest_fixture_setup(
     yield
 
 
+_UNCLOSED_EVENT_LOOP_WARNING = dedent(
+    """\
+    unclosed event loop %r.
+    Possible causes are:
+        1. A custom "event_loop" fixture is used which doesn't close the loop
+        2. Your code or one of your dependencies created a new event loop during
+           the test run
+    """
+)
+
+
 def _close_event_loop() -> None:
     policy = asyncio.get_event_loop_policy()
     try:
@@ -407,7 +419,15 @@ def _close_event_loop() -> None:
     except RuntimeError:
         loop = None
     if loop is not None:
-        # Clean up existing loop to avoid ResourceWarnings
+        # Emit ResourceWarnings in the context of the fixture/test case
+        # rather than waiting for the interpreter to trigger the warning when
+        # garbage collecting the event loop.
+        if not loop.is_closed():
+            warnings.warn(
+                _UNCLOSED_EVENT_LOOP_WARNING % loop,
+                ResourceWarning,
+                source=loop,
+            )
         loop.close()
     # At this point, the event loop for the current thread is closed.
     # When a user calls asyncio.get_event_loop(), they will get a closed loop.
