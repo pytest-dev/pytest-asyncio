@@ -10,7 +10,9 @@ import pytest
 @pytest.fixture(scope="module")
 def event_loop():
     """A module-scoped event loop."""
-    return asyncio.new_event_loop()
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
 
 
 @pytest.fixture(scope="module")
