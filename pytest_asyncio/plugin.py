@@ -7,6 +7,7 @@ import inspect
 import socket
 import sys
 import warnings
+from textwrap import dedent
 from typing import (
     Any,
     AsyncIterator,
@@ -370,39 +371,22 @@ def _hypothesis_test_wraps_coroutine(function: Any) -> bool:
     return _is_coroutine(function.hypothesis.inner_test)
 
 
-@pytest.hookimpl(trylast=True)
-def pytest_fixture_post_finalizer(fixturedef: FixtureDef, request: SubRequest) -> None:
-    """
-    Called after fixture teardown.
-
-    Note that this function may be called multiple times for any specific fixture.
-    see https://github.com/pytest-dev/pytest/issues/5848
-    """
-    if fixturedef.argname == "event_loop":
-        policy = asyncio.get_event_loop_policy()
-        try:
-            loop = policy.get_event_loop()
-        except RuntimeError:
-            loop = None
-        if loop is not None:
-            # Clean up existing loop to avoid ResourceWarnings
-            loop.close()
-        # At this point, the event loop for the current thread is closed.
-        # When a user calls asyncio.get_event_loop(), they will get a closed loop.
-        # In order to avoid this side effect from pytest-asyncio, we need to replace
-        # the current loop with a fresh one.
-        # Note that we cannot set the loop to None, because get_event_loop only creates
-        # a new loop, when set_event_loop has not been called.
-        new_loop = policy.new_event_loop()
-        policy.set_event_loop(new_loop)
-
-
 @pytest.hookimpl(hookwrapper=True)
 def pytest_fixture_setup(
     fixturedef: FixtureDef, request: SubRequest
 ) -> Optional[object]:
     """Adjust the event loop policy when an event loop is produced."""
     if fixturedef.argname == "event_loop":
+        # The use of a fixture finalizer is preferred over the
+        # pytest_fixture_post_finalizer hook. The fixture finalizer is invoked once
+        # for each fixture, whereas the hook may be invoked multiple times for
+        # any specific fixture.
+        # see https://github.com/pytest-dev/pytest/issues/5848
+        _add_finalizers(
+            fixturedef,
+            _close_event_loop,
+            _provide_clean_event_loop,
+        )
         outcome = yield
         loop = outcome.get_result()
         policy = asyncio.get_event_loop_policy()
@@ -419,6 +403,61 @@ def pytest_fixture_setup(
         return
 
     yield
+
+
+def _add_finalizers(fixturedef: FixtureDef, *finalizers: Callable[[], object]) -> None:
+    """
+    Regsiters the specified fixture finalizers in the fixture.
+
+    Finalizers need to specified in the exact order in which they should be invoked.
+
+    :param fixturedef: Fixture definition which finalizers should be added to
+    :param finalizers: Finalizers to be added
+    """
+    for finalizer in reversed(finalizers):
+        fixturedef.addfinalizer(finalizer)
+
+
+_UNCLOSED_EVENT_LOOP_WARNING = dedent(
+    """\
+    unclosed event loop %r.
+    Possible causes are:
+        1. A custom "event_loop" fixture is used which doesn't close the loop
+        2. Your code or one of your dependencies created a new event loop during
+           the test run
+    """
+)
+
+
+def _close_event_loop() -> None:
+    policy = asyncio.get_event_loop_policy()
+    try:
+        loop = policy.get_event_loop()
+    except RuntimeError:
+        loop = None
+    if loop is not None:
+        # Emit ResourceWarnings in the context of the fixture/test case
+        # rather than waiting for the interpreter to trigger the warning when
+        # garbage collecting the event loop.
+        if not loop.is_closed():
+            warnings.warn(
+                _UNCLOSED_EVENT_LOOP_WARNING % loop,
+                ResourceWarning,
+                source=loop,
+            )
+        loop.close()
+
+
+def _provide_clean_event_loop() -> None:
+    # At this point, the event loop for the current thread is closed.
+    # When a user calls asyncio.get_event_loop(), they will get a closed loop.
+    # In order to avoid this side effect from pytest-asyncio, we need to replace
+    # the current loop with a fresh one.
+    # Note that we cannot set the loop to None, because get_event_loop only creates
+    # a new loop, when set_event_loop has not been called.
+    policy = asyncio.get_event_loop_policy()
+    new_loop = policy.new_event_loop()
+    policy.set_event_loop(new_loop)
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
