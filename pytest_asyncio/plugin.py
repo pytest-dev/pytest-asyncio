@@ -397,7 +397,9 @@ def pytest_fixture_setup(
             if old_loop is not loop:
                 old_loop.close()
         except RuntimeError:
-            # Swallow this, since it's probably bad event loop hygiene.
+            # Either the current event loop has been set to None
+            # or the loop policy doesn't specify to create new loops
+            # or we're not in the main thread
             pass
         policy.set_event_loop(loop)
         return
