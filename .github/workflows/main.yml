@@ -60,11 +60,16 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11', 3.12-dev]
 
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
+      if: "!endsWith(matrix.python-version, '-dev')"
+      with:
+        python-version: ${{ matrix.python-version }}
+    - uses: deadsnakes/action@v3.0.0
+      if: endsWith(matrix.python-version, '-dev')
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
