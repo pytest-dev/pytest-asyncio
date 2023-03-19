@@ -5,7 +5,10 @@ Changelog
 UNRELEASED
 =================
 - Drop compatibility with pytest 6.1. Pytest-asyncio now depends on pytest 7.0 or newer.
-- event_loop fixture teardown emits a ResourceWarning when the current event loop has not been closed.
+- pytest-asyncio cleans up any stale event loops when setting up and tearing down the
+  event_loop fixture. This behavior has been deprecated and pytest-asyncio emits a
+  DeprecationWarning when tearing down the event_loop fixture and current event loop
+  has not been closed.
 
 0.20.3 (22-12-08)
 =================
