@@ -2,7 +2,7 @@
 Changelog
 =========
 
-UNRELEASED
+0.21.0 (23-03-19)
 =================
 - Drop compatibility with pytest 6.1. Pytest-asyncio now depends on pytest 7.0 or newer.
 - pytest-asyncio cleans up any stale event loops when setting up and tearing down the
