@@ -2,77 +2,77 @@
 Changelog
 =========
 
-0.21.0 (23-03-19)
-=================
+0.21.0 (2023-03-19)
+===================
 - Drop compatibility with pytest 6.1. Pytest-asyncio now depends on pytest 7.0 or newer.
 - pytest-asyncio cleans up any stale event loops when setting up and tearing down the
   event_loop fixture. This behavior has been deprecated and pytest-asyncio emits a
   DeprecationWarning when tearing down the event_loop fixture and current event loop
   has not been closed.
 
-0.20.3 (22-12-08)
-=================
+0.20.3 (2022-12-08)
+===================
 - Prevent DeprecationWarning to bubble up on CPython 3.10.9 and 3.11.1.
   `#460 <https://github.com/pytest-dev/pytest-asyncio/issues/460>`_
 
-0.20.2 (22-11-11)
-=================
+0.20.2 (2022-11-11)
+===================
 - Fixes an issue with async fixtures that are defined as methods on a test class not being rebound to the actual test instance. `#197 <https://github.com/pytest-dev/pytest-asyncio/issues/197>`_
 - Replaced usage of deprecated ``@pytest.mark.tryfirst`` with ``@pytest.hookimpl(tryfirst=True)`` `#438 <https://github.com/pytest-dev/pytest-asyncio/pull/438>`_
 
-0.20.1 (22-10-21)
-=================
+0.20.1 (2022-10-21)
+===================
 - Fixes an issue that warned about using an old version of pytest, even though the most recent version was installed. `#430 <https://github.com/pytest-dev/pytest-asyncio/issues/430>`_
 
-0.20.0 (22-10-21)
-=================
+0.20.0 (2022-10-21)
+===================
 - BREAKING: Removed *legacy* mode. If you're upgrading from v0.19 and you haven't configured ``asyncio_mode = legacy``, you can upgrade without taking any additional action. If you're upgrading from an earlier version or you have explicitly enabled *legacy* mode, you need to switch to *auto* or *strict* mode before upgrading to this version.
 - Deprecate use of pytest v6.
 - Fixed an issue which prevented fixture setup from being cached. `#404 <https://github.com/pytest-dev/pytest-asyncio/pull/404>`_
 
-0.19.0 (22-07-13)
-=================
+0.19.0 (2022-07-13)
+===================
 - BREAKING: The default ``asyncio_mode`` is now *strict*. `#293 <https://github.com/pytest-dev/pytest-asyncio/issues/293>`_
 - Removes `setup.py` since all relevant configuration is present `setup.cfg`. Users requiring an editable installation of pytest-asyncio need to use pip v21.1 or newer. `#283 <https://github.com/pytest-dev/pytest-asyncio/issues/283>`_
 - Declare support for Python 3.11.
 
-0.18.3 (22-03-25)
-=================
+0.18.3 (2022-03-25)
+===================
 - Adds `pytest-trio <https://pypi.org/project/pytest-trio/>`_ to the test dependencies
 - Fixes a bug that caused pytest-asyncio to try to set up async pytest_trio fixtures in strict mode. `#298 <https://github.com/pytest-dev/pytest-asyncio/issues/298>`_
 
-0.18.2 (22-03-03)
-=================
+0.18.2 (2022-03-03)
+===================
 - Fix asyncio auto mode not marking static methods. `#295 <https://github.com/pytest-dev/pytest-asyncio/issues/295>`_
 - Fix a compatibility issue with Hypothesis 6.39.0. `#302 <https://github.com/pytest-dev/pytest-asyncio/issues/302>`_
 
-0.18.1 (22-02-10)
-=================
+0.18.1 (2022-02-10)
+===================
 - Fixes a regression that prevented async fixtures from working in synchronous tests. `#286 <https://github.com/pytest-dev/pytest-asyncio/issues/286>`_
 
-0.18.0 (22-02-07)
-=================
+0.18.0 (2022-02-07)
+===================
 
 - Raise a warning if @pytest.mark.asyncio is applied to non-async function. `#275 <https://github.com/pytest-dev/pytest-asyncio/issues/275>`_
 - Support parametrized ``event_loop`` fixture. `#278 <https://github.com/pytest-dev/pytest-asyncio/issues/278>`_
 
-0.17.2 (22-01-17)
-=================
+0.17.2 (2022-01-17)
+===================
 
 - Require ``typing-extensions`` on Python<3.8 only. `#269 <https://github.com/pytest-dev/pytest-asyncio/issues/269>`_
 - Fix a regression in tests collection introduced by 0.17.1, the plugin works fine with non-python tests again. `#267 <https://github.com/pytest-dev/pytest-asyncio/issues/267>`_
 
 
-0.17.1 (22-01-16)
-=================
+0.17.1 (2022-01-16)
+===================
 - Fixes a bug that prevents async Hypothesis tests from working without explicit ``asyncio`` marker when ``--asyncio-mode=auto`` is set. `#258 <https://github.com/pytest-dev/pytest-asyncio/issues/258>`_
 - Fixed a bug that closes the default event loop if the loop doesn't exist `#257 <https://github.com/pytest-dev/pytest-asyncio/issues/257>`_
 - Added type annotations. `#198 <https://github.com/pytest-dev/pytest-asyncio/issues/198>`_
 - Show asyncio mode in pytest report headers. `#266 <https://github.com/pytest-dev/pytest-asyncio/issues/266>`_
 - Relax ``asyncio_mode`` type definition; it allows to support pytest 6.1+. `#262 <https://github.com/pytest-dev/pytest-asyncio/issues/262>`_
 
-0.17.0 (22-01-13)
-=================
+0.17.0 (2022-01-13)
+===================
 - `pytest-asyncio` no longer alters existing event loop policies. `#168 <https://github.com/pytest-dev/pytest-asyncio/issues/168>`_, `#188 <https://github.com/pytest-dev/pytest-asyncio/issues/168>`_
 - Drop support for Python 3.6
 - Fixed an issue when pytest-asyncio was used in combination with `flaky` or inherited asynchronous Hypothesis tests. `#178 <https://github.com/pytest-dev/pytest-asyncio/issues/178>`_ `#231 <https://github.com/pytest-dev/pytest-asyncio/issues/231>`_
