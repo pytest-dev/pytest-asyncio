@@ -10,7 +10,7 @@ iniconfig==2.0.0
 mypy==1.2.0
 mypy-extensions==1.0.0
 outcome==1.2.0
-packaging==23.0
+packaging==23.1
 pluggy==1.0.0
 pyparsing==3.0.9
 pytest==7.3.0
