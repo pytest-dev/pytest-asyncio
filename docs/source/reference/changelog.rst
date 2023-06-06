@@ -2,6 +2,10 @@
 Changelog
 =========
 
+0.22.0 (UNRELEASED)
+===================
+- Output a proper error message when an invalid ``asyncio_mode`` is selected.
+
 0.21.0 (2023-03-19)
 ===================
 - Drop compatibility with pytest 6.1. Pytest-asyncio now depends on pytest 7.0 or newer.
