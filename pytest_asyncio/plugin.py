@@ -164,7 +164,13 @@ def _get_asyncio_mode(config: Config) -> Mode:
     val = config.getoption("asyncio_mode")
     if val is None:
         val = config.getini("asyncio_mode")
-    return Mode(val)
+    try:
+        return Mode(val)
+    except ValueError:
+        modes = ", ".join(m.value for m in Mode)
+        raise pytest.UsageError(
+            f"{val!r} is not a valid asyncio_mode. Valid modes: {modes}."
+        )
 
 
 def pytest_configure(config: Config) -> None:

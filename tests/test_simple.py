@@ -272,3 +272,11 @@ def test_warn_asyncio_marker_for_regular_func(testdir):
     result.stdout.fnmatch_lines(
         ["*is marked with '@pytest.mark.asyncio' but it is not an async function.*"]
     )
+
+
+def test_invalid_asyncio_mode(testdir):
+    result = testdir.runpytest("-o", "asyncio_mode=True")
+    result.stderr.no_fnmatch_line("INTERNALERROR> *")
+    result.stderr.fnmatch_lines(
+        "ERROR: 'True' is not a valid asyncio_mode. Valid modes: auto, strict."
+    )
