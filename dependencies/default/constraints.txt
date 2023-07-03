@@ -20,5 +20,5 @@ sortedcontainers==2.4.0
 tomli==2.0.1
 trio==0.22.0
 typed-ast==1.5.4
-typing_extensions==4.6.3
+typing_extensions==4.7.1
 zipp==3.15.0
