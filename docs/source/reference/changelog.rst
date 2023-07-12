@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.22.0 (UNRELEASED)
+0.21.1 (2023-07-12)
 ===================
 - Output a proper error message when an invalid ``asyncio_mode`` is selected.
 - Extend warning message about unclosed event loops with additional possible cause.
