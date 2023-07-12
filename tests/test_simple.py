@@ -300,10 +300,6 @@ def test_asyncio_auto_mode_compatibility_with_skip(pytester: Pytester):
     result.assert_outcomes(skipped=1)
 
 
-def test_async_close_loop(event_loop):
-    event_loop.close()
-
-
 def test_warn_asyncio_marker_for_regular_func(testdir):
     testdir.makepyfile(
         dedent(
