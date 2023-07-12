@@ -2,6 +2,10 @@
 Changelog
 =========
 
+1.0.0 (UNRELEASED)
+==================
+- Remove support for Python 3.7
+
 0.21.1 (2023-07-12)
 ===================
 - Output a proper error message when an invalid ``asyncio_mode`` is selected.
