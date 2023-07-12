@@ -5,6 +5,8 @@ Changelog
 0.22.0 (UNRELEASED)
 ===================
 - Output a proper error message when an invalid ``asyncio_mode`` is selected.
+- Extend warning message about unclosed event loops with additional possible cause.
+  `#531 <https://github.com/pytest-dev/pytest-asyncio/issues/531>`_
 
 0.21.0 (2023-03-19)
 ===================
