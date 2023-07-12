@@ -3,6 +3,7 @@ import asyncio
 from textwrap import dedent
 
 import pytest
+from pytest import Pytester
 
 import pytest_asyncio.plugin
 
@@ -25,10 +26,23 @@ async def test_asyncio_marker():
     await asyncio.sleep(0)
 
 
-@pytest.mark.xfail(reason="need a failure", strict=True)
-@pytest.mark.asyncio
-async def test_asyncio_marker_fail():
-    raise AssertionError
+def test_asyncio_marker_compatibility_with_xfail(pytester: Pytester):
+    pytester.makepyfile(
+        dedent(
+            """\
+                import pytest
+
+                pytest_plugins = "pytest_asyncio"
+
+                @pytest.mark.xfail(reason="need a failure", strict=True)
+                @pytest.mark.asyncio
+                async def test_asyncio_marker_fail():
+                    raise AssertionError
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(xfailed=1)
 
 
 @pytest.mark.asyncio
