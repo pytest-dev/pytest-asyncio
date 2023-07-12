@@ -45,6 +45,24 @@ def test_asyncio_marker_compatibility_with_xfail(pytester: Pytester):
     result.assert_outcomes(xfailed=1)
 
 
+def test_asyncio_auto_mode_compatibility_with_xfail(pytester: Pytester):
+    pytester.makepyfile(
+        dedent(
+            """\
+                import pytest
+
+                pytest_plugins = "pytest_asyncio"
+
+                @pytest.mark.xfail(reason="need a failure", strict=True)
+                async def test_asyncio_marker_fail():
+                    raise AssertionError
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=auto")
+    result.assert_outcomes(xfailed=1)
+
+
 @pytest.mark.asyncio
 async def test_asyncio_marker_with_default_param(a_param=None):
     """Test the asyncio pytest marker."""
