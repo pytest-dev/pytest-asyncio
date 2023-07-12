@@ -27,4 +27,4 @@ are advised to use `unittest.IsolatedAsyncioTestCase <https://docs.python.org/3/
 or an async framework such as `asynctest <https://asynctest.readthedocs.io/en/latest>`__.
 
 
-pytest-asyncio is available under the `Apache License 2.0 <https://github.com/pytest-dev/pytest-asyncio/blob/master/LICENSE>`_.
+pytest-asyncio is available under the `Apache License 2.0 <https://github.com/pytest-dev/pytest-asyncio/blob/main/LICENSE>`_.
