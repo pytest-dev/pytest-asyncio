@@ -2,8 +2,8 @@
 Fixtures
 ========
 
-``event_loop``
-==============
+event_loop
+==========
 Creates a new asyncio event loop based on the current event loop policy. The new loop
 is available as the return value of this fixture or via `asyncio.get_running_loop <https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.get_running_loop>`__.
 The event loop is closed when the fixture scope ends. The fixture scope defaults
@@ -42,13 +42,13 @@ If you need to change the type of the event loop, prefer setting a custom event 
 If the ``pytest.mark.asyncio`` decorator is applied to a test function, the ``event_loop``
 fixture will be requested automatically by the test function.
 
-``unused_tcp_port``
-===================
+unused_tcp_port
+===============
 Finds and yields a single unused TCP port on the localhost interface. Useful for
 binding temporary test servers.
 
-``unused_tcp_port_factory``
-===========================
+unused_tcp_port_factory
+=======================
 A callable which returns a different unused TCP port each invocation. Useful
 when several unused TCP ports are required in a test.
 
@@ -58,6 +58,6 @@ when several unused TCP ports are required in a test.
         port1, port2 = unused_tcp_port_factory(), unused_tcp_port_factory()
         ...
 
-``unused_udp_port`` and ``unused_udp_port_factory``
-===================================================
+unused_udp_port and unused_udp_port_factory
+===========================================
 Works just like their TCP counterparts but returns unused UDP ports.
