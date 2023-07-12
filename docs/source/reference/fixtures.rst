@@ -25,12 +25,17 @@ fixture scope, for example:
 
 .. code-block:: python
 
-    @pytest.fixture(scope="session")
+    @pytest.fixture(scope="module")
     def event_loop():
         policy = asyncio.get_event_loop_policy()
         loop = policy.new_event_loop()
         yield loop
         loop.close()
+
+When defining multiple ``event_loop`` fixtures, you should ensure that their scopes don't overlap.
+Each of the fixtures replace the running event loop, potentially without proper clean up.
+This will emit a warning and likely lead to errors in your tests suite.
+You can manually check for overlapping ``event_loop`` fixtures by running pytest with the ``--setup-show`` option.
 
 If you need to change the type of the event loop, prefer setting a custom event loop policy over redefining the ``event_loop`` fixture.
 
