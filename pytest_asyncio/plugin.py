@@ -434,7 +434,8 @@ _UNCLOSED_EVENT_LOOP_WARNING = dedent(
     library will no longer do so. In order to ensure compatibility with future
     versions, please make sure that:
         1. Any custom "event_loop" fixture properly closes the loop after yielding it
-        2. Your code does not modify the event loop in async fixtures or tests
+        2. The scopes of your custom "event_loop" fixtures do not overlap
+        3. Your code does not modify the event loop in async fixtures or tests
     """
 )
 
