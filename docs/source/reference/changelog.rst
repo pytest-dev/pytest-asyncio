@@ -2,12 +2,12 @@
 Changelog
 =========
 
-0.22.0 (UNRELEASED)
+0.21.1 (2023-07-12)
 ===================
 - Output a proper error message when an invalid ``asyncio_mode`` is selected.
 - Extend warning message about unclosed event loops with additional possible cause.
   `#531 <https://github.com/pytest-dev/pytest-asyncio/issues/531>`_
-- Previously, some tests reported "skipped" or "xfailed" as a result. Now all tests report a "success" results.
+- Previously, some tests reported "skipped" or "xfailed" as a result. Now all tests report a "success" result.
 
 0.21.0 (2023-03-19)
 ===================
