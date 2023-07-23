@@ -7,6 +7,7 @@ Welcome to pytest-asyncio!
   :hidden:
 
   concepts
+  how-to-guides/index
   reference/index
   support
 
