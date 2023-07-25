@@ -21,7 +21,6 @@ from typing import (
     Set,
     TypeVar,
     Union,
-    cast,
     overload,
 )
 
@@ -509,19 +508,15 @@ def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> Optional[object]:
     """
     marker = pyfuncitem.get_closest_marker("asyncio")
     if marker is not None:
-        funcargs: Dict[str, object] = pyfuncitem.funcargs  # type: ignore[name-defined]
-        loop = cast(asyncio.AbstractEventLoop, funcargs["event_loop"])
         if _is_hypothesis_test(pyfuncitem.obj):
             pyfuncitem.obj.hypothesis.inner_test = wrap_in_sync(
                 pyfuncitem,
                 pyfuncitem.obj.hypothesis.inner_test,
-                _loop=loop,
             )
         else:
             pyfuncitem.obj = wrap_in_sync(
                 pyfuncitem,
                 pyfuncitem.obj,
-                _loop=loop,
             )
     yield
 
@@ -533,7 +528,6 @@ def _is_hypothesis_test(function: Any) -> bool:
 def wrap_in_sync(
     pyfuncitem: pytest.Function,
     func: Callable[..., Awaitable[Any]],
-    _loop: asyncio.AbstractEventLoop,
 ):
     """Return a sync wrapper around an async function executing it in the
     current event loop."""
@@ -559,6 +553,7 @@ def wrap_in_sync(
                 )
             )
             return
+        _loop = asyncio.get_event_loop()
         task = asyncio.ensure_future(coro, loop=_loop)
         try:
             _loop.run_until_complete(task)
