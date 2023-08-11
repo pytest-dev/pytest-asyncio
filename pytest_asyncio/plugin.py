@@ -38,6 +38,7 @@ from pytest import (
     Session,
     StashKey,
 )
+from typing_extensions import Self
 
 _R = TypeVar("_R")
 
@@ -356,6 +357,21 @@ def _wrap_async_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -> N
 class AsyncFunction(pytest.Function):
     """Pytest item that is a coroutine or an asynchronous generator"""
 
+    @classmethod
+    def from_function(cls, function: pytest.Function, /) -> Self:
+        """
+        Instantiates an AsyncFunction from the specified pytest.Function item.
+        """
+        return cls.from_parent(
+            function.parent,
+            name=function.name,
+            callspec=getattr(function, "callspec", None),
+            callobj=function.obj,
+            fixtureinfo=function._fixtureinfo,
+            keywords=function.keywords,
+            originalname=function.originalname,
+        )
+
 
 _HOLDER: Set[FixtureDef] = set()
 
@@ -396,27 +412,14 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
     except TypeError:
         # Treat single node as a single-element iterable
         node_iterator = iter((node_or_list_of_nodes,))
-    async_functions = []
-    for collector_or_item in node_iterator:
-        if not (
-            isinstance(collector_or_item, pytest.Function)
-            and _is_coroutine_or_asyncgen(obj)
-        ):
-            collector = collector_or_item
-            async_functions.append(collector)
-            continue
-        item = collector_or_item
-        async_function = AsyncFunction.from_parent(
-            item.parent,
-            name=item.name,
-            callspec=getattr(item, "callspec", None),
-            callobj=item.obj,
-            fixtureinfo=item._fixtureinfo,
-            keywords=item.keywords,
-            originalname=item.originalname,
-        )
-        async_functions.append(async_function)
-    hook_result.force_result(async_functions)
+    updated_node_collection = []
+    for node in node_iterator:
+        if isinstance(node, pytest.Function) and _is_coroutine_or_asyncgen(obj):
+            async_function = AsyncFunction.from_function(node)
+            updated_node_collection.append(async_function)
+        else:
+            updated_node_collection.append(node)
+    hook_result.force_result(updated_node_collection)
 
 
 _event_loop_fixture_id = StashKey[str]
