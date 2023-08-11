@@ -19,4 +19,5 @@ requests==2.28.1
 sortedcontainers==2.4.0
 tomli==2.0.1
 urllib3==1.26.12
+typing-extensions==4.7.1
 xmlschema==2.1.1
