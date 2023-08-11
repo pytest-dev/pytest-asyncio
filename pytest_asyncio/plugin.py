@@ -353,11 +353,17 @@ def _wrap_async_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -> N
     fixturedef.func = _async_fixture_wrapper
 
 
+class AsyncFunction(pytest.Function):
+    """Pytest item that is a coroutine or an asynchronous generator"""
+
+
 _HOLDER: Set[FixtureDef] = set()
 
 
-@pytest.hookimpl(tryfirst=True)
-def pytest_pycollect_makeitem(
+# The function name needs to start with "pytest_"
+# see https://github.com/pytest-dev/pytest/issues/11307
+@pytest.hookimpl(specname="pytest_pycollect_makeitem", tryfirst=True)
+def pytest_pycollect_makeitem_preprocess_async_fixtures(
     collector: Union[pytest.Module, pytest.Class], name: str, obj: object
 ) -> Union[
     pytest.Item, pytest.Collector, List[Union[pytest.Item, pytest.Collector]], None
@@ -367,6 +373,50 @@ def pytest_pycollect_makeitem(
         return None
     _preprocess_async_fixtures(collector, _HOLDER)
     return None
+
+
+# The function name needs to start with "pytest_"
+# see https://github.com/pytest-dev/pytest/issues/11307
+@pytest.hookimpl(specname="pytest_pycollect_makeitem", hookwrapper=True)
+def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
+    collector: Union[pytest.Module, pytest.Class], name: str, obj: object
+) -> Union[
+    pytest.Item, pytest.Collector, List[Union[pytest.Item, pytest.Collector]], None
+]:
+    """
+    Converts coroutines and async generators collected as pytest.Functions
+    to AsyncFunction items.
+    """
+    hook_result = yield
+    node_or_list_of_nodes = hook_result.get_result()
+    if not node_or_list_of_nodes:
+        return
+    try:
+        node_iterator = iter(node_or_list_of_nodes)
+    except TypeError:
+        # Treat single node as a single-element iterable
+        node_iterator = iter((node_or_list_of_nodes,))
+    async_functions = []
+    for collector_or_item in node_iterator:
+        if not (
+            isinstance(collector_or_item, pytest.Function)
+            and _is_coroutine_or_asyncgen(obj)
+        ):
+            collector = collector_or_item
+            async_functions.append(collector)
+            continue
+        item = collector_or_item
+        async_function = AsyncFunction.from_parent(
+            item.parent,
+            name=item.name,
+            callspec=getattr(item, "callspec", None),
+            callobj=item.obj,
+            fixtureinfo=item._fixtureinfo,
+            keywords=item.keywords,
+            originalname=item.originalname,
+        )
+        async_functions.append(async_function)
+    hook_result.force_result(async_functions)
 
 
 _event_loop_fixture_id = StashKey[str]
