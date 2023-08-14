@@ -672,10 +672,20 @@ def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> Optional[object]:
                 pyfuncitem,
                 pyfuncitem.obj.hypothesis.inner_test,
             )
-        else:
+        elif _is_coroutine_or_asyncgen(pyfuncitem.obj):
             pyfuncitem.obj = wrap_in_sync(
                 pyfuncitem,
                 pyfuncitem.obj,
+            )
+        else:
+            pyfuncitem.warn(
+                pytest.PytestWarning(
+                    f"The test {pyfuncitem} is marked with '@pytest.mark.asyncio' "
+                    "but it is not an async function. "
+                    "Please remove asyncio marker. "
+                    "If the test is not marked explicitly, "
+                    "check for global markers applied via 'pytestmark'."
+                )
             )
     yield
 
@@ -701,17 +711,6 @@ def wrap_in_sync(
     @functools.wraps(func)
     def inner(*args, **kwargs):
         coro = func(*args, **kwargs)
-        if not inspect.isawaitable(coro):
-            pyfuncitem.warn(
-                pytest.PytestWarning(
-                    f"The test {pyfuncitem} is marked with '@pytest.mark.asyncio' "
-                    "but it is not an async function. "
-                    "Please remove asyncio marker. "
-                    "If the test is not marked explicitly, "
-                    "check for global markers applied via 'pytestmark'."
-                )
-            )
-            return
         _loop = asyncio.get_event_loop()
         task = asyncio.ensure_future(coro, loop=_loop)
         try:
