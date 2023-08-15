@@ -373,6 +373,28 @@ class AsyncFunction(pytest.Function):
         )
 
 
+class AsyncHypothesisTest(pytest.Function):
+    """
+    Pytest item that is coroutine or an asynchronous generator decorated by
+    @hypothesis.given.
+    """
+
+    @classmethod
+    def from_function(cls, function: pytest.Function, /) -> Self:
+        """
+        Instantiates an AsyncFunction from the specified pytest.Function item.
+        """
+        return cls.from_parent(
+            function.parent,
+            name=function.name,
+            callspec=getattr(function, "callspec", None),
+            callobj=function.obj,
+            fixtureinfo=function._fixtureinfo,
+            keywords=function.keywords,
+            originalname=function.originalname,
+        )
+
+
 _HOLDER: Set[FixtureDef] = set()
 
 
@@ -414,11 +436,14 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
         node_iterator = iter((node_or_list_of_nodes,))
     updated_node_collection = []
     for node in node_iterator:
-        if isinstance(node, pytest.Function) and _is_coroutine_or_asyncgen(obj):
-            async_function = AsyncFunction.from_function(node)
-            updated_node_collection.append(async_function)
-        else:
-            updated_node_collection.append(node)
+        updated_item = node
+        if isinstance(node, pytest.Function):
+            if _is_coroutine_or_asyncgen(obj):
+                updated_item = AsyncFunction.from_function(node)
+            if _is_hypothesis_test(obj) and _hypothesis_test_wraps_coroutine(obj):
+                updated_item = AsyncHypothesisTest.from_function(node)
+        updated_node_collection.append(updated_item)
+
     hook_result.force_result(updated_node_collection)
 
 
