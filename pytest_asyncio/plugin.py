@@ -372,6 +372,14 @@ class AsyncFunction(pytest.Function):
             originalname=function.originalname,
         )
 
+    def runtest(self) -> None:
+        if self.get_closest_marker("asyncio"):
+            self.obj = wrap_in_sync(
+                self,
+                self.obj,
+            )
+        super().runtest()
+
 
 class AsyncStaticMethod(pytest.Function):
     """
@@ -394,6 +402,14 @@ class AsyncStaticMethod(pytest.Function):
             originalname=function.originalname,
         )
 
+    def runtest(self) -> None:
+        if self.get_closest_marker("asyncio"):
+            self.obj = wrap_in_sync(
+                self,
+                self.obj,
+            )
+        super().runtest()
+
 
 class AsyncHypothesisTest(pytest.Function):
     """
@@ -415,6 +431,14 @@ class AsyncHypothesisTest(pytest.Function):
             keywords=function.keywords,
             originalname=function.originalname,
         )
+
+    def runtest(self) -> None:
+        if self.get_closest_marker("asyncio"):
+            self.obj.hypothesis.inner_test = wrap_in_sync(
+                self,
+                self.obj.hypothesis.inner_test,
+            )
+        super().runtest()
 
 
 _HOLDER: Set[FixtureDef] = set()
@@ -718,16 +742,10 @@ def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> Optional[object]:
     """
     marker = pyfuncitem.get_closest_marker("asyncio")
     if marker is not None:
-        if _is_hypothesis_test(pyfuncitem.obj):
-            pyfuncitem.obj.hypothesis.inner_test = wrap_in_sync(
-                pyfuncitem,
-                pyfuncitem.obj.hypothesis.inner_test,
-            )
-        elif _is_coroutine_or_asyncgen(pyfuncitem.obj):
-            pyfuncitem.obj = wrap_in_sync(
-                pyfuncitem,
-                pyfuncitem.obj,
-            )
+        if isinstance(
+            pyfuncitem, (AsyncFunction, AsyncHypothesisTest, AsyncStaticMethod)
+        ):
+            pass
         else:
             pyfuncitem.warn(
                 pytest.PytestWarning(
