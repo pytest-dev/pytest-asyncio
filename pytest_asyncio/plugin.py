@@ -30,7 +30,6 @@ from pytest import (
     Collector,
     Config,
     FixtureRequest,
-    Function,
     Item,
     Metafunc,
     Parser,
@@ -564,25 +563,16 @@ def pytest_collection_modifyitems(
 
     The mark is only applied in `AUTO` mode. It is applied to:
 
-      - coroutines
-      - staticmethods wrapping coroutines
+      - coroutines and async generators
       - Hypothesis tests wrapping coroutines
+      - staticmethods wrapping coroutines
 
     """
     if _get_asyncio_mode(config) != Mode.AUTO:
         return
-    function_items = (item for item in items if isinstance(item, Function))
-    for function_item in function_items:
-        function = function_item.obj
-        if isinstance(function, staticmethod):
-            # staticmethods need to be unwrapped.
-            function = function.__func__
-        if (
-            _is_coroutine(function)
-            or _is_hypothesis_test(function)
-            and _hypothesis_test_wraps_coroutine(function)
-        ):
-            function_item.add_marker("asyncio")
+    for item in items:
+        if isinstance(item, (AsyncFunction, AsyncHypothesisTest, AsyncStaticMethod)):
+            item.add_marker("asyncio")
 
 
 def _hypothesis_test_wraps_coroutine(function: Any) -> bool:
