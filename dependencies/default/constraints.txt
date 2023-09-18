@@ -20,4 +20,4 @@ sortedcontainers==2.4.0
 tomli==2.0.1
 trio==0.22.2
 typed-ast==1.5.5
-zipp==3.16.2
+zipp==3.17.0
