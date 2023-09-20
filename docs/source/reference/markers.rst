@@ -30,5 +30,57 @@ In *auto* mode, the ``pytest.mark.asyncio`` marker can be omitted, the marker is
 automatically to *async* test functions.
 
 
+``pytest.mark.asyncio_event_loop``
+==================================
+Test classes with this mark provide a class-scoped asyncio event loop.
+
+This functionality is orthogonal to the `asyncio` mark.
+That means the presence of this mark does not imply that async test functions inside the class are collected by pytest-asyncio.
+The collection happens automatically in `auto` mode.
+However, if you're using strict mode, you still have to apply the `asyncio` mark to your async test functions.
+
+The following code example uses the `asyncio_event_loop` mark to provide a shared event loop for all tests in `TestClassScopedLoop`:
+
+.. code-block:: python
+
+    import asyncio
+
+    import pytest
+
+
+    @pytest.mark.asyncio_event_loop
+    class TestClassScopedLoop:
+        loop: asyncio.AbstractEventLoop
+
+        @pytest.mark.asyncio
+        async def test_remember_loop(self):
+            TestClassScopedLoop.loop = asyncio.get_running_loop()
+
+        @pytest.mark.asyncio
+        async def test_this_runs_in_same_loop(self):
+            assert asyncio.get_running_loop() is TestClassScopedLoop.loop
+
+In *auto* mode, the ``pytest.mark.asyncio`` marker can be omitted:
+
+.. code-block:: python
+
+    import asyncio
+
+    import pytest
+
+
+    @pytest.mark.asyncio_event_loop
+    class TestClassScopedLoop:
+        loop: asyncio.AbstractEventLoop
+
+        async def test_remember_loop(self):
+            TestClassScopedLoop.loop = asyncio.get_running_loop()
+
+        async def test_this_runs_in_same_loop(self):
+            assert asyncio.get_running_loop() is TestClassScopedLoop.loop
+
+
+
+
 .. |pytestmark| replace:: ``pytestmark``
 .. _pytestmark: http://doc.pytest.org/en/latest/example/markers.html#marking-whole-classes-or-modules
