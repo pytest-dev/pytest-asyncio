@@ -180,7 +180,8 @@ def pytest_configure(config: Config) -> None:
     config.addinivalue_line(
         "markers",
         "asyncio_event_loop: "
-        "Provides an asyncio event loop in the scope of the marked test class",
+        "Provides an asyncio event loop in the scope of the marked test "
+        "class or module",
     )
 
 
@@ -347,7 +348,7 @@ def pytest_pycollect_makeitem(
 
 @pytest.hookimpl
 def pytest_collectstart(collector: pytest.Collector):
-    if not isinstance(collector, pytest.Class):
+    if not isinstance(collector, (pytest.Class, pytest.Module)):
         return
     # pytest.Collector.own_markers is empty at this point,
     # so we rely on _pytest.mark.structures.get_unpacked_marks
@@ -357,10 +358,12 @@ def pytest_collectstart(collector: pytest.Collector):
             continue
 
         @pytest.fixture(
-            scope="class",
+            scope="class" if isinstance(collector, pytest.Class) else "module",
             name="event_loop",
         )
-        def scoped_event_loop(cls) -> Iterator[asyncio.AbstractEventLoop]:
+        def scoped_event_loop(
+            *args,  # Function needs to accept "cls" when collected by pytest.Class
+        ) -> Iterator[asyncio.AbstractEventLoop]:
             loop = asyncio.get_event_loop_policy().new_event_loop()
             yield loop
             loop.close()
@@ -368,6 +371,7 @@ def pytest_collectstart(collector: pytest.Collector):
         # @pytest.fixture does not register the fixture anywhere, so pytest doesn't
         # know it exists. We work around this by attaching the fixture function to the
         # collected Python class, where it will be picked up by pytest.Class.collect()
+        # or pytest.Module.collect(), respectively
         collector.obj.__pytest_asyncio_scoped_event_loop = scoped_event_loop
         break
 

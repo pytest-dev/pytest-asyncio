@@ -50,3 +50,66 @@ def test_asyncio_mark_works_on_module_level(pytester: Pytester):
     )
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=2)
+
+
+def test_asyncio_mark_provides_module_scoped_loop_strict_mode(pytester: Pytester):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+            import pytest
+
+            pytestmark = pytest.mark.asyncio_event_loop
+
+            loop: asyncio.AbstractEventLoop
+
+            @pytest.mark.asyncio
+            async def test_remember_loop():
+                global loop
+                loop = asyncio.get_running_loop()
+
+            @pytest.mark.asyncio
+            async def test_this_runs_in_same_loop():
+                global loop
+                assert asyncio.get_running_loop() is loop
+
+            class TestClassA:
+                @pytest.mark.asyncio
+                async def test_this_runs_in_same_loop(self):
+                    global loop
+                    assert asyncio.get_running_loop() is loop
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=3)
+
+
+def test_asyncio_mark_provides_class_scoped_loop_auto_mode(pytester: Pytester):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+            import pytest
+
+            pytestmark = pytest.mark.asyncio_event_loop
+
+            loop: asyncio.AbstractEventLoop
+
+            async def test_remember_loop():
+                global loop
+                loop = asyncio.get_running_loop()
+
+            async def test_this_runs_in_same_loop():
+                global loop
+                assert asyncio.get_running_loop() is loop
+
+            class TestClassA:
+                async def test_this_runs_in_same_loop(self):
+                    global loop
+                    assert asyncio.get_running_loop() is loop
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=auto")
+    result.assert_outcomes(passed=3)
