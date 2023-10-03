@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 env:
-  PYTHON_LATEST: 3.11
+  PYTHON_LATEST: 3.12
 
 jobs:
   lint:
