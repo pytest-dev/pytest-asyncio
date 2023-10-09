@@ -4,10 +4,13 @@ Changelog
 
 1.0.0 (UNRELEASED)
 ==================
-- Remove support for Python 3.7
-- Declare support for Python 3.12
 - Class-scoped and module-scoped event loops can be requested
   via the _asyncio_event_loop_ mark. `#620 <https://github.com/pytest-dev/pytest-asyncio/pull/620>`_
+- Deprecate redefinition of the `event_loop` fixture. `#587 <https://github.com/pytest-dev/pytest-asyncio/issues/531>`_
+  Users requiring a class-scoped or module-scoped asyncio event loop for their tests
+  should mark the corresponding class or module with `asyncio_event_loop`.
+- Remove support for Python 3.7
+- Declare support for Python 3.12
 
 0.21.1 (2023-07-12)
 ===================
