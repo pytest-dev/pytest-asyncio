@@ -113,3 +113,25 @@ def test_asyncio_mark_provides_class_scoped_loop_auto_mode(pytester: Pytester):
     )
     result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=3)
+
+
+def test_raise_when_event_loop_fixture_is_requested_in_addition_to_scoped_loop(
+    pytester: Pytester,
+):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+            import pytest
+
+            pytestmark = pytest.mark.asyncio_event_loop
+
+            @pytest.mark.asyncio
+            async def test_remember_loop(event_loop):
+                pass
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines("*MultipleEventLoopsRequestedError: *")

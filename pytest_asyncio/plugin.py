@@ -34,6 +34,7 @@ from pytest import (
     Parser,
     PytestPluginManager,
     Session,
+    StashKey,
 )
 
 _R = TypeVar("_R")
@@ -53,6 +54,14 @@ FixtureFunctionMarker = Callable[[FixtureFunction], FixtureFunction]
 # https://github.com/pytest-dev/pytest/pull/9510
 FixtureDef = Any
 SubRequest = Any
+
+
+class PytestAsyncioError(Exception):
+    """Base class for exceptions raised by pytest-asyncio"""
+
+
+class MultipleEventLoopsRequestedError(PytestAsyncioError):
+    """Raised when a test requests multiple asyncio event loops."""
 
 
 class Mode(str, enum.Enum):
@@ -345,6 +354,9 @@ def pytest_pycollect_makeitem(
     return None
 
 
+_event_loop_fixture_id = StashKey[str]
+
+
 @pytest.hookimpl
 def pytest_collectstart(collector: pytest.Collector):
     if not isinstance(collector, (pytest.Class, pytest.Module)):
@@ -356,9 +368,19 @@ def pytest_collectstart(collector: pytest.Collector):
         if not mark.name == "asyncio_event_loop":
             continue
 
+        # There seem to be issues when a fixture is shadowed by another fixture
+        # and both differ in their params.
+        # https://github.com/pytest-dev/pytest/issues/2043
+        # https://github.com/pytest-dev/pytest/issues/11350
+        # As such, we assign a unique name for each event_loop fixture.
+        # The fixture name is stored in the collector's Stash, so it can
+        # be injected when setting up the test
+        event_loop_fixture_id = f"{collector.nodeid}::<event_loop>"
+        collector.stash[_event_loop_fixture_id] = event_loop_fixture_id
+
         @pytest.fixture(
             scope="class" if isinstance(collector, pytest.Class) else "module",
-            name="event_loop",
+            name=event_loop_fixture_id,
         )
         def scoped_event_loop(
             *args,  # Function needs to accept "cls" when collected by pytest.Class
@@ -569,15 +591,38 @@ def wrap_in_sync(
     return inner
 
 
+_MULTIPLE_LOOPS_REQUESTED_ERROR = dedent(
+    """\
+        Multiple asyncio event loops with different scopes have been requested
+        by %s. The test explicitly requests the event_loop fixture, while another
+        event loop is provided by %s.
+        Remove "event_loop" from the requested fixture in your test to run the test
+        in a larger-scoped event loop or remove the "asyncio_event_loop" mark to run
+        the test in a function-scoped event loop.
+    """
+)
+
+
 def pytest_runtest_setup(item: pytest.Item) -> None:
     marker = item.get_closest_marker("asyncio")
     if marker is None:
         return
+    event_loop_fixture_id = "event_loop"
+    for node, mark in item.iter_markers_with_node("asyncio_event_loop"):
+        scoped_event_loop_provider_node = node
+        event_loop_fixture_id = node.stash.get(_event_loop_fixture_id, None)
+        if event_loop_fixture_id:
+            break
     fixturenames = item.fixturenames  # type: ignore[attr-defined]
     # inject an event loop fixture for all async tests
     if "event_loop" in fixturenames:
+        if event_loop_fixture_id != "event_loop":
+            raise MultipleEventLoopsRequestedError(
+                _MULTIPLE_LOOPS_REQUESTED_ERROR
+                % (item.nodeid, scoped_event_loop_provider_node.nodeid),
+            )
         fixturenames.remove("event_loop")
-    fixturenames.insert(0, "event_loop")
+    fixturenames.insert(0, event_loop_fixture_id)
     obj = getattr(item, "obj", None)
     if not getattr(obj, "hypothesis", False) and getattr(
         obj, "is_hypothesis_test", False

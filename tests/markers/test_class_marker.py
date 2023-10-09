@@ -104,3 +104,25 @@ def test_asyncio_event_loop_mark_is_inherited_to_subclasses(pytester: pytest.Pyt
     )
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=2)
+
+
+def test_raise_when_event_loop_fixture_is_requested_in_addition_to_scoped_loop(
+    pytester: pytest.Pytester,
+):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+            import pytest
+
+            @pytest.mark.asyncio_event_loop
+            class TestClassScopedLoop:
+                @pytest.mark.asyncio
+                async def test_remember_loop(self, event_loop):
+                    pass
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines("*MultipleEventLoopsRequestedError: *")
