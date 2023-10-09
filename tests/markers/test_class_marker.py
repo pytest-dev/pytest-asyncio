@@ -126,3 +126,38 @@ def test_raise_when_event_loop_fixture_is_requested_in_addition_to_scoped_loop(
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines("*MultipleEventLoopsRequestedError: *")
+
+
+def test_asyncio_event_loop_mark_allows_specifying_the_loop_policy(
+    pytester: pytest.Pytester,
+):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+            import pytest
+
+            class CustomEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
+                pass
+
+            @pytest.mark.asyncio_event_loop(policy=CustomEventLoopPolicy())
+            class TestUsesCustomEventLoopPolicy:
+
+                @pytest.mark.asyncio
+                async def test_uses_custom_event_loop_policy(self):
+                    assert isinstance(
+                        asyncio.get_event_loop_policy(),
+                        CustomEventLoopPolicy,
+                    )
+
+            @pytest.mark.asyncio
+            async def test_does_not_use_custom_event_loop_policy():
+                assert not isinstance(
+                    asyncio.get_event_loop_policy(),
+                    CustomEventLoopPolicy,
+                )
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=2)
