@@ -31,6 +31,7 @@ from pytest import (
     FixtureRequest,
     Function,
     Item,
+    Metafunc,
     Parser,
     PytestPluginManager,
     Session,
@@ -367,6 +368,7 @@ def pytest_collectstart(collector: pytest.Collector):
     for mark in marks:
         if not mark.name == "asyncio_event_loop":
             continue
+        event_loop_policy = mark.kwargs.get("policy", asyncio.get_event_loop_policy())
 
         # There seem to be issues when a fixture is shadowed by another fixture
         # and both differ in their params.
@@ -381,13 +383,23 @@ def pytest_collectstart(collector: pytest.Collector):
         @pytest.fixture(
             scope="class" if isinstance(collector, pytest.Class) else "module",
             name=event_loop_fixture_id,
+            params=(event_loop_policy,),
+            ids=(type(event_loop_policy).__name__,),
         )
         def scoped_event_loop(
             *args,  # Function needs to accept "cls" when collected by pytest.Class
+            request,
         ) -> Iterator[asyncio.AbstractEventLoop]:
-            loop = asyncio.get_event_loop_policy().new_event_loop()
+            new_loop_policy = request.param
+            old_loop_policy = asyncio.get_event_loop_policy()
+            old_loop = asyncio.get_event_loop()
+            asyncio.set_event_loop_policy(new_loop_policy)
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
             yield loop
             loop.close()
+            asyncio.set_event_loop_policy(old_loop_policy)
+            asyncio.set_event_loop(old_loop)
 
         # @pytest.fixture does not register the fixture anywhere, so pytest doesn't
         # know it exists. We work around this by attaching the fixture function to the
@@ -428,6 +440,30 @@ def pytest_collection_modifyitems(
 
 def _hypothesis_test_wraps_coroutine(function: Any) -> bool:
     return _is_coroutine(function.hypothesis.inner_test)
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_generate_tests(metafunc: Metafunc) -> None:
+    for event_loop_provider_node, _ in metafunc.definition.iter_markers_with_node(
+        "asyncio_event_loop"
+    ):
+        event_loop_fixture_id = event_loop_provider_node.stash.get(
+            _event_loop_fixture_id, None
+        )
+        if event_loop_fixture_id:
+            fixturemanager = metafunc.config.pluginmanager.get_plugin("funcmanage")
+            if "event_loop" in metafunc.fixturenames:
+                raise MultipleEventLoopsRequestedError(
+                    _MULTIPLE_LOOPS_REQUESTED_ERROR
+                    % (metafunc.definition.nodeid, event_loop_provider_node.nodeid),
+                )
+            # Add the scoped event loop fixture to Metafunc's list of fixture names and
+            # fixturedefs and leave the actual parametrization to pytest
+            metafunc.fixturenames.insert(0, event_loop_fixture_id)
+            metafunc._arg2fixturedefs[
+                event_loop_fixture_id
+            ] = fixturemanager._arg2fixturedefs[event_loop_fixture_id]
+            break
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -609,18 +645,12 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
         return
     event_loop_fixture_id = "event_loop"
     for node, mark in item.iter_markers_with_node("asyncio_event_loop"):
-        scoped_event_loop_provider_node = node
         event_loop_fixture_id = node.stash.get(_event_loop_fixture_id, None)
         if event_loop_fixture_id:
             break
     fixturenames = item.fixturenames  # type: ignore[attr-defined]
     # inject an event loop fixture for all async tests
     if "event_loop" in fixturenames:
-        if event_loop_fixture_id != "event_loop":
-            raise MultipleEventLoopsRequestedError(
-                _MULTIPLE_LOOPS_REQUESTED_ERROR
-                % (item.nodeid, scoped_event_loop_provider_node.nodeid),
-            )
         fixturenames.remove("event_loop")
     fixturenames.insert(0, event_loop_fixture_id)
     obj = getattr(item, "obj", None)

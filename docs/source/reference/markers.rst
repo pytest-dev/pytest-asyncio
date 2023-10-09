@@ -107,5 +107,26 @@ Similarly, a module-scoped loop is provided when adding the `asyncio_event_loop`
             global loop
             assert asyncio.get_running_loop() is loop
 
+The `asyncio_event_loop` mark supports an optional `policy` keyword argument to set the asyncio event loop policy.
+
+.. code-block:: python
+
+    import asyncio
+
+    import pytest
+
+
+    class CustomEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
+        pass
+
+
+    @pytest.mark.asyncio_event_loop(policy=CustomEventLoopPolicy())
+    class TestUsesCustomEventLoopPolicy:
+        @pytest.mark.asyncio
+        async def test_uses_custom_event_loop_policy(self):
+            assert isinstance(asyncio.get_event_loop_policy(), CustomEventLoopPolicy)
+
+If no explicit policy is provided, the mark will use the loop policy returned by ``asyncio.get_event_loop_policy()``.
+
 .. |pytestmark| replace:: ``pytestmark``
 .. _pytestmark: http://doc.pytest.org/en/latest/example/markers.html#marking-whole-classes-or-modules
