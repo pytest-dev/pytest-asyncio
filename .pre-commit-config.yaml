@@ -42,7 +42,7 @@ repos:
   - id: mypy
     exclude: ^(docs|tests)/.*
 - repo: https://github.com/pycqa/flake8
-  rev: 5.0.4
+  rev: 6.1.0
   hooks:
   - id: flake8
     language_version: python3
