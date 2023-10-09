@@ -369,6 +369,11 @@ def pytest_collectstart(collector: pytest.Collector):
         if not mark.name == "asyncio_event_loop":
             continue
         event_loop_policy = mark.kwargs.get("policy", asyncio.get_event_loop_policy())
+        policy_params = (
+            event_loop_policy
+            if isinstance(event_loop_policy, Iterable)
+            else (event_loop_policy,)
+        )
 
         # There seem to be issues when a fixture is shadowed by another fixture
         # and both differ in their params.
@@ -383,8 +388,8 @@ def pytest_collectstart(collector: pytest.Collector):
         @pytest.fixture(
             scope="class" if isinstance(collector, pytest.Class) else "module",
             name=event_loop_fixture_id,
-            params=(event_loop_policy,),
-            ids=(type(event_loop_policy).__name__,),
+            params=policy_params,
+            ids=tuple(type(policy).__name__ for policy in policy_params),
         )
         def scoped_event_loop(
             *args,  # Function needs to accept "cls" when collected by pytest.Class

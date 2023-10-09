@@ -126,6 +126,30 @@ The `asyncio_event_loop` mark supports an optional `policy` keyword argument to 
         async def test_uses_custom_event_loop_policy(self):
             assert isinstance(asyncio.get_event_loop_policy(), CustomEventLoopPolicy)
 
+
+The ``policy`` keyword argument may also take an iterable of event loop policies. This causes tests under by the `asyncio_event_loop` mark to be parametrized with different policies:
+
+.. code-block:: python
+
+    import asyncio
+
+    import pytest
+
+    import pytest_asyncio
+
+
+    @pytest.mark.asyncio_event_loop(
+        policy=[
+            asyncio.DefaultEventLoopPolicy(),
+            uvloop.EventLoopPolicy(),
+        ]
+    )
+    class TestWithDifferentLoopPolicies:
+        @pytest.mark.asyncio
+        async def test_parametrized_loop(self):
+            pass
+
+
 If no explicit policy is provided, the mark will use the loop policy returned by ``asyncio.get_event_loop_policy()``.
 
 .. |pytestmark| replace:: ``pytestmark``

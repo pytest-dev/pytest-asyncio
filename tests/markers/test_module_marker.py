@@ -185,3 +185,30 @@ def test_asyncio_event_loop_mark_allows_specifying_the_loop_policy(
     )
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=2)
+
+
+def test_asyncio_event_loop_mark_allows_specifying_multiple_loop_policies(
+    pytester: Pytester,
+):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+
+            import pytest
+
+            pytestmark = pytest.mark.asyncio_event_loop(
+                policy=[
+                    asyncio.DefaultEventLoopPolicy(),
+                    asyncio.DefaultEventLoopPolicy(),
+                ]
+            )
+
+            @pytest.mark.asyncio
+            async def test_parametrized_loop():
+                pass
+            """
+        )
+    )
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result.assert_outcomes(passed=2)
