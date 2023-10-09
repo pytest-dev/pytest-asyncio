@@ -27,6 +27,7 @@ from typing import (
 import pytest
 from _pytest.mark.structures import get_unpacked_marks
 from pytest import (
+    Collector,
     Config,
     FixtureRequest,
     Function,
@@ -202,11 +203,17 @@ def pytest_report_header(config: Config) -> List[str]:
 
 
 def _preprocess_async_fixtures(
-    config: Config,
+    collector: Collector,
     processed_fixturedefs: Set[FixtureDef],
 ) -> None:
+    config = collector.config
     asyncio_mode = _get_asyncio_mode(config)
     fixturemanager = config.pluginmanager.get_plugin("funcmanage")
+    event_loop_fixture_id = "event_loop"
+    for node, mark in collector.iter_markers_with_node("asyncio_event_loop"):
+        event_loop_fixture_id = node.stash.get(_event_loop_fixture_id, None)
+        if event_loop_fixture_id:
+            break
     for fixtures in fixturemanager._arg2fixturedefs.values():
         for fixturedef in fixtures:
             func = fixturedef.func
@@ -219,37 +226,42 @@ def _preprocess_async_fixtures(
                 # This applies to pytest_trio fixtures, for example
                 continue
             _make_asyncio_fixture_function(func)
-            _inject_fixture_argnames(fixturedef)
-            _synchronize_async_fixture(fixturedef)
+            _inject_fixture_argnames(fixturedef, event_loop_fixture_id)
+            _synchronize_async_fixture(fixturedef, event_loop_fixture_id)
             assert _is_asyncio_fixture_function(fixturedef.func)
             processed_fixturedefs.add(fixturedef)
 
 
-def _inject_fixture_argnames(fixturedef: FixtureDef) -> None:
+def _inject_fixture_argnames(
+    fixturedef: FixtureDef, event_loop_fixture_id: str
+) -> None:
     """
     Ensures that `request` and `event_loop` are arguments of the specified fixture.
     """
     to_add = []
-    for name in ("request", "event_loop"):
+    for name in ("request", event_loop_fixture_id):
         if name not in fixturedef.argnames:
             to_add.append(name)
     if to_add:
         fixturedef.argnames += tuple(to_add)
 
 
-def _synchronize_async_fixture(fixturedef: FixtureDef) -> None:
+def _synchronize_async_fixture(
+    fixturedef: FixtureDef, event_loop_fixture_id: str
+) -> None:
     """
     Wraps the fixture function of an async fixture in a synchronous function.
     """
     if inspect.isasyncgenfunction(fixturedef.func):
-        _wrap_asyncgen_fixture(fixturedef)
+        _wrap_asyncgen_fixture(fixturedef, event_loop_fixture_id)
     elif inspect.iscoroutinefunction(fixturedef.func):
-        _wrap_async_fixture(fixturedef)
+        _wrap_async_fixture(fixturedef, event_loop_fixture_id)
 
 
 def _add_kwargs(
     func: Callable[..., Any],
     kwargs: Dict[str, Any],
+    event_loop_fixture_id: str,
     event_loop: asyncio.AbstractEventLoop,
     request: SubRequest,
 ) -> Dict[str, Any]:
@@ -257,8 +269,8 @@ def _add_kwargs(
     ret = kwargs.copy()
     if "request" in sig.parameters:
         ret["request"] = request
-    if "event_loop" in sig.parameters:
-        ret["event_loop"] = event_loop
+    if event_loop_fixture_id in sig.parameters:
+        ret[event_loop_fixture_id] = event_loop
     return ret
 
 
@@ -281,17 +293,18 @@ def _perhaps_rebind_fixture_func(
     return func
 
 
-def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
+def _wrap_asyncgen_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -> None:
     fixture = fixturedef.func
 
     @functools.wraps(fixture)
-    def _asyncgen_fixture_wrapper(
-        event_loop: asyncio.AbstractEventLoop, request: SubRequest, **kwargs: Any
-    ):
+    def _asyncgen_fixture_wrapper(request: SubRequest, **kwargs: Any):
         func = _perhaps_rebind_fixture_func(
             fixture, request.instance, fixturedef.unittest
         )
-        gen_obj = func(**_add_kwargs(func, kwargs, event_loop, request))
+        event_loop = kwargs.pop(event_loop_fixture_id)
+        gen_obj = func(
+            **_add_kwargs(func, kwargs, event_loop_fixture_id, event_loop, request)
+        )
 
         async def setup():
             res = await gen_obj.__anext__()
@@ -319,19 +332,20 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
     fixturedef.func = _asyncgen_fixture_wrapper
 
 
-def _wrap_async_fixture(fixturedef: FixtureDef) -> None:
+def _wrap_async_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -> None:
     fixture = fixturedef.func
 
     @functools.wraps(fixture)
-    def _async_fixture_wrapper(
-        event_loop: asyncio.AbstractEventLoop, request: SubRequest, **kwargs: Any
-    ):
+    def _async_fixture_wrapper(request: SubRequest, **kwargs: Any):
         func = _perhaps_rebind_fixture_func(
             fixture, request.instance, fixturedef.unittest
         )
+        event_loop = kwargs.pop(event_loop_fixture_id)
 
         async def setup():
-            res = await func(**_add_kwargs(func, kwargs, event_loop, request))
+            res = await func(
+                **_add_kwargs(func, kwargs, event_loop_fixture_id, event_loop, request)
+            )
             return res
 
         return event_loop.run_until_complete(setup())
@@ -351,7 +365,7 @@ def pytest_pycollect_makeitem(
     """A pytest hook to collect asyncio coroutines."""
     if not collector.funcnamefilter(name):
         return None
-    _preprocess_async_fixtures(collector.config, _HOLDER)
+    _preprocess_async_fixtures(collector, _HOLDER)
     return None
 
 
@@ -456,6 +470,12 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
             _event_loop_fixture_id, None
         )
         if event_loop_fixture_id:
+            # This specific fixture name may already be in metafunc.argnames, if this
+            # test indirectly depends on the fixture. For example, this is the case
+            # when the test depends on an async fixture, both of which share the same
+            # asyncio_event_loop mark.
+            if event_loop_fixture_id in metafunc.fixturenames:
+                continue
             fixturemanager = metafunc.config.pluginmanager.get_plugin("funcmanage")
             if "event_loop" in metafunc.fixturenames:
                 raise MultipleEventLoopsRequestedError(

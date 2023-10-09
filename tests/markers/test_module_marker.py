@@ -212,3 +212,34 @@ def test_asyncio_event_loop_mark_allows_specifying_multiple_loop_policies(
     )
     result = pytester.runpytest_subprocess("--asyncio-mode=strict")
     result.assert_outcomes(passed=2)
+
+
+def test_asyncio_event_loop_mark_provides_module_scoped_loop_to_fixtures(
+    pytester: Pytester,
+):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+
+            import pytest
+            import pytest_asyncio
+
+            pytestmark = pytest.mark.asyncio_event_loop
+
+            loop: asyncio.AbstractEventLoop
+
+            @pytest_asyncio.fixture
+            async def my_fixture():
+                global loop
+                loop = asyncio.get_running_loop()
+
+            @pytest.mark.asyncio
+            async def test_runs_is_same_loop_as_fixture(my_fixture):
+                global loop
+                assert asyncio.get_running_loop() is loop
+            """
+        )
+    )
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)
