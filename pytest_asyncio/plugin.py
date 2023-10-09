@@ -461,6 +461,18 @@ def _hypothesis_test_wraps_coroutine(function: Any) -> bool:
     return _is_coroutine(function.hypothesis.inner_test)
 
 
+_REDEFINED_EVENT_LOOP_FIXTURE_WARNING = dedent(
+    """\
+    The event_loop fixture provided by pytest-asyncio has been redefined in
+    %s:%d
+    Replacing the event_loop fixture with a custom implementation is deprecated
+    and will lead to errors in the future.
+    If you want to request an asyncio event loop with a class or module scope,
+    please attach the asyncio_event_loop mark to the respective class or module.
+    """
+)
+
+
 @pytest.hookimpl(tryfirst=True)
 def pytest_generate_tests(metafunc: Metafunc) -> None:
     for event_loop_provider_node, _ in metafunc.definition.iter_markers_with_node(
@@ -497,6 +509,17 @@ def pytest_fixture_setup(
 ) -> Optional[object]:
     """Adjust the event loop policy when an event loop is produced."""
     if fixturedef.argname == "event_loop":
+        # FixtureDef.baseid is an empty string when the Fixture was found in a plugin.
+        # This is also true, when the fixture was defined in a conftest.py
+        # at the rootdir.
+        fixture_filename = inspect.getsourcefile(fixturedef.func)
+        if not getattr(fixturedef.func, "__original_func", False):
+            _, fixture_line_number = inspect.getsourcelines(fixturedef.func)
+            warnings.warn(
+                _REDEFINED_EVENT_LOOP_FIXTURE_WARNING
+                % (fixture_filename, fixture_line_number),
+                DeprecationWarning,
+            )
         # The use of a fixture finalizer is preferred over the
         # pytest_fixture_post_finalizer hook. The fixture finalizer is invoked once
         # for each fixture, whereas the hook may be invoked multiple times for
@@ -691,6 +714,12 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
 @pytest.fixture
 def event_loop(request: FixtureRequest) -> Iterator[asyncio.AbstractEventLoop]:
     """Create an instance of the default event loop for each test case."""
+    # Add a magic value to the fixture function, so that we can check for overrides
+    # of this fixture in pytest_fixture_setup
+    # The magic value must be part of the function definition, because pytest may have
+    # multiple instances of the fixture function
+    event_loop.__original_func = True
+
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()

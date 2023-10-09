@@ -19,23 +19,7 @@ to ``function`` scope.
 Note that, when using the ``event_loop`` fixture, you need to interact with the event loop using methods like ``event_loop.run_until_complete``. If you want to *await* code inside your test function, you need to write a coroutine and use it as a test function. The `asyncio <#pytest-mark-asyncio>`__ marker
 is used to mark coroutines that should be treated as test functions.
 
-The ``event_loop`` fixture can be overridden in any of the standard pytest locations,
-e.g. directly in the test file, or in ``conftest.py``. This allows redefining the
-fixture scope, for example:
-
-.. code-block:: python
-
-    @pytest.fixture(scope="module")
-    def event_loop():
-        policy = asyncio.get_event_loop_policy()
-        loop = policy.new_event_loop()
-        yield loop
-        loop.close()
-
-When defining multiple ``event_loop`` fixtures, you should ensure that their scopes don't overlap.
-Each of the fixtures replace the running event loop, potentially without proper clean up.
-This will emit a warning and likely lead to errors in your tests suite.
-You can manually check for overlapping ``event_loop`` fixtures by running pytest with the ``--setup-show`` option.
+If your tests require an asyncio event loop with class or module scope, apply the `asyncio_event_loop mark <./markers.html/#pytest-mark-asyncio-event-loop>`__ to the respective class or module.
 
 If you need to change the type of the event loop, prefer setting a custom event loop policy over redefining the ``event_loop`` fixture.
 
