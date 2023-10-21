@@ -398,7 +398,6 @@ class AsyncFunction(PytestAsyncioFunction):
     def runtest(self) -> None:
         if self.get_closest_marker("asyncio"):
             self.obj = wrap_in_sync(
-                self,
                 self.obj,
             )
         super().runtest()
@@ -420,7 +419,6 @@ class AsyncStaticMethod(PytestAsyncioFunction):
     def runtest(self) -> None:
         if self.get_closest_marker("asyncio"):
             self.obj = wrap_in_sync(
-                self,
                 self.obj,
             )
         super().runtest()
@@ -442,7 +440,6 @@ class AsyncHypothesisTest(PytestAsyncioFunction):
     def runtest(self) -> None:
         if self.get_closest_marker("asyncio"):
             self.obj.hypothesis.inner_test = wrap_in_sync(
-                self,
                 self.obj.hypothesis.inner_test,
             )
         super().runtest()
@@ -744,7 +741,6 @@ def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> Optional[object]:
 
 
 def wrap_in_sync(
-    pyfuncitem: pytest.Function,
     func: Callable[..., Awaitable[Any]],
 ):
     """Return a sync wrapper around an async function executing it in the
