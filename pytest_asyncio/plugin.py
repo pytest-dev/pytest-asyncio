@@ -157,13 +157,8 @@ def _make_asyncio_fixture_function(obj: Any) -> None:
     obj._force_asyncio_fixture = True
 
 
-def _is_coroutine(obj: Any) -> bool:
-    """Check to see if an object is really an asyncio coroutine."""
-    return asyncio.iscoroutinefunction(obj)
-
-
 def _is_coroutine_or_asyncgen(obj: Any) -> bool:
-    return _is_coroutine(obj) or inspect.isasyncgenfunction(obj)
+    return asyncio.iscoroutinefunction(obj) or inspect.isasyncgenfunction(obj)
 
 
 def _get_asyncio_mode(config: Config) -> Mode:
@@ -580,7 +575,7 @@ def pytest_collection_modifyitems(
 
 
 def _hypothesis_test_wraps_coroutine(function: Any) -> bool:
-    return _is_coroutine(function.hypothesis.inner_test)
+    return asyncio.iscoroutinefunction(function.hypothesis.inner_test)
 
 
 _REDEFINED_EVENT_LOOP_FIXTURE_WARNING = dedent(
