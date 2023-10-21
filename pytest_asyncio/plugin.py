@@ -736,9 +736,9 @@ def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> Optional[object]:
                 pytest.PytestWarning(
                     f"The test {pyfuncitem} is marked with '@pytest.mark.asyncio' "
                     "but it is not an async function. "
-                    "Please remove asyncio marker. "
+                    "Please remove the asyncio mark. "
                     "If the test is not marked explicitly, "
-                    "check for global markers applied via 'pytestmark'."
+                    "check for global marks applied via 'pytestmark'."
                 )
             )
     yield
