@@ -435,7 +435,9 @@ class AsyncHypothesisTest(PytestAsyncioFunction):
     @staticmethod
     def _can_substitute(item: pytest.Function) -> bool:
         func = item.obj
-        return _is_hypothesis_test(func) and _hypothesis_test_wraps_coroutine(func)
+        return _is_hypothesis_test(func) and asyncio.iscoroutinefunction(
+            func.hypothesis.inner_test
+        )
 
     def runtest(self) -> None:
         if self.get_closest_marker("asyncio"):
@@ -572,10 +574,6 @@ def pytest_collection_modifyitems(
     for item in items:
         if isinstance(item, PytestAsyncioFunction):
             item.add_marker("asyncio")
-
-
-def _hypothesis_test_wraps_coroutine(function: Any) -> bool:
-    return asyncio.iscoroutinefunction(function.hypothesis.inner_test)
 
 
 _REDEFINED_EVENT_LOOP_FIXTURE_WARNING = dedent(
