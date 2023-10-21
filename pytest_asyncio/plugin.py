@@ -353,19 +353,14 @@ def _wrap_async_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -> N
     fixturedef.func = _async_fixture_wrapper
 
 
-class AsyncFunction(pytest.Function):
-    """Pytest item that is a coroutine or an asynchronous generator"""
-
-    @staticmethod
-    def can_substitute(item: pytest.Function) -> bool:
-        """Returns whether the specified function can be replaced by this class"""
-        func = item.obj
-        return _is_coroutine_or_asyncgen(func)
+class PytestAsyncioFunction(pytest.Function):
+    """Base class for all test functions managed by pytest-asyncio."""
 
     @classmethod
     def from_function(cls, function: pytest.Function, /) -> Self:
         """
-        Instantiates an AsyncFunction from the specified pytest.Function item.
+        Instantiates this specific PytestAsyncioFunction type from the specified
+        pytest.Function item.
         """
         return cls.from_parent(
             function.parent,
@@ -377,6 +372,20 @@ class AsyncFunction(pytest.Function):
             originalname=function.originalname,
         )
 
+    @staticmethod
+    def can_substitute(item: pytest.Function) -> bool:
+        """Returns whether the specified function can be replaced by this class"""
+        raise NotImplementedError()
+
+
+class AsyncFunction(PytestAsyncioFunction):
+    """Pytest item that is a coroutine or an asynchronous generator"""
+
+    @staticmethod
+    def can_substitute(item: pytest.Function) -> bool:
+        func = item.obj
+        return _is_coroutine_or_asyncgen(func)
+
     def runtest(self) -> None:
         if self.get_closest_marker("asyncio"):
             self.obj = wrap_in_sync(
@@ -386,7 +395,7 @@ class AsyncFunction(pytest.Function):
         super().runtest()
 
 
-class AsyncStaticMethod(pytest.Function):
+class AsyncStaticMethod(PytestAsyncioFunction):
     """
     Pytest item that is a coroutine or an asynchronous generator
     decorated with staticmethod
@@ -394,25 +403,9 @@ class AsyncStaticMethod(pytest.Function):
 
     @staticmethod
     def can_substitute(item: pytest.Function) -> bool:
-        """Returns whether the specified function can be replaced by this class"""
         func = item.obj
         return isinstance(func, staticmethod) and _is_coroutine_or_asyncgen(
             func.__func__
-        )
-
-    @classmethod
-    def from_function(cls, function: pytest.Function, /) -> Self:
-        """
-        Instantiates an AsyncStaticMethod from the specified pytest.Function item.
-        """
-        return cls.from_parent(
-            function.parent,
-            name=function.name,
-            callspec=getattr(function, "callspec", None),
-            callobj=function.obj,
-            fixtureinfo=function._fixtureinfo,
-            keywords=function.keywords,
-            originalname=function.originalname,
         )
 
     def runtest(self) -> None:
@@ -424,7 +417,7 @@ class AsyncStaticMethod(pytest.Function):
         super().runtest()
 
 
-class AsyncHypothesisTest(pytest.Function):
+class AsyncHypothesisTest(PytestAsyncioFunction):
     """
     Pytest item that is coroutine or an asynchronous generator decorated by
     @hypothesis.given.
@@ -432,24 +425,8 @@ class AsyncHypothesisTest(pytest.Function):
 
     @staticmethod
     def can_substitute(item: pytest.Function) -> bool:
-        """Returns whether the specified function can be replaced by this class"""
         func = item.obj
         return _is_hypothesis_test(func) and _hypothesis_test_wraps_coroutine(func)
-
-    @classmethod
-    def from_function(cls, function: pytest.Function, /) -> Self:
-        """
-        Instantiates an AsyncFunction from the specified pytest.Function item.
-        """
-        return cls.from_parent(
-            function.parent,
-            name=function.name,
-            callspec=getattr(function, "callspec", None),
-            callobj=function.obj,
-            fixtureinfo=function._fixtureinfo,
-            keywords=function.keywords,
-            originalname=function.originalname,
-        )
 
     def runtest(self) -> None:
         if self.get_closest_marker("asyncio"):
@@ -589,7 +566,7 @@ def pytest_collection_modifyitems(
     if _get_asyncio_mode(config) != Mode.AUTO:
         return
     for item in items:
-        if isinstance(item, (AsyncFunction, AsyncHypothesisTest, AsyncStaticMethod)):
+        if isinstance(item, PytestAsyncioFunction):
             item.add_marker("asyncio")
 
 
@@ -750,9 +727,7 @@ def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> Optional[object]:
     """
     marker = pyfuncitem.get_closest_marker("asyncio")
     if marker is not None:
-        if isinstance(
-            pyfuncitem, (AsyncFunction, AsyncHypothesisTest, AsyncStaticMethod)
-        ):
+        if isinstance(pyfuncitem, PytestAsyncioFunction):
             pass
         else:
             pyfuncitem.warn(
