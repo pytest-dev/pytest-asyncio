@@ -356,6 +356,12 @@ def _wrap_async_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -> N
 class AsyncFunction(pytest.Function):
     """Pytest item that is a coroutine or an asynchronous generator"""
 
+    @staticmethod
+    def can_substitute(item: pytest.Function) -> bool:
+        """Returns whether the specified function can be replaced by this class"""
+        func = item.obj
+        return _is_coroutine_or_asyncgen(func)
+
     @classmethod
     def from_function(cls, function: pytest.Function, /) -> Self:
         """
@@ -386,6 +392,14 @@ class AsyncStaticMethod(pytest.Function):
     decorated with staticmethod
     """
 
+    @staticmethod
+    def can_substitute(item: pytest.Function) -> bool:
+        """Returns whether the specified function can be replaced by this class"""
+        func = item.obj
+        return isinstance(func, staticmethod) and _is_coroutine_or_asyncgen(
+            func.__func__
+        )
+
     @classmethod
     def from_function(cls, function: pytest.Function, /) -> Self:
         """
@@ -415,6 +429,12 @@ class AsyncHypothesisTest(pytest.Function):
     Pytest item that is coroutine or an asynchronous generator decorated by
     @hypothesis.given.
     """
+
+    @staticmethod
+    def can_substitute(item: pytest.Function) -> bool:
+        """Returns whether the specified function can be replaced by this class"""
+        func = item.obj
+        return _is_hypothesis_test(func) and _hypothesis_test_wraps_coroutine(func)
 
     @classmethod
     def from_function(cls, function: pytest.Function, /) -> Self:
@@ -483,13 +503,11 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
     for node in node_iterator:
         updated_item = node
         if isinstance(node, pytest.Function):
-            if isinstance(obj, staticmethod) and _is_coroutine_or_asyncgen(
-                obj.__func__
-            ):
+            if AsyncStaticMethod.can_substitute(node):
                 updated_item = AsyncStaticMethod.from_function(node)
-            if _is_coroutine_or_asyncgen(obj):
+            if AsyncFunction.can_substitute(node):
                 updated_item = AsyncFunction.from_function(node)
-            if _is_hypothesis_test(obj) and _hypothesis_test_wraps_coroutine(obj):
+            if AsyncHypothesisTest.can_substitute(node):
                 updated_item = AsyncHypothesisTest.from_function(node)
         updated_node_collection.append(updated_item)
 
