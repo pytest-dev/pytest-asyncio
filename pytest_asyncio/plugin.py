@@ -37,7 +37,6 @@ from pytest import (
     Session,
     StashKey,
 )
-from typing_extensions import Self
 
 _R = TypeVar("_R")
 
@@ -366,7 +365,7 @@ class PytestAsyncioFunction(pytest.Function):
         return item
 
     @classmethod
-    def _from_function(cls, function: pytest.Function, /) -> Self:
+    def _from_function(cls, function: pytest.Function, /) -> pytest.Function:
         """
         Instantiates this specific PytestAsyncioFunction type from the specified
         pytest.Function item.
