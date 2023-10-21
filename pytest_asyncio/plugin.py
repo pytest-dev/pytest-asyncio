@@ -398,7 +398,8 @@ class AsyncFunction(PytestAsyncioFunction):
     def runtest(self) -> None:
         if self.get_closest_marker("asyncio"):
             self.obj = wrap_in_sync(
-                self.obj,
+                # https://github.com/pytest-dev/pytest-asyncio/issues/596
+                self.obj,  # type: ignore[has-type]
             )
         super().runtest()
 
@@ -419,7 +420,8 @@ class AsyncStaticMethod(PytestAsyncioFunction):
     def runtest(self) -> None:
         if self.get_closest_marker("asyncio"):
             self.obj = wrap_in_sync(
-                self.obj,
+                # https://github.com/pytest-dev/pytest-asyncio/issues/596
+                self.obj,  # type: ignore[has-type]
             )
         super().runtest()
 
