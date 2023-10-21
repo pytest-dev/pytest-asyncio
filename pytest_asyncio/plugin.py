@@ -727,8 +727,7 @@ def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> Optional[object]:
     Wraps marked tests in a synchronous function
     where the wrapped test coroutine is executed in an event loop.
     """
-    marker = pyfuncitem.get_closest_marker("asyncio")
-    if marker is not None:
+    if pyfuncitem.get_closest_marker("asyncio") is not None:
         if isinstance(pyfuncitem, PytestAsyncioFunction):
             pass
         else:
