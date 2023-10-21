@@ -1,8 +1,10 @@
 from textwrap import dedent
 
+from pytest import Pytester
 
-def test_warn_asyncio_marker_for_regular_func(testdir):
-    testdir.makepyfile(
+
+def test_warn_asyncio_marker_for_regular_func(pytester: Pytester):
+    pytester.makepyfile(
         dedent(
             """\
         import pytest
@@ -15,7 +17,7 @@ def test_warn_asyncio_marker_for_regular_func(testdir):
         """
         )
     )
-    testdir.makefile(
+    pytester.makefile(
         ".ini",
         pytest=dedent(
             """\
@@ -26,7 +28,7 @@ def test_warn_asyncio_marker_for_regular_func(testdir):
     """
         ),
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)
     result.stdout.fnmatch_lines(
         ["*is marked with '@pytest.mark.asyncio' but it is not an async function.*"]
