@@ -435,9 +435,9 @@ class AsyncHypothesisTest(PytestAsyncioFunction):
     @staticmethod
     def _can_substitute(item: pytest.Function) -> bool:
         func = item.obj
-        return _is_hypothesis_test(func) and asyncio.iscoroutinefunction(
-            func.hypothesis.inner_test
-        )
+        return getattr(
+            func, "is_hypothesis_test", False
+        ) and asyncio.iscoroutinefunction(func.hypothesis.inner_test)
 
     def runtest(self) -> None:
         if self.get_closest_marker("asyncio"):
@@ -742,10 +742,6 @@ def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> Optional[object]:
                 )
             )
     yield
-
-
-def _is_hypothesis_test(function: Any) -> bool:
-    return getattr(function, "is_hypothesis_test", False)
 
 
 def wrap_in_sync(
