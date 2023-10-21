@@ -30,6 +30,7 @@ from pytest import (
     Collector,
     Config,
     FixtureRequest,
+    Function,
     Item,
     Metafunc,
     Parser,
@@ -347,11 +348,11 @@ def _wrap_async_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -> N
     fixturedef.func = _async_fixture_wrapper
 
 
-class PytestAsyncioFunction(pytest.Function):
+class PytestAsyncioFunction(Function):
     """Base class for all test functions managed by pytest-asyncio."""
 
     @classmethod
-    def substitute(cls, item: pytest.Function, /) -> pytest.Function:
+    def substitute(cls, item: Function, /) -> Function:
         """
         Returns a PytestAsyncioFunction if there is an implementation that can handle
         the specified function item.
@@ -365,10 +366,10 @@ class PytestAsyncioFunction(pytest.Function):
         return item
 
     @classmethod
-    def _from_function(cls, function: pytest.Function, /) -> pytest.Function:
+    def _from_function(cls, function: Function, /) -> Function:
         """
         Instantiates this specific PytestAsyncioFunction type from the specified
-        pytest.Function item.
+        Function item.
         """
         return cls.from_parent(
             function.parent,
@@ -381,7 +382,7 @@ class PytestAsyncioFunction(pytest.Function):
         )
 
     @staticmethod
-    def _can_substitute(item: pytest.Function) -> bool:
+    def _can_substitute(item: Function) -> bool:
         """Returns whether the specified function can be replaced by this class"""
         raise NotImplementedError()
 
@@ -390,7 +391,7 @@ class AsyncFunction(PytestAsyncioFunction):
     """Pytest item that is a coroutine or an asynchronous generator"""
 
     @staticmethod
-    def _can_substitute(item: pytest.Function) -> bool:
+    def _can_substitute(item: Function) -> bool:
         func = item.obj
         return _is_coroutine_or_asyncgen(func)
 
@@ -409,7 +410,7 @@ class AsyncStaticMethod(PytestAsyncioFunction):
     """
 
     @staticmethod
-    def _can_substitute(item: pytest.Function) -> bool:
+    def _can_substitute(item: Function) -> bool:
         func = item.obj
         return isinstance(func, staticmethod) and _is_coroutine_or_asyncgen(
             func.__func__
@@ -430,7 +431,7 @@ class AsyncHypothesisTest(PytestAsyncioFunction):
     """
 
     @staticmethod
-    def _can_substitute(item: pytest.Function) -> bool:
+    def _can_substitute(item: Function) -> bool:
         func = item.obj
         return getattr(
             func, "is_hypothesis_test", False
@@ -486,7 +487,7 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
     updated_node_collection = []
     for node in node_iterator:
         updated_item = node
-        if isinstance(node, pytest.Function):
+        if isinstance(node, Function):
             updated_item = PytestAsyncioFunction.substitute(node)
         updated_node_collection.append(updated_item)
 
@@ -716,7 +717,7 @@ def _provide_clean_event_loop() -> None:
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> Optional[object]:
+def pytest_pyfunc_call(pyfuncitem: Function) -> Optional[object]:
     """
     Pytest hook called before a test case is run.
 
