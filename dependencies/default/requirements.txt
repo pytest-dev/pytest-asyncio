@@ -1,4 +1,3 @@
 # Always adjust install_requires in setup.cfg and pytest-min-requirements.txt
 # when changing runtime dependencies
 pytest >= 7.0.0
-typing-extensions >= 4.0; python_version < "3.11"
