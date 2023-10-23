@@ -9,6 +9,7 @@ Changelog
 - Deprecate redefinition of the `event_loop` fixture. `#587 <https://github.com/pytest-dev/pytest-asyncio/issues/531>`_
   Users requiring a class-scoped or module-scoped asyncio event loop for their tests
   should mark the corresponding class or module with `asyncio_event_loop`.
+- Test items based on asynchronous generators always exit with *xfail* status and emit a warning during the collection phase. This behavior is consistent with synchronous yield tests. `#642 <https://github.com/pytest-dev/pytest-asyncio/issues/642>`__
 - Remove support for Python 3.7
 - Declare support for Python 3.12
 
