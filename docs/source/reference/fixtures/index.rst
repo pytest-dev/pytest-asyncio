@@ -9,12 +9,8 @@ is available as the return value of this fixture or via `asyncio.get_running_loo
 The event loop is closed when the fixture scope ends. The fixture scope defaults
 to ``function`` scope.
 
-.. code-block:: python
-
-    def test_http_client(event_loop):
-        url = "http://httpbin.org/get"
-        resp = event_loop.run_until_complete(http_client(url))
-        assert b"HTTP/1.1 200 OK" in resp
+.. include:: event_loop_example.py
+    :code: python
 
 Note that, when using the ``event_loop`` fixture, you need to interact with the event loop using methods like ``event_loop.run_until_complete``. If you want to *await* code inside your test function, you need to write a coroutine and use it as a test function. The `asyncio <#pytest-mark-asyncio>`__ marker
 is used to mark coroutines that should be treated as test functions.

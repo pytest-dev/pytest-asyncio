@@ -6,9 +6,9 @@ Reference
   :hidden:
 
   configuration
-  fixtures
-  markers
-  decorators
+  fixtures/index
+  markers/index
+  decorators/index
   changelog
 
 This section of the documentation provides descriptions of the individual parts provided by pytest-asyncio.
