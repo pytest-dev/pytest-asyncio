@@ -34,6 +34,7 @@ from pytest import (
     Item,
     Metafunc,
     Parser,
+    PytestCollectionWarning,
     PytestPluginManager,
     Session,
     StashKey,
@@ -387,13 +388,13 @@ class PytestAsyncioFunction(Function):
         raise NotImplementedError()
 
 
-class AsyncFunction(PytestAsyncioFunction):
-    """Pytest item that is a coroutine or an asynchronous generator"""
+class Coroutine(PytestAsyncioFunction):
+    """Pytest item created by a coroutine"""
 
     @staticmethod
     def _can_substitute(item: Function) -> bool:
         func = item.obj
-        return _is_coroutine_or_asyncgen(func)
+        return asyncio.iscoroutinefunction(func)
 
     def runtest(self) -> None:
         if self.get_closest_marker("asyncio"):
@@ -402,6 +403,28 @@ class AsyncFunction(PytestAsyncioFunction):
                 self.obj,  # type: ignore[has-type]
             )
         super().runtest()
+
+
+class AsyncGenerator(PytestAsyncioFunction):
+    """Pytest item created by an asynchronous generator"""
+
+    @staticmethod
+    def _can_substitute(item: Function) -> bool:
+        func = item.obj
+        return inspect.isasyncgenfunction(func)
+
+    @classmethod
+    def _from_function(cls, function: Function, /) -> Function:
+        async_gen_item = super()._from_function(function)
+        unsupported_item_type_message = (
+            f"Tests based on asynchronous generators are not supported. "
+            f"{function.name} will be ignored."
+        )
+        async_gen_item.warn(PytestCollectionWarning(unsupported_item_type_message))
+        async_gen_item.add_marker(
+            pytest.mark.xfail(run=False, reason=unsupported_item_type_message)
+        )
+        return async_gen_item
 
 
 class AsyncStaticMethod(PytestAsyncioFunction):
