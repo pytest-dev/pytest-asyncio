@@ -12,7 +12,7 @@ async def async_inner_fixture():
 
 
 @pytest.fixture()
-async def async_fixture_outer(async_inner_fixture, event_loop):
+async def async_fixture_outer(async_inner_fixture):
     await asyncio.sleep(0.01)
     print("outer start")
     assert async_inner_fixture is True

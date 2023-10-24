@@ -35,6 +35,7 @@ from pytest import (
     Metafunc,
     Parser,
     PytestCollectionWarning,
+    PytestDeprecationWarning,
     PytestPluginManager,
     Session,
     StashKey,
@@ -222,6 +223,16 @@ def _preprocess_async_fixtures(
                 # This applies to pytest_trio fixtures, for example
                 continue
             _make_asyncio_fixture_function(func)
+            function_signature = inspect.signature(func)
+            if "event_loop" in function_signature.parameters:
+                warnings.warn(
+                    PytestDeprecationWarning(
+                        f"{func.__name__} is asynchronous and explicitly "
+                        f'requests the "event_loop" fixture. Asynchronous fixtures and '
+                        f'test functions should use "asyncio.get_running_loop()" '
+                        f"instead."
+                    )
+                )
             _inject_fixture_argnames(fixturedef, event_loop_fixture_id)
             _synchronize_async_fixture(fixturedef, event_loop_fixture_id)
             assert _is_asyncio_fixture_function(fixturedef.func)
@@ -372,7 +383,7 @@ class PytestAsyncioFunction(Function):
         Instantiates this specific PytestAsyncioFunction type from the specified
         Function item.
         """
-        return cls.from_parent(
+        subclass_instance = cls.from_parent(
             function.parent,
             name=function.name,
             callspec=getattr(function, "callspec", None),
@@ -381,6 +392,16 @@ class PytestAsyncioFunction(Function):
             keywords=function.keywords,
             originalname=function.originalname,
         )
+        subclassed_function_signature = inspect.signature(subclass_instance.obj)
+        if "event_loop" in subclassed_function_signature.parameters:
+            subclass_instance.warn(
+                PytestDeprecationWarning(
+                    f"{subclass_instance.name} is asynchronous and explicitly "
+                    f'requests the "event_loop" fixture. Asynchronous fixtures and '
+                    f'test functions should use "asyncio.get_running_loop()" instead.'
+                )
+            )
+        return subclass_instance
 
     @staticmethod
     def _can_substitute(item: Function) -> bool:

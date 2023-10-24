@@ -8,7 +8,7 @@ import pytest
 class TestPyTestMark:
     pytestmark = pytest.mark.asyncio
 
-    async def test_is_asyncio(self, event_loop, sample_fixture):
+    async def test_is_asyncio(self, sample_fixture):
         assert asyncio.get_event_loop()
         counter = 1
 

@@ -4,14 +4,19 @@ Concepts
 
 asyncio event loops
 ===================
-pytest-asyncio runs each test item in its own asyncio event loop. The loop can be accessed via the ``event_loop`` fixture, which is automatically requested by all async tests.
+pytest-asyncio runs each test item in its own asyncio event loop. The loop can be accessed via ``asyncio.get_running_loop()``.
 
 .. code-block:: python
 
-    async def test_provided_loop_is_running_loop(event_loop):
-        assert event_loop is asyncio.get_running_loop()
+    async def test_runs_in_a_loop():
+        assert asyncio.get_running_loop()
 
-You can think of `event_loop` as an autouse fixture for async tests.
+Synchronous test functions can get access to an asyncio event loop via the `event_loop` fixture.
+
+.. code-block:: python
+
+    def test_can_access_current_loop(event_loop):
+        assert event_loop
 
 Test discovery modes
 ====================
