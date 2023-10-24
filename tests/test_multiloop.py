@@ -54,7 +54,7 @@ def test_event_loop_override(pytester: Pytester):
 
 
             @pytest.mark.asyncio
-            async def test_for_custom_loop(event_loop):
+            async def test_for_custom_loop():
                 """This test should be executed using the custom loop."""
                 await asyncio.sleep(0.01)
                 assert type(asyncio.get_event_loop()).__name__ == "CustomSelectorLoop"

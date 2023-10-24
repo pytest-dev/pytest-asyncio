@@ -70,7 +70,7 @@ async def test_asyncio_marker_with_default_param(a_param=None):
 
 
 @pytest.mark.asyncio
-async def test_unused_port_fixture(unused_tcp_port, event_loop):
+async def test_unused_port_fixture(unused_tcp_port):
     """Test the unused TCP port fixture."""
 
     async def closer(_, writer):
@@ -86,7 +86,7 @@ async def test_unused_port_fixture(unused_tcp_port, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_unused_udp_port_fixture(unused_udp_port, event_loop):
+async def test_unused_udp_port_fixture(unused_udp_port):
     """Test the unused TCP port fixture."""
 
     class Closer:
@@ -96,6 +96,7 @@ async def test_unused_udp_port_fixture(unused_udp_port, event_loop):
         def connection_lost(self, *arg, **kwd):
             pass
 
+    event_loop = asyncio.get_running_loop()
     transport1, _ = await event_loop.create_datagram_endpoint(
         Closer,
         local_addr=("127.0.0.1", unused_udp_port),
@@ -113,7 +114,7 @@ async def test_unused_udp_port_fixture(unused_udp_port, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_unused_port_factory_fixture(unused_tcp_port_factory, event_loop):
+async def test_unused_port_factory_fixture(unused_tcp_port_factory):
     """Test the unused TCP port factory fixture."""
 
     async def closer(_, writer):
@@ -142,7 +143,7 @@ async def test_unused_port_factory_fixture(unused_tcp_port_factory, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_unused_udp_port_factory_fixture(unused_udp_port_factory, event_loop):
+async def test_unused_udp_port_factory_fixture(unused_udp_port_factory):
     """Test the unused UDP port factory fixture."""
 
     class Closer:
@@ -158,6 +159,7 @@ async def test_unused_udp_port_factory_fixture(unused_udp_port_factory, event_lo
         unused_udp_port_factory(),
     )
 
+    event_loop = asyncio.get_running_loop()
     transport1, _ = await event_loop.create_datagram_endpoint(
         Closer,
         local_addr=("127.0.0.1", port1),
@@ -229,13 +231,6 @@ class TestMarkerInClassBasedTests:
     """Test that asyncio marked functions work for methods of test classes."""
 
     @pytest.mark.asyncio
-    async def test_asyncio_marker_with_explicit_loop_fixture(self, event_loop):
-        """Test the "asyncio" marker works on a method in
-        a class-based test with explicit loop fixture."""
-        ret = await async_coro()
-        assert ret == "ok"
-
-    @pytest.mark.asyncio
     async def test_asyncio_marker_with_implicit_loop_fixture(self):
         """Test the "asyncio" marker works on a method in
         a class-based test with implicit loop fixture."""
@@ -257,11 +252,11 @@ class TestEventLoopStartedBeforeFixtures:
         assert await loop.run_in_executor(None, self.foo) == 1
 
     @pytest.mark.asyncio
-    async def test_event_loop_after_fixture(self, loop, event_loop):
+    async def test_event_loop_after_fixture(self, loop):
         assert await loop.run_in_executor(None, self.foo) == 1
 
     @pytest.mark.asyncio
-    async def test_event_loop_before_fixture(self, event_loop, loop):
+    async def test_event_loop_before_fixture(self, loop):
         assert await loop.run_in_executor(None, self.foo) == 1
 
 

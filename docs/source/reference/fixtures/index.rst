@@ -5,7 +5,7 @@ Fixtures
 event_loop
 ==========
 Creates a new asyncio event loop based on the current event loop policy. The new loop
-is available as the return value of this fixture or via `asyncio.get_running_loop <https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.get_running_loop>`__.
+is available as the return value of this fixture for synchronous functions, or via `asyncio.get_running_loop <https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.get_running_loop>`__ for asynchronous functions.
 The event loop is closed when the fixture scope ends. The fixture scope defaults
 to ``function`` scope.
 
