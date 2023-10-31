@@ -549,7 +549,7 @@ def pytest_collectstart(collector: pytest.Collector):
         return
     # pytest.Collector.own_markers is empty at this point,
     # so we rely on _pytest.mark.structures.get_unpacked_marks
-    marks = get_unpacked_marks(collector.obj, consider_mro=True)
+    marks = get_unpacked_marks(collector.obj)
     for mark in marks:
         if not mark.name == "asyncio_event_loop":
             continue
