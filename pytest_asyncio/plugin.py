@@ -26,6 +26,7 @@ from typing import (
 
 import pytest
 from _pytest.mark.structures import get_unpacked_marks
+from _pytest.outcomes import OutcomeException
 from pytest import (
     Collector,
     Config,
@@ -549,7 +550,15 @@ def pytest_collectstart(collector: pytest.Collector):
         return
     # pytest.Collector.own_markers is empty at this point,
     # so we rely on _pytest.mark.structures.get_unpacked_marks
-    marks = get_unpacked_marks(collector.obj, consider_mro=True)
+    # The function imports the collected object if it's a module.
+    # This can lead to issues, when the module contains statements specifying
+    # test outcomes, such as "pytest.skip(allow_module_level=True)". These cases
+    # are handled correctly when they happen inside Collector.collect(), but this hook
+    # runs before the actual collect call.
+    try:
+        marks = get_unpacked_marks(collector.obj, consider_mro=True)
+    except (OutcomeException, Collector.CollectError):
+        marks = []
     for mark in marks:
         if not mark.name == "asyncio_event_loop":
             continue

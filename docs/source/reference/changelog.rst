@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.22.1 (UNRELEASED)
+===================
+- Fixes a bug that caused an internal pytest error when using module-level skips `#655 <https://github.com/pytest-dev/pytest-asyncio/pull/655>`_
+
+
 0.22.0 (2023-10-31)
 ===================
 - Class-scoped and module-scoped event loops can be requested
