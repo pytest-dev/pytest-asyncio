@@ -2,9 +2,9 @@
 Changelog
 =========
 
-0.22.1 (UNRELEASED)
+0.23.0 (UNRELEASED)
 ===================
-- Fixes a bug that broke compatibility with pytest>=7.0,<7.2. `#654 <https://github.com/pytest-dev/pytest-asyncio/pull/654>`_
+- Removes pytest-trio from the test dependencies `#620 <https://github.com/pytest-dev/pytest-asyncio/pull/620>`_
 
 0.22.0 (2023-10-31)
 ===================
