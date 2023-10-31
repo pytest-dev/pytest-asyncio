@@ -2,8 +2,8 @@
 Changelog
 =========
 
-1.0.0 (UNRELEASED)
-==================
+0.22.0 (2023-10-31)
+===================
 - Class-scoped and module-scoped event loops can be requested
   via the _asyncio_event_loop_ mark. `#620 <https://github.com/pytest-dev/pytest-asyncio/pull/620>`_
 - Deprecate redefinition of the `event_loop` fixture. `#587 <https://github.com/pytest-dev/pytest-asyncio/issues/531>`_
