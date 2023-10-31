@@ -28,6 +28,7 @@ from typing import (
 )
 
 import pytest
+from _pytest.outcomes import OutcomeException
 from pytest import (
     Class,
     Collector,
@@ -607,7 +608,15 @@ def pytest_collectstart(collector: pytest.Collector):
     # know it exists. We work around this by attaching the fixture function to the
     # collected Python class, where it will be picked up by pytest.Class.collect()
     # or pytest.Module.collect(), respectively
-    collector.obj.__pytest_asyncio_scoped_event_loop = scoped_event_loop
+    try:
+        collector.obj.__pytest_asyncio_scoped_event_loop = scoped_event_loop
+    except (OutcomeException, Collector.CollectError):
+        # Accessing Module.obj triggers a module import executing module-level
+        # statements. A module-level pytest.skip statement raises the "Skipped"
+        # OutcomeException or a Collector.CollectError, if the "allow_module_level"
+        # kwargs is missing. These cases are handled correctly when they happen inside
+        # Collector.collect(), but this hook runs before the actual collect call.
+        return
     # When collector is a package, collector.obj is the package's __init__.py.
     # pytest doesn't seem to collect fixtures in __init__.py.
     # Using parsefactories to collect fixtures in __init__.py their baseid will end

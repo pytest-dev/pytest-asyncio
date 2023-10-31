@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.23.1 (2023-12-03)
+===================
+- Fixes a bug that caused an internal pytest error when using module-level skips `#701 <https://github.com/pytest-dev/pytest-asyncio/issues/701>`_
+
+
 0.23.0 (2023-12-03)
 ===================
 This release is backwards-compatible with v0.21.
