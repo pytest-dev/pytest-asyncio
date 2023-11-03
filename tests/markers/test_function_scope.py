@@ -1,0 +1,147 @@
+from textwrap import dedent
+
+from pytest import Pytester
+
+
+def test_asyncio_mark_provides_function_scoped_loop_strict_mode(pytester: Pytester):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+            import pytest
+
+            pytestmark = pytest.mark.asyncio
+
+            loop: asyncio.AbstractEventLoop
+
+            async def test_remember_loop():
+                global loop
+                loop = asyncio.get_running_loop()
+
+            async def test_does_not_run_in_same_loop():
+                global loop
+                assert asyncio.get_running_loop() is not loop
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=2)
+
+
+def test_function_scope_supports_explicit_event_loop_fixture_request(
+    pytester: Pytester,
+):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import pytest
+
+            pytestmark = pytest.mark.asyncio
+
+            async def test_remember_loop(event_loop):
+                pass
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1, warnings=1)
+    result.stdout.fnmatch_lines(
+        '*is asynchronous and explicitly requests the "event_loop" fixture*'
+    )
+
+
+def test_asyncio_mark_respects_the_loop_policy(
+    pytester: Pytester,
+):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+            import pytest
+
+            pytestmark = pytest.mark.asyncio
+
+            class CustomEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
+                pass
+
+            @pytest.fixture(scope="function")
+            def event_loop_policy():
+                return CustomEventLoopPolicy()
+
+            async def test_uses_custom_event_loop_policy():
+                assert isinstance(
+                    asyncio.get_event_loop_policy(),
+                    CustomEventLoopPolicy,
+                )
+            """
+        ),
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)
+
+
+def test_asyncio_mark_respects_parametrized_loop_policies(
+    pytester: Pytester,
+):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+
+            import pytest
+
+            pytestmark = pytest.mark.asyncio
+
+            class CustomEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
+                pass
+
+            @pytest.fixture(
+                scope="module",
+                params=[
+                    CustomEventLoopPolicy(),
+                    CustomEventLoopPolicy(),
+                ],
+            )
+            def event_loop_policy(request):
+                return request.param
+
+            async def test_parametrized_loop():
+                assert isinstance(
+                    asyncio.get_event_loop_policy(),
+                    CustomEventLoopPolicy,
+                )
+            """
+        )
+    )
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result.assert_outcomes(passed=2)
+
+
+def test_asyncio_mark_provides_function_scoped_loop_to_fixtures(
+    pytester: Pytester,
+):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+
+            import pytest
+            import pytest_asyncio
+
+            pytestmark = pytest.mark.asyncio
+
+            loop: asyncio.AbstractEventLoop
+
+            @pytest_asyncio.fixture
+            async def my_fixture():
+                global loop
+                loop = asyncio.get_running_loop()
+
+            async def test_runs_is_same_loop_as_fixture(my_fixture):
+                global loop
+                assert asyncio.get_running_loop() is loop
+            """
+        )
+    )
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)

@@ -5,6 +5,7 @@ Changelog
 0.23.0 (UNRELEASED)
 ===================
 - Removes pytest-trio from the test dependencies `#620 <https://github.com/pytest-dev/pytest-asyncio/pull/620>`_
+- Introduces the *event_loop_policy* fixture which allows testing with non-default or multiple event loops  `#662 <https://github.com/pytest-dev/pytest-asyncio/pull/662>`_
 
 0.22.0 (2023-10-31)
 ===================
