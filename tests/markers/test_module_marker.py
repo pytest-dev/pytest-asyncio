@@ -157,7 +157,11 @@ def test_asyncio_event_loop_mark_allows_specifying_the_loop_policy(
 
             from .custom_policy import CustomEventLoopPolicy
 
-            pytestmark = pytest.mark.asyncio_event_loop(policy=CustomEventLoopPolicy())
+            pytestmark = pytest.mark.asyncio_event_loop
+
+            @pytest.fixture(scope="module")
+            def event_loop_policy():
+                return CustomEventLoopPolicy()
 
             @pytest.mark.asyncio
             async def test_uses_custom_event_loop_policy():
@@ -178,7 +182,7 @@ def test_asyncio_event_loop_mark_allows_specifying_the_loop_policy(
             async def test_does_not_use_custom_event_loop_policy():
                 assert not isinstance(
                     asyncio.get_event_loop_policy(),
-                   CustomEventLoopPolicy,
+                    CustomEventLoopPolicy,
                 )
             """
         ),
@@ -197,12 +201,17 @@ def test_asyncio_event_loop_mark_allows_specifying_multiple_loop_policies(
 
             import pytest
 
-            pytestmark = pytest.mark.asyncio_event_loop(
-                policy=[
+            pytestmark = pytest.mark.asyncio_event_loop
+
+            @pytest.fixture(
+                scope="module",
+                params=[
                     asyncio.DefaultEventLoopPolicy(),
                     asyncio.DefaultEventLoopPolicy(),
-                ]
+                ],
             )
+            def event_loop_policy(request):
+                return request.param
 
             @pytest.mark.asyncio
             async def test_parametrized_loop():

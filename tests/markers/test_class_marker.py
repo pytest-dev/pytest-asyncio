@@ -140,8 +140,12 @@ def test_asyncio_event_loop_mark_allows_specifying_the_loop_policy(
             class CustomEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
                 pass
 
-            @pytest.mark.asyncio_event_loop(policy=CustomEventLoopPolicy())
-            class TestUsesCustomEventLoopPolicy:
+            @pytest.mark.asyncio_event_loop
+            class TestUsesCustomEventLoop:
+
+                @pytest.fixture(scope="class")
+                def event_loop_policy(self):
+                    return CustomEventLoopPolicy()
 
                 @pytest.mark.asyncio
                 async def test_uses_custom_event_loop_policy(self):
@@ -173,15 +177,18 @@ def test_asyncio_event_loop_mark_allows_specifying_multiple_loop_policies(
 
             import pytest
 
-            @pytest.mark.asyncio_event_loop(
-                policy=[
+            @pytest.fixture(
+                params=[
                     asyncio.DefaultEventLoopPolicy(),
                     asyncio.DefaultEventLoopPolicy(),
                 ]
             )
+            def event_loop_policy(request):
+                return request.param
+
             class TestWithDifferentLoopPolicies:
                 @pytest.mark.asyncio
-                async def test_parametrized_loop(self):
+                async def test_parametrized_loop(self, request):
                     pass
             """
         )

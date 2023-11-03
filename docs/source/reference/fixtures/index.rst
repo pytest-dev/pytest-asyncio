@@ -22,6 +22,24 @@ If you need to change the type of the event loop, prefer setting a custom event 
 If the ``pytest.mark.asyncio`` decorator is applied to a test function, the ``event_loop``
 fixture will be requested automatically by the test function.
 
+event_loop_policy
+=================
+Returns the event loop policy used to create asyncio event loops.
+The default return value is *asyncio.get_event_loop_policy().*
+
+This fixture can be overridden when a different event loop policy should be used.
+
+.. include:: event_loop_policy_example.py
+    :code: python
+
+Multiple policies can be provided via fixture parameters.
+The fixture is automatically applied to all pytest-asyncio tests.
+Therefore, all tests managed by pytest-asyncio are run once for each fixture parameter.
+The following example runs the test with different event loop policies.
+
+.. include:: event_loop_policy_parametrized_example.py
+    :code: python
+
 unused_tcp_port
 ===============
 Finds and yields a single unused TCP port on the localhost interface. Useful for

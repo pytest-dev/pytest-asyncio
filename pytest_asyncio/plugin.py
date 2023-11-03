@@ -6,6 +6,7 @@ import functools
 import inspect
 import socket
 import warnings
+from asyncio import AbstractEventLoopPolicy
 from textwrap import dedent
 from typing import (
     Any,
@@ -553,12 +554,6 @@ def pytest_collectstart(collector: pytest.Collector):
     for mark in marks:
         if not mark.name == "asyncio_event_loop":
             continue
-        event_loop_policy = mark.kwargs.get("policy", asyncio.get_event_loop_policy())
-        policy_params = (
-            event_loop_policy
-            if isinstance(event_loop_policy, Iterable)
-            else (event_loop_policy,)
-        )
 
         # There seem to be issues when a fixture is shadowed by another fixture
         # and both differ in their params.
@@ -573,14 +568,12 @@ def pytest_collectstart(collector: pytest.Collector):
         @pytest.fixture(
             scope="class" if isinstance(collector, pytest.Class) else "module",
             name=event_loop_fixture_id,
-            params=policy_params,
-            ids=tuple(type(policy).__name__ for policy in policy_params),
         )
         def scoped_event_loop(
             *args,  # Function needs to accept "cls" when collected by pytest.Class
-            request,
+            event_loop_policy,
         ) -> Iterator[asyncio.AbstractEventLoop]:
-            new_loop_policy = request.param
+            new_loop_policy = event_loop_policy
             old_loop_policy = asyncio.get_event_loop_policy()
             old_loop = asyncio.get_event_loop()
             asyncio.set_event_loop_policy(new_loop_policy)
@@ -675,6 +668,7 @@ def pytest_fixture_setup(
         _add_finalizers(
             fixturedef,
             _close_event_loop,
+            _restore_event_loop_policy(asyncio.get_event_loop_policy()),
             _provide_clean_event_loop,
         )
         outcome = yield
@@ -747,6 +741,23 @@ def _close_event_loop() -> None:
                 DeprecationWarning,
             )
         loop.close()
+
+
+def _restore_event_loop_policy(previous_policy) -> Callable[[], None]:
+    def _restore_policy():
+        # Close any event loop associated with the old loop policy
+        # to avoid ResourceWarnings in the _provide_clean_event_loop finalizer
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", DeprecationWarning)
+                loop = previous_policy.get_event_loop()
+        except RuntimeError:
+            loop = None
+        if loop:
+            loop.close()
+        asyncio.set_event_loop_policy(previous_policy)
+
+    return _restore_policy
 
 
 def _provide_clean_event_loop() -> None:
@@ -856,6 +867,8 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
 @pytest.fixture
 def event_loop(request: FixtureRequest) -> Iterator[asyncio.AbstractEventLoop]:
     """Create an instance of the default event loop for each test case."""
+    new_loop_policy = request.getfixturevalue(event_loop_policy.__name__)
+    asyncio.set_event_loop_policy(new_loop_policy)
     loop = asyncio.get_event_loop_policy().new_event_loop()
     # Add a magic value to the event loop, so pytest-asyncio can determine if the
     # event_loop fixture was overridden. Other implementations of event_loop don't
@@ -865,6 +878,12 @@ def event_loop(request: FixtureRequest) -> Iterator[asyncio.AbstractEventLoop]:
     loop.__original_fixture_loop = True  # type: ignore[attr-defined]
     yield loop
     loop.close()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def event_loop_policy() -> AbstractEventLoopPolicy:
+    """Return an instance of the policy used to create asyncio event loops."""
+    return asyncio.get_event_loop_policy()
 
 
 def _unused_port(socket_type: int) -> int:
