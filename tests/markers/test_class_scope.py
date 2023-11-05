@@ -26,7 +26,7 @@ def sample_fixture():
     return None
 
 
-def test_asyncio_event_loop_mark_provides_class_scoped_loop_strict_mode(
+def test_asyncio_mark_provides_class_scoped_loop_when_applied_to_functions(
     pytester: pytest.Pytester,
 ):
     pytester.makepyfile(
@@ -35,15 +35,14 @@ def test_asyncio_event_loop_mark_provides_class_scoped_loop_strict_mode(
             import asyncio
             import pytest
 
-            @pytest.mark.asyncio_event_loop
             class TestClassScopedLoop:
                 loop: asyncio.AbstractEventLoop
 
-                @pytest.mark.asyncio
+                @pytest.mark.asyncio(scope="class")
                 async def test_remember_loop(self):
                     TestClassScopedLoop.loop = asyncio.get_running_loop()
 
-                @pytest.mark.asyncio
+                @pytest.mark.asyncio(scope="class")
                 async def test_this_runs_in_same_loop(self):
                     assert asyncio.get_running_loop() is TestClassScopedLoop.loop
             """
@@ -53,7 +52,7 @@ def test_asyncio_event_loop_mark_provides_class_scoped_loop_strict_mode(
     result.assert_outcomes(passed=2)
 
 
-def test_asyncio_event_loop_mark_provides_class_scoped_loop_auto_mode(
+def test_asyncio_mark_provides_class_scoped_loop_when_applied_to_class(
     pytester: pytest.Pytester,
 ):
     pytester.makepyfile(
@@ -62,7 +61,7 @@ def test_asyncio_event_loop_mark_provides_class_scoped_loop_auto_mode(
             import asyncio
             import pytest
 
-            @pytest.mark.asyncio_event_loop
+            @pytest.mark.asyncio(scope="class")
             class TestClassScopedLoop:
                 loop: asyncio.AbstractEventLoop
 
@@ -74,29 +73,49 @@ def test_asyncio_event_loop_mark_provides_class_scoped_loop_auto_mode(
             """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=auto")
+    result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=2)
 
 
-def test_asyncio_event_loop_mark_is_inherited_to_subclasses(pytester: pytest.Pytester):
+def test_asyncio_mark_raises_when_class_scoped_is_request_without_class(
+    pytester: pytest.Pytester,
+):
     pytester.makepyfile(
         dedent(
             """\
             import asyncio
             import pytest
 
-            @pytest.mark.asyncio_event_loop
+            @pytest.mark.asyncio(scope="class")
+            async def test_has_no_surrounding_class():
+                pass
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines(
+        "*is marked to be run in an event loop with scope*",
+    )
+
+
+def test_asyncio_mark_is_inherited_to_subclasses(pytester: pytest.Pytester):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+            import pytest
+
+            @pytest.mark.asyncio(scope="class")
             class TestSuperClassWithMark:
                 pass
 
             class TestWithoutMark(TestSuperClassWithMark):
                 loop: asyncio.AbstractEventLoop
 
-                @pytest.mark.asyncio
                 async def test_remember_loop(self):
                     TestWithoutMark.loop = asyncio.get_running_loop()
 
-                @pytest.mark.asyncio
                 async def test_this_runs_in_same_loop(self):
                     assert asyncio.get_running_loop() is TestWithoutMark.loop
             """
@@ -106,29 +125,7 @@ def test_asyncio_event_loop_mark_is_inherited_to_subclasses(pytester: pytest.Pyt
     result.assert_outcomes(passed=2)
 
 
-def test_raise_when_event_loop_fixture_is_requested_in_addition_to_scoped_loop(
-    pytester: pytest.Pytester,
-):
-    pytester.makepyfile(
-        dedent(
-            """\
-            import asyncio
-            import pytest
-
-            @pytest.mark.asyncio_event_loop
-            class TestClassScopedLoop:
-                @pytest.mark.asyncio
-                async def test_remember_loop(self, event_loop):
-                    pass
-            """
-        )
-    )
-    result = pytester.runpytest("--asyncio-mode=strict")
-    result.assert_outcomes(errors=1)
-    result.stdout.fnmatch_lines("*MultipleEventLoopsRequestedError: *")
-
-
-def test_asyncio_event_loop_mark_allows_specifying_the_loop_policy(
+def test_asyncio_mark_respects_the_loop_policy(
     pytester: pytest.Pytester,
 ):
     pytester.makepyfile(
@@ -167,7 +164,7 @@ def test_asyncio_event_loop_mark_allows_specifying_the_loop_policy(
     result.assert_outcomes(passed=2)
 
 
-def test_asyncio_event_loop_mark_allows_specifying_multiple_loop_policies(
+def test_asyncio_mark_respects_parametrized_loop_policies(
     pytester: pytest.Pytester,
 ):
     pytester.makepyfile(
@@ -178,6 +175,7 @@ def test_asyncio_event_loop_mark_allows_specifying_multiple_loop_policies(
             import pytest
 
             @pytest.fixture(
+                scope="class",
                 params=[
                     asyncio.DefaultEventLoopPolicy(),
                     asyncio.DefaultEventLoopPolicy(),
@@ -186,8 +184,8 @@ def test_asyncio_event_loop_mark_allows_specifying_multiple_loop_policies(
             def event_loop_policy(request):
                 return request.param
 
+            @pytest.mark.asyncio(scope="class")
             class TestWithDifferentLoopPolicies:
-                @pytest.mark.asyncio
                 async def test_parametrized_loop(self, request):
                     pass
             """
@@ -197,7 +195,7 @@ def test_asyncio_event_loop_mark_allows_specifying_multiple_loop_policies(
     result.assert_outcomes(passed=2)
 
 
-def test_asyncio_event_loop_mark_provides_class_scoped_loop_to_fixtures(
+def test_asyncio_mark_provides_class_scoped_loop_to_fixtures(
     pytester: pytest.Pytester,
 ):
     pytester.makepyfile(
@@ -208,7 +206,7 @@ def test_asyncio_event_loop_mark_provides_class_scoped_loop_to_fixtures(
             import pytest
             import pytest_asyncio
 
-            @pytest.mark.asyncio_event_loop
+            @pytest.mark.asyncio(scope="class")
             class TestClassScopedLoop:
                 loop: asyncio.AbstractEventLoop
 
