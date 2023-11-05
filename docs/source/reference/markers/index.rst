@@ -4,62 +4,34 @@ Markers
 
 ``pytest.mark.asyncio``
 =======================
-A coroutine or async generator with this marker will be treated as a test function by pytest. The marked function will be executed as an
-asyncio task in the event loop provided by the ``event_loop`` fixture.
+A coroutine or async generator with this marker is treated as a test function by pytest.
+The marked function is executed as an asyncio task in the event loop provided by pytest-asyncio.
 
-In order to make your test code a little more concise, the pytest |pytestmark|_
-feature can be used to mark entire modules or classes with this marker.
-Only test coroutines will be affected (by default, coroutines prefixed by
-``test_``), so, for example, fixtures are safe to define.
-
-.. include:: pytestmark_asyncio_strict_mode_example.py
+.. include:: function_scoped_loop_strict_mode_example.py
     :code: python
 
-In *auto* mode, the ``pytest.mark.asyncio`` marker can be omitted, the marker is added
-automatically to *async* test functions.
+Multiple async tests in a single class or module can be marked using |pytestmark|_.
 
+.. include:: function_scoped_loop_pytestmark_strict_mode_example.py
+    :code: python
 
-``pytest.mark.asyncio_event_loop``
-==================================
-Test classes or modules with this mark provide a class-scoped or module-scoped asyncio event loop.
+The ``pytest.mark.asyncio`` marker can be omitted entirely in *auto* mode, where the *asyncio* marker is added automatically to *async* test functions.
 
-This functionality is orthogonal to the `asyncio` mark.
-That means the presence of this mark does not imply that async test functions inside the class or module are collected by pytest-asyncio.
-The collection happens automatically in `auto` mode.
-However, if you're using strict mode, you still have to apply the `asyncio` mark to your async test functions.
-
-The following code example uses the `asyncio_event_loop` mark to provide a shared event loop for all tests in `TestClassScopedLoop`:
+By default, each test runs in it's own asyncio event loop.
+Multiple tests can share the same event loop by providing a *scope* keyword argument to the *asyncio* mark.
+The following code example provides a shared event loop for all tests in `TestClassScopedLoop`:
 
 .. include:: class_scoped_loop_strict_mode_example.py
     :code: python
 
-In *auto* mode, the ``pytest.mark.asyncio`` marker can be omitted:
+Requesting class scope for tests that are not part of a class will give a *UsageError.*
+Similar to class-scoped event loops, a module-scoped loop is provided when setting the asyncio mark's scope to *module:*
 
-.. include:: class_scoped_loop_auto_mode_example.py
+.. include:: module_scoped_loop_strict_mode_example.py
     :code: python
 
-Similarly, a module-scoped loop is provided when adding the `asyncio_event_loop` mark to the module:
-
-.. include:: module_scoped_loop_auto_mode_example.py
-    :code: python
-
-The `asyncio_event_loop` mark supports an optional `policy` keyword argument to set the asyncio event loop policy.
-
-.. include:: class_scoped_loop_custom_policy_strict_mode_example.py
-    :code: python
-
-
-The ``policy`` keyword argument may also take an iterable of event loop policies. This causes tests under by the `asyncio_event_loop` mark to be parametrized with different policies:
-
-.. include:: class_scoped_loop_custom_policies_strict_mode_example.py
-    :code: python
-
-If no explicit policy is provided, the mark will use the loop policy returned by ``asyncio.get_event_loop_policy()``.
-
-Fixtures and tests sharing the same `asyncio_event_loop` mark are executed in the same event loop:
-
-.. include:: class_scoped_loop_with_fixture_strict_mode_example.py
-    :code: python
+Requesting class scope with the test being part of a class will give a *UsageError*.
+The supported scopes are *class*, and *module.*
 
 .. |pytestmark| replace:: ``pytestmark``
 .. _pytestmark: http://doc.pytest.org/en/latest/example/markers.html#marking-whole-classes-or-modules
