@@ -5,6 +5,7 @@ import enum
 import functools
 import inspect
 import socket
+import sys
 import warnings
 from asyncio import AbstractEventLoopPolicy
 from textwrap import dedent
@@ -35,6 +36,7 @@ from pytest import (
     Item,
     Metafunc,
     Module,
+    Package,
     Parser,
     PytestCollectionWarning,
     PytestDeprecationWarning,
@@ -545,11 +547,16 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
 
 
 _event_loop_fixture_id = StashKey[str]
+_fixture_scope_by_collector_type = {
+    Class: "class",
+    Module: "module",
+    Package: "package",
+}
 
 
 @pytest.hookimpl
 def pytest_collectstart(collector: pytest.Collector):
-    if not isinstance(collector, (pytest.Class, pytest.Module)):
+    if not isinstance(collector, (Class, Module, Package)):
         return
     # There seem to be issues when a fixture is shadowed by another fixture
     # and both differ in their params.
@@ -562,7 +569,7 @@ def pytest_collectstart(collector: pytest.Collector):
     collector.stash[_event_loop_fixture_id] = event_loop_fixture_id
 
     @pytest.fixture(
-        scope="class" if isinstance(collector, pytest.Class) else "module",
+        scope=_fixture_scope_by_collector_type[type(collector)],
         name=event_loop_fixture_id,
     )
     def scoped_event_loop(
@@ -585,6 +592,23 @@ def pytest_collectstart(collector: pytest.Collector):
     # collected Python class, where it will be picked up by pytest.Class.collect()
     # or pytest.Module.collect(), respectively
     collector.obj.__pytest_asyncio_scoped_event_loop = scoped_event_loop
+    # When collector is a package, collector.obj is the package's __init__.py.
+    # pytest doesn't seem to collect fixtures in __init__.py.
+    # Using parsefactories to collect fixtures in __init__.py their baseid will end
+    # with "__init__.py", thus limiting the scope of the fixture to the init module.
+    # Therefore, we tell the pluginmanager explicitly to collect the fixtures
+    # in the init module, but strip "__init__.py" from the baseid
+    # Possibly related to https://github.com/pytest-dev/pytest/issues/4085
+    if isinstance(collector, Package):
+        fixturemanager = collector.config.pluginmanager.get_plugin("funcmanage")
+        package_node_id = _removesuffix(collector.nodeid, "__init__.py")
+        fixturemanager.parsefactories(collector.obj, nodeid=package_node_id)
+
+
+def _removesuffix(s: str, suffix: str) -> str:
+    if sys.version_info < (3, 9):
+        return s[: -len(suffix)]
+    return s.removesuffix(suffix)
 
 
 def pytest_collection_modifyitems(
@@ -868,6 +892,7 @@ def _retrieve_scope_root(item: Union[Collector, Item], scope: str) -> Collector:
     node_type_by_scope = {
         "class": Class,
         "module": Module,
+        "package": Package,
     }
     scope_root_type = node_type_by_scope[scope]
     for node in reversed(item.listchain()):

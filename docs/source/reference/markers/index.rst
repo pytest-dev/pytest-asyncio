@@ -19,19 +19,23 @@ The ``pytest.mark.asyncio`` marker can be omitted entirely in *auto* mode, where
 
 By default, each test runs in it's own asyncio event loop.
 Multiple tests can share the same event loop by providing a *scope* keyword argument to the *asyncio* mark.
+The supported scopes are *class,* and *module,* and *package*.
 The following code example provides a shared event loop for all tests in `TestClassScopedLoop`:
 
 .. include:: class_scoped_loop_strict_mode_example.py
     :code: python
 
-Requesting class scope for tests that are not part of a class will give a *UsageError.*
-Similar to class-scoped event loops, a module-scoped loop is provided when setting the asyncio mark's scope to *module:*
+Requesting class scope with the test being part of a class will give a *UsageError*.
+Similar to class-scoped event loops, a module-scoped loop is provided when setting mark's scope to *module:*
 
 .. include:: module_scoped_loop_strict_mode_example.py
     :code: python
 
-Requesting class scope with the test being part of a class will give a *UsageError*.
-The supported scopes are *class*, and *module.*
+Package-scoped loops only work with `regular Python packages. <https://docs.python.org/3/glossary.html#term-regular-package>`__
+That means they require an *__init__.py* to be present.
+Package-scoped loops do not work in `namespace packages. <https://docs.python.org/3/glossary.html#term-namespace-package>`__
+Subpackages do not share the loop with their parent package.
+
 
 .. |pytestmark| replace:: ``pytestmark``
 .. _pytestmark: http://doc.pytest.org/en/latest/example/markers.html#marking-whole-classes-or-modules
