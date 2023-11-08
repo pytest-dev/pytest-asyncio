@@ -15,7 +15,7 @@ Multiple async tests in a single class or module can be marked using |pytestmark
 .. include:: function_scoped_loop_pytestmark_strict_mode_example.py
     :code: python
 
-The ``pytest.mark.asyncio`` marker can be omitted entirely in *auto* mode, where the *asyncio* marker is added automatically to *async* test functions.
+The ``pytest.mark.asyncio`` marker can be omitted entirely in |auto mode|_ where the *asyncio* marker is added automatically to *async* test functions.
 
 By default, each test runs in it's own asyncio event loop.
 Multiple tests can share the same event loop by providing a *scope* keyword argument to the *asyncio* mark.
@@ -37,5 +37,7 @@ Package-scoped loops do not work in `namespace packages. <https://docs.python.or
 Subpackages do not share the loop with their parent package.
 
 
+.. |auto mode| replace:: *auto mode*
+.. _auto mode: ../../concepts.html#auto-mode
 .. |pytestmark| replace:: ``pytestmark``
 .. _pytestmark: http://doc.pytest.org/en/latest/example/markers.html#marking-whole-classes-or-modules
