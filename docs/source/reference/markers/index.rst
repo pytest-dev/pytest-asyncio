@@ -36,6 +36,7 @@ That means they require an *__init__.py* to be present.
 Package-scoped loops do not work in `namespace packages. <https://docs.python.org/3/glossary.html#term-namespace-package>`__
 Subpackages do not share the loop with their parent package.
 
+Tests marked with *session* scope share the same event loop, even if the tests exist in different packages.
 
 .. |auto mode| replace:: *auto mode*
 .. _auto mode: ../../concepts.html#auto-mode
