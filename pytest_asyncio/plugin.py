@@ -545,11 +545,21 @@ _fixture_scope_by_collector_type = {
     Class: "class",
     Module: "module",
     Package: "package",
+    Session: "session",
 }
 
 
 @pytest.hookimpl
 def pytest_collectstart(collector: pytest.Collector):
+    # Session is not a PyCollector type, so it doesn't have a corresponding
+    # "obj" attribute to attach a dynamic fixture function to.
+    # However, there's only one session per pytest run, so there's no need to
+    # create the fixture dynamically. We can simply define a session-scoped
+    # event loop fixture once in the plugin code.
+    if isinstance(collector, Session):
+        event_loop_fixture_id = _session_event_loop.__name__
+        collector.stash[_event_loop_fixture_id] = event_loop_fixture_id
+        return
     if not isinstance(collector, (Class, Module, Package)):
         return
     # There seem to be issues when a fixture is shadowed by another fixture
@@ -892,6 +902,7 @@ def _retrieve_scope_root(item: Union[Collector, Item], scope: str) -> Collector:
         "class": Class,
         "module": Module,
         "package": Package,
+        "session": Session,
     }
     scope_root_type = node_type_by_scope[scope]
     for node in reversed(item.listchain()):
@@ -918,6 +929,22 @@ def event_loop(request: FixtureRequest) -> Iterator[asyncio.AbstractEventLoop]:
     loop.__original_fixture_loop = True  # type: ignore[attr-defined]
     yield loop
     loop.close()
+
+
+@pytest.fixture(scope="session")
+def _session_event_loop(
+    request: FixtureRequest, event_loop_policy: AbstractEventLoopPolicy
+) -> Iterator[asyncio.AbstractEventLoop]:
+    new_loop_policy = event_loop_policy
+    old_loop_policy = asyncio.get_event_loop_policy()
+    old_loop = asyncio.get_event_loop()
+    asyncio.set_event_loop_policy(new_loop_policy)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    yield loop
+    loop.close()
+    asyncio.set_event_loop_policy(old_loop_policy)
+    asyncio.set_event_loop(old_loop)
 
 
 @pytest.fixture(scope="session", autouse=True)

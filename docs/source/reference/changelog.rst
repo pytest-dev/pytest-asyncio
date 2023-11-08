@@ -7,7 +7,7 @@ Changelog
 This release is backwards-compatible with v0.21.
 Changes are non-breaking, unless you upgrade from v0.22.
 
-- BREAKING: The *asyncio_event_loop* mark has been removed. Event loops with class, module and package scope can be requested via the *scope* keyword argument to the _asyncio_ mark.
+- BREAKING: The *asyncio_event_loop* mark has been removed. Event loops with class, module, package, and session scopes can be requested via the *scope* keyword argument to the _asyncio_ mark.
 - Introduces the *event_loop_policy* fixture which allows testing with non-default or multiple event loops  `#662 <https://github.com/pytest-dev/pytest-asyncio/pull/662>`_
 - Removes pytest-trio from the test dependencies `#620 <https://github.com/pytest-dev/pytest-asyncio/pull/620>`_
 
