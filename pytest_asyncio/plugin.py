@@ -308,7 +308,8 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -
         func = _perhaps_rebind_fixture_func(
             fixture, request.instance, fixturedef.unittest
         )
-        event_loop = kwargs.pop(event_loop_fixture_id)
+        kwargs.pop(event_loop_fixture_id)
+        event_loop = asyncio.get_event_loop()
         gen_obj = func(**_add_kwargs(func, kwargs, request))
 
         async def setup():
@@ -345,13 +346,13 @@ def _wrap_async_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -> N
         func = _perhaps_rebind_fixture_func(
             fixture, request.instance, fixturedef.unittest
         )
-        event_loop = kwargs.pop(event_loop_fixture_id)
+        kwargs.pop(event_loop_fixture_id)
 
         async def setup():
             res = await func(**_add_kwargs(func, kwargs, request))
             return res
 
-        return event_loop.run_until_complete(setup())
+        return asyncio.get_event_loop().run_until_complete(setup())
 
     fixturedef.func = _async_fixture_wrapper
 
