@@ -5,6 +5,7 @@ Changelog
 1.0.0 (UNRELEASED)
 ==================
 - BREAKING: Asynchronous fixtures can no longer request the *event_loop* fixture
+- BREAKING: Parametrizations and custom implementations of the *event_loop* fixture no longer have any effect on async fixtures
 
 0.23.0 (UNRELEASED)
 ===================

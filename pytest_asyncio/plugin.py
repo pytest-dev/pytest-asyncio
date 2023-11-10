@@ -210,13 +210,6 @@ def _preprocess_async_fixtures(
     config = collector.config
     asyncio_mode = _get_asyncio_mode(config)
     fixturemanager = config.pluginmanager.get_plugin("funcmanage")
-    marker = collector.get_closest_marker("asyncio")
-    scope = marker.kwargs.get("scope", "function") if marker else "function"
-    if scope == "function":
-        event_loop_fixture_id = "event_loop"
-    else:
-        event_loop_node = _retrieve_scope_root(collector, scope)
-        event_loop_fixture_id = event_loop_node.stash.get(_event_loop_fixture_id, None)
     for fixtures in fixturemanager._arg2fixturedefs.values():
         for fixturedef in fixtures:
             func = fixturedef.func
@@ -237,36 +230,32 @@ def _preprocess_async_fixtures(
                     f'test functions should use "asyncio.get_running_loop()" '
                     f"instead."
                 )
-            _inject_fixture_argnames(fixturedef, event_loop_fixture_id)
-            _synchronize_async_fixture(fixturedef, event_loop_fixture_id)
+            _inject_fixture_argnames(fixturedef)
+            _synchronize_async_fixture(fixturedef)
             assert _is_asyncio_fixture_function(fixturedef.func)
             processed_fixturedefs.add(fixturedef)
 
 
-def _inject_fixture_argnames(
-    fixturedef: FixtureDef, event_loop_fixture_id: str
-) -> None:
+def _inject_fixture_argnames(fixturedef: FixtureDef) -> None:
     """
-    Ensures that `request` and `event_loop` are arguments of the specified fixture.
+    Ensures that `request` is an argument of the specified fixture.
     """
     to_add = []
-    for name in ("request", event_loop_fixture_id):
+    for name in ("request",):
         if name not in fixturedef.argnames:
             to_add.append(name)
     if to_add:
         fixturedef.argnames += tuple(to_add)
 
 
-def _synchronize_async_fixture(
-    fixturedef: FixtureDef, event_loop_fixture_id: str
-) -> None:
+def _synchronize_async_fixture(fixturedef: FixtureDef) -> None:
     """
     Wraps the fixture function of an async fixture in a synchronous function.
     """
     if inspect.isasyncgenfunction(fixturedef.func):
-        _wrap_asyncgen_fixture(fixturedef, event_loop_fixture_id)
+        _wrap_asyncgen_fixture(fixturedef)
     elif inspect.iscoroutinefunction(fixturedef.func):
-        _wrap_async_fixture(fixturedef, event_loop_fixture_id)
+        _wrap_async_fixture(fixturedef)
 
 
 def _add_kwargs(
@@ -300,7 +289,7 @@ def _perhaps_rebind_fixture_func(
     return func
 
 
-def _wrap_asyncgen_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -> None:
+def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
     fixture = fixturedef.func
 
     @functools.wraps(fixture)
@@ -308,7 +297,6 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -
         func = _perhaps_rebind_fixture_func(
             fixture, request.instance, fixturedef.unittest
         )
-        kwargs.pop(event_loop_fixture_id)
         event_loop = asyncio.get_event_loop()
         gen_obj = func(**_add_kwargs(func, kwargs, request))
 
@@ -338,7 +326,7 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -
     fixturedef.func = _asyncgen_fixture_wrapper
 
 
-def _wrap_async_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -> None:
+def _wrap_async_fixture(fixturedef: FixtureDef) -> None:
     fixture = fixturedef.func
 
     @functools.wraps(fixture)
@@ -346,7 +334,6 @@ def _wrap_async_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -> N
         func = _perhaps_rebind_fixture_func(
             fixture, request.instance, fixturedef.unittest
         )
-        kwargs.pop(event_loop_fixture_id)
 
         async def setup():
             res = await func(**_add_kwargs(func, kwargs, request))
