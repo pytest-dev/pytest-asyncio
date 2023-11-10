@@ -20,7 +20,6 @@ from typing import (
     List,
     Literal,
     Optional,
-    Set,
     TypeVar,
     Union,
     overload,
@@ -201,28 +200,6 @@ def pytest_report_header(config: Config) -> List[str]:
     """Add asyncio config to pytest header."""
     mode = _get_asyncio_mode(config)
     return [f"asyncio: mode={mode}"]
-
-
-def _preprocess_async_fixtures(
-    collector: Collector,
-    processed_fixturedefs: Set[FixtureDef],
-) -> None:
-    config = collector.config
-    asyncio_mode = _get_asyncio_mode(config)
-    fixturemanager = config.pluginmanager.get_plugin("funcmanage")
-    for fixtures in fixturemanager._arg2fixturedefs.values():
-        for fixturedef in fixtures:
-            func = fixturedef.func
-            if fixturedef in processed_fixturedefs or not _is_coroutine_or_asyncgen(
-                func
-            ):
-                continue
-            if not _is_asyncio_fixture_function(func) and asyncio_mode == Mode.STRICT:
-                # Ignore async fixtures without explicit asyncio mark in strict mode
-                # This applies to pytest_trio fixtures, for example
-                continue
-            _make_asyncio_fixture_function(func)
-            processed_fixturedefs.add(fixturedef)
 
 
 def _inject_fixture_argnames(fixturedef: FixtureDef) -> None:
@@ -460,24 +437,6 @@ class AsyncHypothesisTest(PytestAsyncioFunction):
         super().runtest()
 
 
-_HOLDER: Set[FixtureDef] = set()
-
-
-# The function name needs to start with "pytest_"
-# see https://github.com/pytest-dev/pytest/issues/11307
-@pytest.hookimpl(specname="pytest_pycollect_makeitem", tryfirst=True)
-def pytest_pycollect_makeitem_preprocess_async_fixtures(
-    collector: Union[pytest.Module, pytest.Class], name: str, obj: object
-) -> Union[
-    pytest.Item, pytest.Collector, List[Union[pytest.Item, pytest.Collector]], None
-]:
-    """A pytest hook to collect asyncio coroutines."""
-    if not collector.funcnamefilter(name):
-        return None
-    _preprocess_async_fixtures(collector, _HOLDER)
-    return None
-
-
 # The function name needs to start with "pytest_"
 # see https://github.com/pytest-dev/pytest/issues/11307
 @pytest.hookimpl(specname="pytest_pycollect_makeitem", hookwrapper=True)
@@ -655,6 +614,7 @@ def pytest_fixture_setup(
     fixturedef: FixtureDef, request: SubRequest
 ) -> Optional[object]:
     """Adjust the event loop policy when an event loop is produced."""
+    async_mode = _get_asyncio_mode(request.config)
     if fixturedef.argname == "event_loop":
         # The use of a fixture finalizer is preferred over the
         # pytest_fixture_post_finalizer hook. The fixture finalizer is invoked once
@@ -693,7 +653,14 @@ def pytest_fixture_setup(
             pass
         policy.set_event_loop(loop)
         return
-    elif _is_asyncio_fixture_function(fixturedef.func):
+    elif inspect.iscoroutinefunction(fixturedef.func) or inspect.isasyncgenfunction(
+        fixturedef.func
+    ):
+        if async_mode == Mode.STRICT and not _is_asyncio_fixture_function(
+            fixturedef.func
+        ):
+            yield
+            return
         if "event_loop" in inspect.signature(fixturedef.func).parameters:
             raise pytest.UsageError(
                 f"{fixturedef.func.__name__} is asynchronous and explicitly "
