@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-pytestmark = pytest.mark.asyncio_event_loop
+pytestmark = pytest.mark.asyncio(scope="module")
 
 loop: asyncio.AbstractEventLoop
 
