@@ -222,14 +222,6 @@ def _preprocess_async_fixtures(
                 # This applies to pytest_trio fixtures, for example
                 continue
             _make_asyncio_fixture_function(func)
-            function_signature = inspect.signature(func)
-            if "event_loop" in function_signature.parameters:
-                raise pytest.UsageError(
-                    f"{func.__name__} is asynchronous and explicitly "
-                    f'requests the "event_loop" fixture. Asynchronous fixtures and '
-                    f'test functions should use "asyncio.get_running_loop()" '
-                    f"instead."
-                )
             processed_fixturedefs.add(fixturedef)
 
 
@@ -702,6 +694,13 @@ def pytest_fixture_setup(
         policy.set_event_loop(loop)
         return
     elif _is_asyncio_fixture_function(fixturedef.func):
+        if "event_loop" in inspect.signature(fixturedef.func).parameters:
+            raise pytest.UsageError(
+                f"{fixturedef.func.__name__} is asynchronous and explicitly "
+                f'requests the "event_loop" fixture. Asynchronous fixtures and '
+                f'test functions should use "asyncio.get_running_loop()" '
+                f"instead."
+            )
         _inject_fixture_argnames(fixturedef)
         _synchronize_async_fixture(fixturedef)
     yield
