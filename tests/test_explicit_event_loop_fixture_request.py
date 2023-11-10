@@ -69,7 +69,7 @@ def test_emit_warning_when_event_loop_is_explicitly_requested_in_coroutine_stati
     )
 
 
-def test_emit_warning_when_event_loop_is_explicitly_requested_in_coroutine_fixture(
+def test_raises_error_when_event_loop_is_explicitly_requested_in_coroutine_fixture(
     pytester: Pytester,
 ):
     pytester.makepyfile(
@@ -79,17 +79,17 @@ def test_emit_warning_when_event_loop_is_explicitly_requested_in_coroutine_fixtu
             import pytest_asyncio
 
             @pytest_asyncio.fixture
-            async def emits_warning(event_loop):
+            async def raises_error(event_loop):
                 pass
 
             @pytest.mark.asyncio
-            async def test_uses_fixture(emits_warning):
+            async def test_uses_fixture(raises_error):
                 pass
             """
         )
     )
     result = pytester.runpytest("--asyncio-mode=strict")
-    result.assert_outcomes(passed=1, warnings=1)
+    result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
         ['*is asynchronous and explicitly requests the "event_loop" fixture*']
     )
@@ -105,20 +105,17 @@ def test_emit_warning_when_event_loop_is_explicitly_requested_in_async_gen_fixtu
             import pytest_asyncio
 
             @pytest_asyncio.fixture
-            async def emits_warning(event_loop):
+            async def raises_error(event_loop):
                 yield
 
             @pytest.mark.asyncio
-            async def test_uses_fixture(emits_warning):
+            async def test_uses_fixture(raises_error):
                 pass
             """
         )
     )
     result = pytester.runpytest("--asyncio-mode=strict")
-    result.assert_outcomes(passed=1, warnings=1)
-    result.stdout.fnmatch_lines(
-        ['*is asynchronous and explicitly requests the "event_loop" fixture*']
-    )
+    result.assert_outcomes(errors=1)
 
 
 def test_does_not_emit_warning_when_event_loop_is_explicitly_requested_in_sync_function(

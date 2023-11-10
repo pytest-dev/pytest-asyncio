@@ -231,13 +231,11 @@ def _preprocess_async_fixtures(
             _make_asyncio_fixture_function(func)
             function_signature = inspect.signature(func)
             if "event_loop" in function_signature.parameters:
-                warnings.warn(
-                    PytestDeprecationWarning(
-                        f"{func.__name__} is asynchronous and explicitly "
-                        f'requests the "event_loop" fixture. Asynchronous fixtures and '
-                        f'test functions should use "asyncio.get_running_loop()" '
-                        f"instead."
-                    )
+                raise pytest.UsageError(
+                    f"{func.__name__} is asynchronous and explicitly "
+                    f'requests the "event_loop" fixture. Asynchronous fixtures and '
+                    f'test functions should use "asyncio.get_running_loop()" '
+                    f"instead."
                 )
             _inject_fixture_argnames(fixturedef, event_loop_fixture_id)
             _synchronize_async_fixture(fixturedef, event_loop_fixture_id)
@@ -274,16 +272,12 @@ def _synchronize_async_fixture(
 def _add_kwargs(
     func: Callable[..., Any],
     kwargs: Dict[str, Any],
-    event_loop_fixture_id: str,
-    event_loop: asyncio.AbstractEventLoop,
     request: SubRequest,
 ) -> Dict[str, Any]:
     sig = inspect.signature(func)
     ret = kwargs.copy()
     if "request" in sig.parameters:
         ret["request"] = request
-    if event_loop_fixture_id in sig.parameters:
-        ret[event_loop_fixture_id] = event_loop
     return ret
 
 
@@ -315,9 +309,7 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -
             fixture, request.instance, fixturedef.unittest
         )
         event_loop = kwargs.pop(event_loop_fixture_id)
-        gen_obj = func(
-            **_add_kwargs(func, kwargs, event_loop_fixture_id, event_loop, request)
-        )
+        gen_obj = func(**_add_kwargs(func, kwargs, request))
 
         async def setup():
             res = await gen_obj.__anext__()
@@ -356,9 +348,7 @@ def _wrap_async_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -> N
         event_loop = kwargs.pop(event_loop_fixture_id)
 
         async def setup():
-            res = await func(
-                **_add_kwargs(func, kwargs, event_loop_fixture_id, event_loop, request)
-            )
+            res = await func(**_add_kwargs(func, kwargs, request))
             return res
 
         return event_loop.run_until_complete(setup())

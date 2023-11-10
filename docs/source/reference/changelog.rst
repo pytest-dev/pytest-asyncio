@@ -2,6 +2,10 @@
 Changelog
 =========
 
+1.0.0 (UNRELEASED)
+==================
+- BREAKING: Asynchronous fixtures can no longer request the *event_loop* fixture
+
 0.23.0 (UNRELEASED)
 ===================
 This release is backwards-compatible with v0.21.
