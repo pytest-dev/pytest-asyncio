@@ -240,12 +240,8 @@ def _inject_fixture_argnames(fixturedef: FixtureDef) -> None:
     """
     Ensures that `request` is an argument of the specified fixture.
     """
-    to_add = []
-    for name in ("request",):
-        if name not in fixturedef.argnames:
-            to_add.append(name)
-    if to_add:
-        fixturedef.argnames += tuple(to_add)
+    if "request" not in fixturedef.argnames:
+        fixturedef.argnames += ("request",)
 
 
 def _synchronize_async_fixture(fixturedef: FixtureDef) -> None:
