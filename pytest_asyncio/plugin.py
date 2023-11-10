@@ -230,9 +230,6 @@ def _preprocess_async_fixtures(
                     f'test functions should use "asyncio.get_running_loop()" '
                     f"instead."
                 )
-            _inject_fixture_argnames(fixturedef)
-            _synchronize_async_fixture(fixturedef)
-            assert _is_asyncio_fixture_function(fixturedef.func)
             processed_fixturedefs.add(fixturedef)
 
 
@@ -704,7 +701,9 @@ def pytest_fixture_setup(
             pass
         policy.set_event_loop(loop)
         return
-
+    elif _is_asyncio_fixture_function(fixturedef.func):
+        _inject_fixture_argnames(fixturedef)
+        _synchronize_async_fixture(fixturedef)
     yield
 
 
