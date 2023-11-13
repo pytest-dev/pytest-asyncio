@@ -4,7 +4,7 @@ exceptiongroup==1.1.3
 flaky==3.7.0
 hypothesis==6.88.3
 iniconfig==2.0.0
-mypy==1.6.1
+mypy==1.7.0
 mypy-extensions==1.0.0
 packaging==23.2
 pluggy==1.3.0
