@@ -54,8 +54,14 @@ def test_can_use_explicit_event_loop_fixture(pytester: Pytester):
             """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=strict")
-    result.assert_outcomes(passed=1)
+    result = pytester.runpytest("--asyncio-mode=strict", "-W default")
+    result.assert_outcomes(passed=1, warnings=2)
+    result.stdout.fnmatch_lines(
+        [
+            '*is asynchronous and explicitly requests the "event_loop" fixture*',
+            "*event_loop fixture provided by pytest-asyncio has been redefined*",
+        ]
+    )
 
 
 def test_async_auto_marked(pytester: Pytester):
