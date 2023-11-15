@@ -9,7 +9,7 @@ import pytest_asyncio
 class TestClassScopedLoop:
     loop: asyncio.AbstractEventLoop
 
-    @pytest_asyncio.fixture
+    @pytest_asyncio.fixture(scope="class")
     async def my_fixture(self):
         TestClassScopedLoop.loop = asyncio.get_running_loop()
 
