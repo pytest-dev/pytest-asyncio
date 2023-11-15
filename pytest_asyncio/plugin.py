@@ -204,13 +204,6 @@ def _preprocess_async_fixtures(
     config = collector.config
     asyncio_mode = _get_asyncio_mode(config)
     fixturemanager = config.pluginmanager.get_plugin("funcmanage")
-    marker = collector.get_closest_marker("asyncio")
-    scope = marker.kwargs.get("scope", "function") if marker else "function"
-    if scope == "function":
-        event_loop_fixture_id = "event_loop"
-    else:
-        event_loop_node = _retrieve_scope_root(collector, scope)
-        event_loop_fixture_id = event_loop_node.stash.get(_event_loop_fixture_id, None)
     for fixtures in fixturemanager._arg2fixturedefs.values():
         for fixturedef in fixtures:
             func = fixturedef.func
@@ -222,6 +215,14 @@ def _preprocess_async_fixtures(
                 # Ignore async fixtures without explicit asyncio mark in strict mode
                 # This applies to pytest_trio fixtures, for example
                 continue
+            scope = fixturedef.scope
+            if scope == "function":
+                event_loop_fixture_id = "event_loop"
+            else:
+                event_loop_node = _retrieve_scope_root(collector, scope)
+                event_loop_fixture_id = event_loop_node.stash.get(
+                    _event_loop_fixture_id, None
+                )
             _make_asyncio_fixture_function(func)
             function_signature = inspect.signature(func)
             if "event_loop" in function_signature.parameters:
@@ -589,6 +590,12 @@ def pytest_collectstart(collector: pytest.Collector):
         yield loop
         loop.close()
         asyncio.set_event_loop_policy(old_loop_policy)
+        # When a test uses both a scoped event loop and the event_loop fixture,
+        # the "_provide_clean_event_loop" finalizer of the event_loop fixture
+        # will already have installed a fresh event loop, in order to shield
+        # subsequent tests from side-effects. We close this loop before restoring
+        # the old loop to avoid ResourceWarnings.
+        asyncio.get_event_loop().close()
         asyncio.set_event_loop(old_loop)
 
     # @pytest.fixture does not register the fixture anywhere, so pytest doesn't
@@ -680,7 +687,9 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
             )
         # Add the scoped event loop fixture to Metafunc's list of fixture names and
         # fixturedefs and leave the actual parametrization to pytest
-        metafunc.fixturenames.insert(0, event_loop_fixture_id)
+        # The fixture needs to be appended to avoid messing up the fixture evaluation
+        # order
+        metafunc.fixturenames.append(event_loop_fixture_id)
         metafunc._arg2fixturedefs[
             event_loop_fixture_id
         ] = fixturemanager._arg2fixturedefs[event_loop_fixture_id]
@@ -885,8 +894,13 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
     fixturenames = item.fixturenames  # type: ignore[attr-defined]
     # inject an event loop fixture for all async tests
     if "event_loop" in fixturenames:
+        # Move the "event_loop" fixture to the beginning of the fixture evaluation
+        # closure for backwards compatibility
         fixturenames.remove("event_loop")
-    fixturenames.insert(0, event_loop_fixture_id)
+        fixturenames.insert(0, "event_loop")
+    else:
+        if event_loop_fixture_id not in fixturenames:
+            fixturenames.append(event_loop_fixture_id)
     obj = getattr(item, "obj", None)
     if not getattr(obj, "hypothesis", False) and getattr(
         obj, "is_hypothesis_test", False
@@ -944,6 +958,12 @@ def _session_event_loop(
     yield loop
     loop.close()
     asyncio.set_event_loop_policy(old_loop_policy)
+    # When a test uses both a scoped event loop and the event_loop fixture,
+    # the "_provide_clean_event_loop" finalizer of the event_loop fixture
+    # will already have installed a fresh event loop, in order to shield
+    # subsequent tests from side-effects. We close this loop before restoring
+    # the old loop to avoid ResourceWarnings.
+    asyncio.get_event_loop().close()
     asyncio.set_event_loop(old_loop)
 
 
