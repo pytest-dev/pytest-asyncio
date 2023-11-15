@@ -8,10 +8,22 @@ from hypothesis import given, strategies as st
 from pytest import Pytester
 
 
-@given(st.integers())
-@pytest.mark.asyncio
-async def test_mark_inner(n):
-    assert isinstance(n, int)
+def test_hypothesis_given_decorator_before_asyncio_mark(pytester: Pytester):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import pytest
+            from hypothesis import given, strategies as st
+
+            @given(st.integers())
+            @pytest.mark.asyncio
+            async def test_mark_inner(n):
+                assert isinstance(n, int)
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict", "-W default")
+    result.assert_outcomes(passed=1)
 
 
 @pytest.mark.asyncio
