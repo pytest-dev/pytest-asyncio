@@ -43,7 +43,7 @@ def test_function_scope_supports_explicit_event_loop_fixture_request(
             """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W default")
     result.assert_outcomes(passed=1, warnings=1)
     result.stdout.fnmatch_lines(
         '*is asynchronous and explicitly requests the "event_loop" fixture*'

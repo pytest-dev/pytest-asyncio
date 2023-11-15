@@ -22,7 +22,7 @@ def test_emit_warning_when_event_loop_fixture_is_redefined(pytester: Pytester):
             """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W default")
     result.assert_outcomes(passed=1, warnings=1)
     result.stdout.fnmatch_lines(
         ["*event_loop fixture provided by pytest-asyncio has been redefined*"]
@@ -50,7 +50,7 @@ def test_emit_warning_when_event_loop_fixture_is_redefined_explicit_request(
             """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W default")
     result.assert_outcomes(passed=1, warnings=2)
     result.stdout.fnmatch_lines(
         ["*event_loop fixture provided by pytest-asyncio has been redefined*"]
@@ -107,5 +107,5 @@ def test_emit_warning_when_redefined_event_loop_is_used_by_fixture(pytester: Pyt
             """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W default")
     result.assert_outcomes(passed=1, warnings=1)
