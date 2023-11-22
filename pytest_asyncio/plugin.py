@@ -544,24 +544,32 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
 _event_loop_fixture_id = StashKey[str]
 _fixture_scope_by_collector_type = {
     Class: "class",
-    Module: "module",
+    # Package is a subclass of module and the dict is used in isinstance checks
+    # Therefore, the order matters and Package needs to appear before Module
     Package: "package",
+    Module: "module",
     Session: "session",
 }
 
 
 @pytest.hookimpl
 def pytest_collectstart(collector: pytest.Collector):
+    try:
+        collector_scope = next(
+            scope
+            for cls, scope in _fixture_scope_by_collector_type.items()
+            if isinstance(collector, cls)
+        )
+    except StopIteration:
+        return
     # Session is not a PyCollector type, so it doesn't have a corresponding
     # "obj" attribute to attach a dynamic fixture function to.
     # However, there's only one session per pytest run, so there's no need to
     # create the fixture dynamically. We can simply define a session-scoped
     # event loop fixture once in the plugin code.
-    if isinstance(collector, Session):
+    if collector_scope == "session":
         event_loop_fixture_id = _session_event_loop.__name__
         collector.stash[_event_loop_fixture_id] = event_loop_fixture_id
-        return
-    if not isinstance(collector, (Class, Module, Package)):
         return
     # There seem to be issues when a fixture is shadowed by another fixture
     # and both differ in their params.
@@ -574,7 +582,7 @@ def pytest_collectstart(collector: pytest.Collector):
     collector.stash[_event_loop_fixture_id] = event_loop_fixture_id
 
     @pytest.fixture(
-        scope=_fixture_scope_by_collector_type[type(collector)],
+        scope=collector_scope,
         name=event_loop_fixture_id,
     )
     def scoped_event_loop(
