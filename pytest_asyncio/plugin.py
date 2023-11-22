@@ -615,7 +615,10 @@ def _removesuffix(s: str, suffix: str) -> str:
 @contextlib.contextmanager
 def _temporary_event_loop_policy(policy: AbstractEventLoopPolicy) -> Iterator[None]:
     old_loop_policy = asyncio.get_event_loop_policy()
-    old_loop = asyncio.get_event_loop()
+    try:
+        old_loop = asyncio.get_event_loop()
+    except RuntimeError:
+        old_loop = None
     asyncio.set_event_loop_policy(policy)
     try:
         yield
@@ -626,7 +629,10 @@ def _temporary_event_loop_policy(policy: AbstractEventLoopPolicy) -> Iterator[No
         # will already have installed a fresh event loop, in order to shield
         # subsequent tests from side-effects. We close this loop before restoring
         # the old loop to avoid ResourceWarnings.
-        asyncio.get_event_loop().close()
+        try:
+            asyncio.get_event_loop().close()
+        except RuntimeError:
+            pass
         asyncio.set_event_loop(old_loop)
 
 
@@ -900,15 +906,8 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
     else:
         event_loop_fixture_id = "event_loop"
     fixturenames = item.fixturenames  # type: ignore[attr-defined]
-    # inject an event loop fixture for all async tests
-    if "event_loop" in fixturenames:
-        # Move the "event_loop" fixture to the beginning of the fixture evaluation
-        # closure for backwards compatibility
-        fixturenames.remove("event_loop")
-        fixturenames.insert(0, "event_loop")
-    else:
-        if event_loop_fixture_id not in fixturenames:
-            fixturenames.append(event_loop_fixture_id)
+    if event_loop_fixture_id not in fixturenames:
+        fixturenames.append(event_loop_fixture_id)
     obj = getattr(item, "obj", None)
     if not getattr(obj, "hypothesis", False) and getattr(
         obj, "is_hypothesis_test", False

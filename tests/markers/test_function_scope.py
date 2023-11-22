@@ -145,3 +145,37 @@ def test_asyncio_mark_provides_function_scoped_loop_to_fixtures(
     )
     result = pytester.runpytest_subprocess("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
+
+
+def test_asyncio_mark_handles_missing_event_loop_triggered_by_fixture(
+    pytester: Pytester,
+):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import pytest
+            import asyncio
+
+            @pytest.fixture
+            def sets_event_loop_to_none():
+                # asyncio.run() creates a new event loop without closing the existing
+                # one. For any test, but the first one, this leads to a ResourceWarning
+                # when the discarded loop is destroyed by the garbage collector.
+                # We close the current loop to avoid this
+                try:
+                    asyncio.get_event_loop().close()
+                except RuntimeError:
+                    pass
+                return asyncio.run(asyncio.sleep(0))
+                # asyncio.run() sets the current event loop to None when finished
+
+            @pytest.mark.asyncio
+            # parametrization may impact fixture ordering
+            @pytest.mark.parametrize("n", (0, 1))
+            async def test_does_not_fail(sets_event_loop_to_none, n):
+                pass
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=2)
