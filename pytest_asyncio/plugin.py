@@ -582,21 +582,11 @@ def pytest_collectstart(collector: pytest.Collector):
         event_loop_policy,
     ) -> Iterator[asyncio.AbstractEventLoop]:
         new_loop_policy = event_loop_policy
-        old_loop_policy = asyncio.get_event_loop_policy()
-        old_loop = asyncio.get_event_loop()
-        asyncio.set_event_loop_policy(new_loop_policy)
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        yield loop
-        loop.close()
-        asyncio.set_event_loop_policy(old_loop_policy)
-        # When a test uses both a scoped event loop and the event_loop fixture,
-        # the "_provide_clean_event_loop" finalizer of the event_loop fixture
-        # will already have installed a fresh event loop, in order to shield
-        # subsequent tests from side-effects. We close this loop before restoring
-        # the old loop to avoid ResourceWarnings.
-        asyncio.get_event_loop().close()
-        asyncio.set_event_loop(old_loop)
+        with _temporary_event_loop_policy(new_loop_policy):
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            yield loop
+            loop.close()
 
     # @pytest.fixture does not register the fixture anywhere, so pytest doesn't
     # know it exists. We work around this by attaching the fixture function to the
@@ -620,6 +610,24 @@ def _removesuffix(s: str, suffix: str) -> str:
     if sys.version_info < (3, 9):
         return s[: -len(suffix)]
     return s.removesuffix(suffix)
+
+
+@contextlib.contextmanager
+def _temporary_event_loop_policy(policy: AbstractEventLoopPolicy) -> Iterator[None]:
+    old_loop_policy = asyncio.get_event_loop_policy()
+    old_loop = asyncio.get_event_loop()
+    asyncio.set_event_loop_policy(policy)
+    try:
+        yield
+    finally:
+        asyncio.set_event_loop_policy(old_loop_policy)
+        # When a test uses both a scoped event loop and the event_loop fixture,
+        # the "_provide_clean_event_loop" finalizer of the event_loop fixture
+        # will already have installed a fresh event loop, in order to shield
+        # subsequent tests from side-effects. We close this loop before restoring
+        # the old loop to avoid ResourceWarnings.
+        asyncio.get_event_loop().close()
+        asyncio.set_event_loop(old_loop)
 
 
 def pytest_collection_modifyitems(
@@ -950,21 +958,11 @@ def _session_event_loop(
     request: FixtureRequest, event_loop_policy: AbstractEventLoopPolicy
 ) -> Iterator[asyncio.AbstractEventLoop]:
     new_loop_policy = event_loop_policy
-    old_loop_policy = asyncio.get_event_loop_policy()
-    old_loop = asyncio.get_event_loop()
-    asyncio.set_event_loop_policy(new_loop_policy)
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    yield loop
-    loop.close()
-    asyncio.set_event_loop_policy(old_loop_policy)
-    # When a test uses both a scoped event loop and the event_loop fixture,
-    # the "_provide_clean_event_loop" finalizer of the event_loop fixture
-    # will already have installed a fresh event loop, in order to shield
-    # subsequent tests from side-effects. We close this loop before restoring
-    # the old loop to avoid ResourceWarnings.
-    asyncio.get_event_loop().close()
-    asyncio.set_event_loop(old_loop)
+    with _temporary_event_loop_policy(new_loop_policy):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        yield loop
+        loop.close()
 
 
 @pytest.fixture(scope="session", autouse=True)
