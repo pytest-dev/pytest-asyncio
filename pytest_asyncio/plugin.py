@@ -386,6 +386,7 @@ class PytestAsyncioFunction(Function):
         Instantiates this specific PytestAsyncioFunction type from the specified
         Function item.
         """
+        assert function.get_closest_marker("asyncio")
         subclass_instance = cls.from_parent(
             function.parent,
             name=function.name,
@@ -422,11 +423,10 @@ class Coroutine(PytestAsyncioFunction):
         return asyncio.iscoroutinefunction(func)
 
     def runtest(self) -> None:
-        if self.get_closest_marker("asyncio"):
-            self.obj = wrap_in_sync(
-                # https://github.com/pytest-dev/pytest-asyncio/issues/596
-                self.obj,  # type: ignore[has-type]
-            )
+        self.obj = wrap_in_sync(
+            # https://github.com/pytest-dev/pytest-asyncio/issues/596
+            self.obj,  # type: ignore[has-type]
+        )
         super().runtest()
 
 
@@ -466,11 +466,10 @@ class AsyncStaticMethod(PytestAsyncioFunction):
         )
 
     def runtest(self) -> None:
-        if self.get_closest_marker("asyncio"):
-            self.obj = wrap_in_sync(
-                # https://github.com/pytest-dev/pytest-asyncio/issues/596
-                self.obj,  # type: ignore[has-type]
-            )
+        self.obj = wrap_in_sync(
+            # https://github.com/pytest-dev/pytest-asyncio/issues/596
+            self.obj,  # type: ignore[has-type]
+        )
         super().runtest()
 
 
@@ -488,10 +487,9 @@ class AsyncHypothesisTest(PytestAsyncioFunction):
         ) and asyncio.iscoroutinefunction(func.hypothesis.inner_test)
 
     def runtest(self) -> None:
-        if self.get_closest_marker("asyncio"):
-            self.obj.hypothesis.inner_test = wrap_in_sync(
-                self.obj.hypothesis.inner_test,
-            )
+        self.obj.hypothesis.inner_test = wrap_in_sync(
+            self.obj.hypothesis.inner_test,
+        )
         super().runtest()
 
 
