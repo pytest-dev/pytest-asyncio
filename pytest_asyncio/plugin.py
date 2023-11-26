@@ -21,6 +21,7 @@ from typing import (
     Literal,
     Optional,
     Set,
+    Type,
     TypeVar,
     Union,
     overload,
@@ -365,18 +366,19 @@ class PytestAsyncioFunction(Function):
     """Base class for all test functions managed by pytest-asyncio."""
 
     @classmethod
-    def substitute(cls, item: Function, /) -> Function:
+    def item_subclass_for(
+        cls, item: Function, /
+    ) -> Union[Type["PytestAsyncioFunction"], None]:
         """
-        Returns a PytestAsyncioFunction if there is an implementation that can handle
-        the specified function item.
+        Returns a subclass of PytestAsyncioFunction if there is a specialized subclass
+        for the specified function item.
 
-        If no implementation of PytestAsyncioFunction can handle the specified item,
-        the item is returned unchanged.
+        Return None if no specialized subclass exists for the specified item.
         """
         for subclass in cls.__subclasses__():
             if subclass._can_substitute(item):
-                return subclass._from_function(item)
-        return item
+                return subclass
+        return None
 
     @classmethod
     def _from_function(cls, function: Function, /) -> Function:
@@ -535,7 +537,9 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
     for node in node_iterator:
         updated_item = node
         if isinstance(node, Function):
-            updated_item = PytestAsyncioFunction.substitute(node)
+            specialized_item_class = PytestAsyncioFunction.item_subclass_for(node)
+            if specialized_item_class:
+                updated_item = specialized_item_class._from_function(node)
         updated_node_collection.append(updated_item)
 
     hook_result.force_result(updated_node_collection)
