@@ -540,9 +540,13 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
         if isinstance(node, Function):
             specialized_item_class = PytestAsyncioFunction.item_subclass_for(node)
             if specialized_item_class:
-                updated_item = specialized_item_class._from_function(node)
+                if _get_asyncio_mode(
+                    node.config
+                ) == Mode.AUTO and not node.get_closest_marker("asyncio"):
+                    node.add_marker("asyncio")
+                if node.get_closest_marker("asyncio"):
+                    updated_item = specialized_item_class._from_function(node)
         updated_node_collection.append(updated_item)
-
     hook_result.force_result(updated_node_collection)
 
 
@@ -647,28 +651,6 @@ def _temporary_event_loop_policy(policy: AbstractEventLoopPolicy) -> Iterator[No
         except RuntimeError:
             pass
         asyncio.set_event_loop(old_loop)
-
-
-def pytest_collection_modifyitems(
-    session: Session, config: Config, items: List[Item]
-) -> None:
-    """
-    Marks collected async test items as `asyncio` tests.
-
-    The mark is only applied in `AUTO` mode. It is applied to:
-
-      - coroutines and async generators
-      - Hypothesis tests wrapping coroutines
-      - staticmethods wrapping coroutines
-
-    """
-    if _get_asyncio_mode(config) != Mode.AUTO:
-        return
-    for item in items:
-        if isinstance(item, PytestAsyncioFunction) and not item.get_closest_marker(
-            "asyncio"
-        ):
-            item.add_marker("asyncio")
 
 
 _REDEFINED_EVENT_LOOP_FIXTURE_WARNING = dedent(
