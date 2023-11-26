@@ -963,6 +963,11 @@ def event_loop_policy() -> AbstractEventLoopPolicy:
     return asyncio.get_event_loop_policy()
 
 
+def is_async_test(item: Item) -> bool:
+    """Returns whether a test item is a pytest-asyncio test"""
+    return isinstance(item, PytestAsyncioFunction)
+
+
 def _unused_port(socket_type: int) -> int:
     """Find an unused localhost port from 1024-65535 and return it."""
     with contextlib.closing(socket.socket(type=socket_type)) as sock:

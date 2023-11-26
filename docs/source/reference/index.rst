@@ -7,6 +7,7 @@ Reference
 
   configuration
   fixtures/index
+  functions
   markers/index
   decorators/index
   changelog
