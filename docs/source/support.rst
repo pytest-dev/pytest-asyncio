@@ -18,4 +18,4 @@ If you require commercial support outside of the Tidelift subscription, reach ou
 
 Community support
 =================
-The GitHub page of pytest-asyncio offers free community support on a best-effort basis. Please use the `issue tracker <https://github.com/pytest-dev/pytest-asyncio/issues>`__ to report bugs and the `discussions <https://github.com/pytest-dev/pytest-asyncio/discussions>`__ to ask questions.
+The GitHub page of pytest-asyncio offers free community support on a best-effort basis. Please use the `issue tracker <https://github.com/pytest-dev/pytest-asyncio/issues>`__ to report bugs and the Matrix chat room `#pytest-asyncio:matrix.org <https://matrix.to/#/#pytest-asyncio:matrix.org>`__ or `GitHub discussions <https://github.com/pytest-dev/pytest-asyncio/discussions>`__ to ask questions.

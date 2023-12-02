@@ -12,6 +12,9 @@ pytest-asyncio
     :alt: Supported Python versions
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/ambv/black
+.. image:: https://img.shields.io/badge/Matrix-%23pytest--asyncio-brightgreen
+    :alt: Matrix chat room: #pytest-asyncio
+    :target: https://matrix.to/#/#pytest-asyncio:matrix.org
 
 `pytest-asyncio <https://pytest-asyncio.readthedocs.io/en/latest/>`_ is a `pytest <https://docs.pytest.org/en/latest/contents.html>`_ plugin. It facilitates testing of code that uses the `asyncio <https://docs.python.org/3/library/asyncio.html>`_ library.
 
