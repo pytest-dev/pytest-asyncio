@@ -9,7 +9,7 @@
 project = "pytest-asyncio"
 copyright = "2023, pytest-asyncio contributors"
 author = "Tin Tvrtković"
-release = "v0.22.0"
+release = "v0.23.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

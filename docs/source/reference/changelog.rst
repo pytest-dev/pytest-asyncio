@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.23.0 (UNRELEASED)
+0.23.0 (2023-12-03)
 ===================
 This release is backwards-compatible with v0.21.
 Changes are non-breaking, unless you upgrade from v0.22.
