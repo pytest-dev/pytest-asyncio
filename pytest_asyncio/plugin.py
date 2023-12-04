@@ -609,7 +609,11 @@ def pytest_collectstart(collector: pytest.Collector):
     # collected Python class, where it will be picked up by pytest.Class.collect()
     # or pytest.Module.collect(), respectively
     try:
-        collector.obj.__pytest_asyncio_scoped_event_loop = scoped_event_loop
+        pyobject = collector.obj
+        # If the collected module is a DoctestTextfile, collector.obj is None
+        if pyobject is None:
+            return
+        pyobject.__pytest_asyncio_scoped_event_loop = scoped_event_loop
     except (OutcomeException, Collector.CollectError):
         # Accessing Module.obj triggers a module import executing module-level
         # statements. A module-level pytest.skip statement raises the "Skipped"
