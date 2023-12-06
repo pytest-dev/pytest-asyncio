@@ -322,6 +322,7 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -
 
         def finalizer() -> None:
             """Yield again, to finalize."""
+            nonlocal event_loop
 
             async def async_finalizer() -> None:
                 try:
@@ -333,6 +334,9 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -
                     msg += "Yield only once."
                     raise ValueError(msg)
 
+            if event_loop.is_closed():
+                event_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(event_loop)
             event_loop.run_until_complete(async_finalizer())
 
         result = event_loop.run_until_complete(setup())
