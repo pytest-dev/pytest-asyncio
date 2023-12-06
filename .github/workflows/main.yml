@@ -24,7 +24,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_LATEST }}
     - name: Install GitHub matcher for ActionLint checker
@@ -65,7 +65,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       if: "!endsWith(matrix.python-version, '-dev')"
       with:
         python-version: ${{ matrix.python-version }}
@@ -100,7 +100,7 @@ jobs:
       with:
         jobs: ${{ toJSON(needs) }}
     - uses: actions/checkout@v4
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_LATEST }}
     - name: Install Coverage.py
