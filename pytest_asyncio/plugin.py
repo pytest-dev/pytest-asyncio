@@ -600,6 +600,7 @@ def pytest_collectstart(collector: pytest.Collector):
         new_loop_policy = event_loop_policy
         with _temporary_event_loop_policy(new_loop_policy):
             loop = asyncio.new_event_loop()
+            loop.__pytest_asyncio = True  # type: ignore[attr-defined]
             asyncio.set_event_loop(loop)
             yield loop
             loop.close()
@@ -749,7 +750,8 @@ def pytest_fixture_setup(
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", DeprecationWarning)
                 old_loop = policy.get_event_loop()
-            if old_loop is not loop:
+            is_pytest_asyncio_loop = getattr(old_loop, "__pytest_asyncio", False)
+            if old_loop is not loop and not is_pytest_asyncio_loop:
                 old_loop.close()
         except RuntimeError:
             # Either the current event loop has been set to None
@@ -965,6 +967,7 @@ def _session_event_loop(
     new_loop_policy = event_loop_policy
     with _temporary_event_loop_policy(new_loop_policy):
         loop = asyncio.new_event_loop()
+        loop.__pytest_asyncio = True  # type: ignore[attr-defined]
         asyncio.set_event_loop(loop)
         yield loop
         loop.close()
