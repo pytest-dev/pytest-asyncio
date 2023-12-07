@@ -26,6 +26,7 @@ from typing import (
     Union,
     overload,
 )
+from unittest import SkipTest
 
 import pytest
 from _pytest.outcomes import OutcomeException
@@ -621,6 +622,10 @@ def pytest_collectstart(collector: pytest.Collector):
         # OutcomeException or a Collector.CollectError, if the "allow_module_level"
         # kwargs is missing. These cases are handled correctly when they happen inside
         # Collector.collect(), but this hook runs before the actual collect call.
+        return
+    except SkipTest:
+        # Users may also have a unittest suite that they run with pytest.
+        # Therefore, we need to handle SkipTest to avoid breaking test collection.
         return
     # When collector is a package, collector.obj is the package's __init__.py.
     # pytest doesn't seem to collect fixtures in __init__.py.

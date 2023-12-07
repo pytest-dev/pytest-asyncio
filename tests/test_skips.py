@@ -88,3 +88,20 @@ def test_asyncio_auto_mode_wrong_skip_usage(pytester: Pytester):
     )
     result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(errors=1)
+
+
+def test_unittest_skiptest_compatibility(pytester: Pytester):
+    pytester.makepyfile(
+        dedent(
+            """\
+                from unittest import SkipTest
+
+                raise SkipTest("Skip all tests")
+
+                async def test_is_skipped():
+                    pass
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=auto")
+    result.assert_outcomes(skipped=1)
