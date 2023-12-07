@@ -350,6 +350,37 @@ def test_asyncio_mark_allows_combining_session_scoped_fixture_with_function_scop
     result.assert_outcomes(passed=1)
 
 
+def test_allows_combining_session_scoped_asyncgen_fixture_with_function_scoped_test(
+    pytester: Pytester,
+):
+    pytester.makepyfile(
+        __init__="",
+        test_mixed_scopes=dedent(
+            """\
+            import asyncio
+
+            import pytest
+            import pytest_asyncio
+
+            loop: asyncio.AbstractEventLoop
+
+            @pytest_asyncio.fixture(scope="session")
+            async def async_fixture():
+                global loop
+                loop = asyncio.get_running_loop()
+                yield
+
+            @pytest.mark.asyncio
+            async def test_runs_in_different_loop_as_fixture(async_fixture):
+                global loop
+                assert asyncio.get_running_loop() is not loop
+            """
+        ),
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)
+
+
 def test_asyncio_mark_handles_missing_event_loop_triggered_by_fixture(
     pytester: Pytester,
 ):

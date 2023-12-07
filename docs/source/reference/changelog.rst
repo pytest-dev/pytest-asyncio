@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.23.3 (UNRELEASED)
+===================
+- Fixes a bug that caused event loops to be closed prematurely when using async generator fixtures with class scope or wider in a function-scoped test `#708 <https://github.com/pytest-dev/pytest-asyncio/issues/708>`_
+
+
 0.23.2 (2023-12-04)
 ===================
 - Fixes a bug that caused an internal pytest error when collecting .txt files `#703 <https://github.com/pytest-dev/pytest-asyncio/issues/703>`_
