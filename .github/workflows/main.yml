@@ -148,7 +148,7 @@ jobs:
     - name: PyPI upload
       uses: pypa/gh-action-pypi-publish@v1.8.11
       with:
-        packages_dir: dist
+        packages-dir: dist
         password: ${{ secrets.PYPI_API_TOKEN }}
     - name: GitHub Release
       uses: ncipollo/release-action@v1
