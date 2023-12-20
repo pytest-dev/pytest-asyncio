@@ -26,10 +26,8 @@ from typing import (
     Union,
     overload,
 )
-from unittest import SkipTest
 
 import pytest
-from _pytest.outcomes import OutcomeException
 from pytest import (
     Class,
     Collector,
@@ -608,25 +606,28 @@ def pytest_collectstart(collector: pytest.Collector):
 
     # @pytest.fixture does not register the fixture anywhere, so pytest doesn't
     # know it exists. We work around this by attaching the fixture function to the
-    # collected Python class, where it will be picked up by pytest.Class.collect()
+    # collected Python object, where it will be picked up by pytest.Class.collect()
     # or pytest.Module.collect(), respectively
-    try:
-        pyobject = collector.obj
-        # If the collected module is a DoctestTextfile, collector.obj is None
-        if pyobject is None:
-            return
-        pyobject.__pytest_asyncio_scoped_event_loop = scoped_event_loop
-    except (OutcomeException, Collector.CollectError):
+    if type(collector) is Module:
         # Accessing Module.obj triggers a module import executing module-level
         # statements. A module-level pytest.skip statement raises the "Skipped"
         # OutcomeException or a Collector.CollectError, if the "allow_module_level"
         # kwargs is missing. These cases are handled correctly when they happen inside
         # Collector.collect(), but this hook runs before the actual collect call.
-        return
-    except SkipTest:
-        # Users may also have a unittest suite that they run with pytest.
-        # Therefore, we need to handle SkipTest to avoid breaking test collection.
-        return
+        # Therefore, we monkey patch Module.collect to add the scoped fixture to the
+        # module before it runs the actual collection.
+        def _patched_collect():
+            collector.obj.__pytest_asyncio_scoped_event_loop = scoped_event_loop
+            return collector.__original_collect()
+
+        collector.__original_collect = collector.collect
+        collector.collect = _patched_collect
+    else:
+        pyobject = collector.obj
+        # If the collected module is a DoctestTextfile, collector.obj is None
+        if pyobject is None:
+            return
+        pyobject.__pytest_asyncio_scoped_event_loop = scoped_event_loop
     # When collector is a package, collector.obj is the package's __init__.py.
     # pytest doesn't seem to collect fixtures in __init__.py.
     # Using parsefactories to collect fixtures in __init__.py their baseid will end

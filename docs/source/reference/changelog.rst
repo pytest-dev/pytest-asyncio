@@ -6,6 +6,7 @@ Changelog
 ===================
 - Fixes a bug that caused event loops to be closed prematurely when using async generator fixtures with class scope or wider in a function-scoped test `#708 <https://github.com/pytest-dev/pytest-asyncio/issues/708>`_
 - Fixes a bug that caused an internal pytest error when using unittest.SkipTest in a module `#711 <https://github.com/pytest-dev/pytest-asyncio/issues/711>`_
+- Fixes a bug that caused an internal pytest error when an ImportWarning is emitted in a module `#713 <https://github.com/pytest-dev/pytest-asyncio/issues/713>`_
 
 
 0.23.2 (2023-12-04)
