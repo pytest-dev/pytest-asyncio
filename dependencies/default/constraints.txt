@@ -1,4 +1,4 @@
-attrs==23.1.0
+attrs==23.2.0
 coverage==7.3.4
 exceptiongroup==1.2.0
 hypothesis==6.92.2
