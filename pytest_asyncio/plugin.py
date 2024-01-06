@@ -622,23 +622,30 @@ def pytest_collectstart(collector: pytest.Collector):
 
         collector.__original_collect = collector.collect
         collector.collect = _patched_collect
+    elif type(collector) is Package:
+
+        def _patched_collect():
+            # When collector is a package, collector.obj is the package's __init__.py.
+            # pytest doesn't seem to collect fixtures in __init__.py.
+            # Using parsefactories to collect fixtures in __init__.py their baseid will
+            # end with "__init__.py", thus limiting the scope of the fixture to the
+            # init module. Therefore, we tell the pluginmanager explicitly to collect
+            # the fixtures in the init module, but strip "__init__.py" from the baseid
+            # Possibly related to https://github.com/pytest-dev/pytest/issues/4085
+            collector.obj.__pytest_asyncio_scoped_event_loop = scoped_event_loop
+            fixturemanager = collector.config.pluginmanager.get_plugin("funcmanage")
+            package_node_id = _removesuffix(collector.nodeid, "__init__.py")
+            fixturemanager.parsefactories(collector.obj, nodeid=package_node_id)
+            return collector.__original_collect()
+
+        collector.__original_collect = collector.collect
+        collector.collect = _patched_collect
     else:
         pyobject = collector.obj
         # If the collected module is a DoctestTextfile, collector.obj is None
         if pyobject is None:
             return
         pyobject.__pytest_asyncio_scoped_event_loop = scoped_event_loop
-    # When collector is a package, collector.obj is the package's __init__.py.
-    # pytest doesn't seem to collect fixtures in __init__.py.
-    # Using parsefactories to collect fixtures in __init__.py their baseid will end
-    # with "__init__.py", thus limiting the scope of the fixture to the init module.
-    # Therefore, we tell the pluginmanager explicitly to collect the fixtures
-    # in the init module, but strip "__init__.py" from the baseid
-    # Possibly related to https://github.com/pytest-dev/pytest/issues/4085
-    if isinstance(collector, Package):
-        fixturemanager = collector.config.pluginmanager.get_plugin("funcmanage")
-        package_node_id = _removesuffix(collector.nodeid, "__init__.py")
-        fixturemanager.parsefactories(collector.obj, nodeid=package_node_id)
 
 
 def _removesuffix(s: str, suffix: str) -> str:
