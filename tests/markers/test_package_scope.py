@@ -46,6 +46,7 @@ def test_asyncio_mark_provides_package_scoped_loop_strict_mode(pytester: Pyteste
         ),
     )
     subpkg = pytester.mkpydir(subpackage_name)
+    subpkg.joinpath("__init__.py").touch()
     subpkg.joinpath("test_subpkg.py").write_text(
         dedent(
             f"""\
