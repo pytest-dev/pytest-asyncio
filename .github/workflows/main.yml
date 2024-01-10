@@ -57,11 +57,11 @@ jobs:
 
   test:
     name: ${{ matrix.os }} - Python ${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-latest
 
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu, windows]
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
 
     steps:
