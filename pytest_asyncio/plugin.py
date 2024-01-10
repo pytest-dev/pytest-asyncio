@@ -4,6 +4,7 @@ import contextlib
 import enum
 import functools
 import inspect
+import os
 import socket
 import sys
 import warnings
@@ -659,9 +660,7 @@ def pytest_collectstart(collector: pytest.Collector):
                 # to all items in the package.
                 # see also https://github.com/pytest-dev/pytest/issues/11662#issuecomment-1879310072  # noqa
                 # Possibly related to https://github.com/pytest-dev/pytest/issues/4085
-                fixture_id = (
-                    str(Path(pkg_nodeid).joinpath("__init__.py")) + "::<event_loop>"
-                )
+                fixture_id = f"{pkg_nodeid}/__init__.py::<event_loop>".lstrip("/")
                 # When collector is a Package, collector.obj is the package's
                 # __init__.py. Accessing the __init__.py to attach the fixture function
                 # may trigger additional module imports or change the order of imports,
@@ -677,6 +676,7 @@ def pytest_collectstart(collector: pytest.Collector):
                     dir=pkgdir,
                     prefix="pytest_asyncio_virtual_module_",
                     suffix=".py",
+                    delete=False,  # Required for Windows compatibility
                 ) as virtual_module_file:
                     virtual_module = Module.from_parent(
                         collector, path=Path(virtual_module_file.name)
@@ -684,6 +684,10 @@ def pytest_collectstart(collector: pytest.Collector):
                     virtual_module_file.write(
                         dedent(
                             f"""\
+                            # This is a temporary file created by pytest-asyncio
+                            # If you see this file, a pytest run has crashed and
+                            # wasn't able to clean up the file in time.
+                            # You can safely remove this file.
                             import asyncio
                             import pytest
                             from pytest_asyncio.plugin \
@@ -715,6 +719,7 @@ def pytest_collectstart(collector: pytest.Collector):
                     # see also https://github.com/pytest-dev/pytest/issues/11662#issuecomment-1879310072  # noqa
                     fixturemanager.parsefactories(virtual_module.obj, nodeid=pkg_nodeid)
                     yield virtual_module
+                os.unlink(virtual_module_file.name)
             yield from collector.__original_collect()
 
         collector.__original_collect = collector.collect
