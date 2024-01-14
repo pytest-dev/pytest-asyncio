@@ -608,21 +608,7 @@ def pytest_collectstart(collector: pytest.Collector):
     # know it exists. We work around this by attaching the fixture function to the
     # collected Python object, where it will be picked up by pytest.Class.collect()
     # or pytest.Module.collect(), respectively
-    if type(collector) is Module:
-        # Accessing Module.obj triggers a module import executing module-level
-        # statements. A module-level pytest.skip statement raises the "Skipped"
-        # OutcomeException or a Collector.CollectError, if the "allow_module_level"
-        # kwargs is missing. These cases are handled correctly when they happen inside
-        # Collector.collect(), but this hook runs before the actual collect call.
-        # Therefore, we monkey patch Module.collect to add the scoped fixture to the
-        # module before it runs the actual collection.
-        def _patched_collect():
-            collector.obj.__pytest_asyncio_scoped_event_loop = scoped_event_loop
-            return collector.__original_collect()
-
-        collector.__original_collect = collector.collect
-        collector.collect = _patched_collect
-    elif type(collector) is Package:
+    if type(collector) is Package:
 
         def _patched_collect():
             # When collector is a Package, collector.obj is the package's
@@ -648,12 +634,24 @@ def pytest_collectstart(collector: pytest.Collector):
 
         collector.__original_collect = collector.collect
         collector.collect = _patched_collect
-    else:
-        pyobject = collector.obj
-        # If the collected module is a DoctestTextfile, collector.obj is None
-        if pyobject is None:
-            return
-        pyobject.__pytest_asyncio_scoped_event_loop = scoped_event_loop
+    elif isinstance(collector, Module):
+        # Accessing Module.obj triggers a module import executing module-level
+        # statements. A module-level pytest.skip statement raises the "Skipped"
+        # OutcomeException or a Collector.CollectError, if the "allow_module_level"
+        # kwargs is missing. These cases are handled correctly when they happen inside
+        # Collector.collect(), but this hook runs before the actual collect call.
+        # Therefore, we monkey patch Module.collect to add the scoped fixture to the
+        # module before it runs the actual collection.
+        def _patched_collect():
+            # If the collected module is a DoctestTextfile, collector.obj is None
+            if collector.obj is not None:
+                collector.obj.__pytest_asyncio_scoped_event_loop = scoped_event_loop
+            return collector.__original_collect()
+
+        collector.__original_collect = collector.collect
+        collector.collect = _patched_collect
+    elif isinstance(collector, Class):
+        collector.obj.__pytest_asyncio_scoped_event_loop = scoped_event_loop
 
 
 def _removesuffix(s: str, suffix: str) -> str:
