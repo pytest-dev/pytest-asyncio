@@ -4,13 +4,10 @@ import contextlib
 import enum
 import functools
 import inspect
-import os
 import socket
 import sys
 import warnings
 from asyncio import AbstractEventLoopPolicy
-from pathlib import Path
-from tempfile import NamedTemporaryFile
 from textwrap import dedent
 from typing import (
     Any,
@@ -31,7 +28,6 @@ from typing import (
 )
 
 import pytest
-from _pytest.pathlib import visit
 from pytest import (
     Class,
     Collector,
@@ -627,100 +623,28 @@ def pytest_collectstart(collector: pytest.Collector):
         collector.__original_collect = collector.collect
         collector.collect = _patched_collect
     elif type(collector) is Package:
-        if not collector.funcnamefilter(collector.name):
-            return
 
         def _patched_collect():
-            # pytest.Package collects all files and sub-packages. Pytest 8 changes
-            # this logic to only collect a single directory. Sub-packages are then
-            # collected by a separate Package collector. Therefore, this logic can be
-            # dropped, once we move to pytest 8.
-            collector_dir = Path(collector.path.parent)
-            for direntry in visit(str(collector_dir), recurse=collector._recurse):
-                if not direntry.name == "__init__.py":
-                    # No need to register a package-scoped fixture, if we aren't
-                    # collecting a (sub-)package
-                    continue
-                pkgdir = Path(direntry.path).parent
-                pkg_nodeid = str(pkgdir.relative_to(collector_dir))
-                if pkg_nodeid == ".":
-                    pkg_nodeid = ""
-                # Pytest's fixture matching algorithm compares a fixture's baseid with
-                # an Item's nodeid to determine whether a fixture is available for a
-                # specific Item. Package.nodeid ends with __init__.py, so the
-                # fixture's baseid will also end with __init__.py and prevents
-                # the fixture from being matched to test items in the package.
-                # Furthermore, Package also collects any sub-packages, which means
-                # the ID of the scoped event loop for the package must change for
-                # each sub-package.
-                # As the fixture matching is purely based on string comparison, we
-                # can assemble a path based on the root package path
-                # (i.e. Package.path.parent) and the sub-package path
-                # (i.e. Path(direntry.path).parent)). This makes the fixture visible
-                # to all items in the package.
-                # see also https://github.com/pytest-dev/pytest/issues/11662#issuecomment-1879310072  # noqa
-                # Possibly related to https://github.com/pytest-dev/pytest/issues/4085
-                fixture_id = f"{pkg_nodeid}/__init__.py::<event_loop>".lstrip("/")
-                # When collector is a Package, collector.obj is the package's
-                # __init__.py. Accessing the __init__.py to attach the fixture function
-                # may trigger additional module imports or change the order of imports,
-                # which leads to a number of problems.
-                # see https://github.com/pytest-dev/pytest-asyncio/issues/729
-                # Moreover, Package.obj has been removed in pytest 8.
-                # Therefore, pytest-asyncio creates a temporary Python module inside the
-                # collected package. The sole purpose of that module is to house a
-                # fixture function for the pacakge-scoped event loop fixture. Once the
-                # fixture has been evaluated by pytest, the temporary module
-                # can be removed.
-                with NamedTemporaryFile(
-                    dir=pkgdir,
-                    prefix="pytest_asyncio_virtual_module_",
-                    suffix=".py",
-                    delete=False,  # Required for Windows compatibility
-                ) as virtual_module_file:
-                    virtual_module = Module.from_parent(
-                        collector, path=Path(virtual_module_file.name)
+            # When collector is a Package, collector.obj is the package's
+            # __init__.py. Accessing the __init__.py to attach the fixture function
+            # may trigger additional module imports or change the order of imports,
+            # which leads to a number of problems.
+            # see https://github.com/pytest-dev/pytest-asyncio/issues/729
+            # Moreover, Package.obj has been removed in pytest 8.
+            # Therefore, pytest-asyncio attaches the packages-scoped event loop
+            # fixture to the first collected module in that package.
+            package_scoped_loop_added = False
+            for subcollector in collector.__original_collect():
+                if (
+                    not package_scoped_loop_added
+                    and isinstance(subcollector, Module)
+                    and getattr(subcollector, "obj", None)
+                ):
+                    subcollector.obj.__pytest_asyncio_package_scoped_event_loop = (
+                        scoped_event_loop
                     )
-                    virtual_module_file.write(
-                        dedent(
-                            f"""\
-                            # This is a temporary file created by pytest-asyncio
-                            # If you see this file, a pytest run has crashed and
-                            # wasn't able to clean up the file in time.
-                            # You can safely remove this file.
-                            import asyncio
-                            import pytest
-                            from pytest_asyncio.plugin \
-                                import _temporary_event_loop_policy
-                            @pytest.fixture(
-                                scope="{collector_scope}",
-                                name="{fixture_id}",
-                            )
-                            def scoped_event_loop(
-                                *args,
-                                event_loop_policy,
-                            ):
-                                new_loop_policy = event_loop_policy
-                                with _temporary_event_loop_policy(new_loop_policy):
-                                    loop = asyncio.new_event_loop()
-                                    loop.__pytest_asyncio = True
-                                    asyncio.set_event_loop(loop)
-                                    yield loop
-                                    loop.close()
-                            """
-                        ).encode()
-                    )
-                    virtual_module_file.flush()
-                    fixturemanager = collector.config.pluginmanager.get_plugin(
-                        "funcmanage"
-                    )
-                    # Collect the fixtures in the virtual module with the node ID of
-                    # the current sub-package to ensure correct fixture matching.
-                    # see also https://github.com/pytest-dev/pytest/issues/11662#issuecomment-1879310072  # noqa
-                    fixturemanager.parsefactories(virtual_module.obj, nodeid=pkg_nodeid)
-                    yield virtual_module
-                os.unlink(virtual_module_file.name)
-            yield from collector.__original_collect()
+                    package_scoped_loop_added = True
+                yield subcollector
 
         collector.__original_collect = collector.collect
         collector.collect = _patched_collect
