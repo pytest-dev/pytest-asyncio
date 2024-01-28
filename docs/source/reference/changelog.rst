@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.23.4 (UNRELEASED)
+0.23.4 (2024-01-28)
 ===================
 - pytest-asyncio no longer imports additional, unrelated packages during test collection `#729 <https://github.com/pytest-dev/pytest-asyncio/issues/729>`_
 - Addresses further issues that caused an internal pytest error during test collection
