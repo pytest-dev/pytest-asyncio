@@ -10,7 +10,7 @@ repos:
   hooks:
   - id: yesqa
 - repo: https://github.com/Zac-HD/shed
-  rev: 0.10.7
+  rev: 2024.1.1
   hooks:
   - id: shed
     args:
