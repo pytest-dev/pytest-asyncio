@@ -1,4 +1,5 @@
 """pytest-asyncio implementation."""
+
 import asyncio
 import contextlib
 import enum
@@ -115,8 +116,7 @@ def fixture(
         None,
     ] = ...,
     name: Optional[str] = ...,
-) -> FixtureFunction:
-    ...
+) -> FixtureFunction: ...
 
 
 @overload
@@ -132,8 +132,7 @@ def fixture(
         None,
     ] = ...,
     name: Optional[str] = None,
-) -> FixtureFunctionMarker:
-    ...
+) -> FixtureFunctionMarker: ...
 
 
 def fixture(
@@ -720,9 +719,9 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
         # The fixture needs to be appended to avoid messing up the fixture evaluation
         # order
         metafunc.fixturenames.append(event_loop_fixture_id)
-        metafunc._arg2fixturedefs[
-            event_loop_fixture_id
-        ] = fixturemanager._arg2fixturedefs[event_loop_fixture_id]
+        metafunc._arg2fixturedefs[event_loop_fixture_id] = (
+            fixturemanager._arg2fixturedefs[event_loop_fixture_id]
+        )
 
 
 @pytest.hookimpl(hookwrapper=True)

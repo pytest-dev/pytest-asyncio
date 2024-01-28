@@ -1,4 +1,5 @@
 """Test if pytestmark works when defined on a class."""
+
 import asyncio
 from textwrap import dedent
 

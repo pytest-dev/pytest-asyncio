@@ -1,4 +1,5 @@
 """Unit tests for overriding the event loop with a larger scoped one."""
+
 import asyncio
 
 import pytest

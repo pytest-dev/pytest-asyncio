@@ -2,6 +2,7 @@
 We support module-scoped async fixtures, but only if the event loop is
 module-scoped too.
 """
+
 import asyncio
 
 import pytest
