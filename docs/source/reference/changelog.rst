@@ -6,6 +6,7 @@ Changelog
 ===================
 - pytest-asyncio no longer imports additional, unrelated packages during test collection `#729 <https://github.com/pytest-dev/pytest-asyncio/issues/729>`_
 - Addresses further issues that caused an internal pytest error during test collection
+- Declares incompatibility with pytest 8 `#737 <https://github.com/pytest-dev/pytest-asyncio/issues/737>`_
 
 Known issues
 ------------
