@@ -558,6 +558,10 @@ _fixture_scope_by_collector_type = {
     Session: "session",
 }
 
+# A stack used to push package-scoped loops during collection of a package
+# and pop those loops during collection of a Module
+__package_loop_stack: List[Union[FixtureFunctionMarker, FixtureFunction]] = []
+
 
 @pytest.hookimpl
 def pytest_collectstart(collector: pytest.Collector):
@@ -609,31 +613,11 @@ def pytest_collectstart(collector: pytest.Collector):
     # collected Python object, where it will be picked up by pytest.Class.collect()
     # or pytest.Module.collect(), respectively
     if type(collector) is Package:
-
-        def _patched_collect():
-            # When collector is a Package, collector.obj is the package's
-            # __init__.py. Accessing the __init__.py to attach the fixture function
-            # may trigger additional module imports or change the order of imports,
-            # which leads to a number of problems.
-            # see https://github.com/pytest-dev/pytest-asyncio/issues/729
-            # Moreover, Package.obj has been removed in pytest 8.
-            # Therefore, pytest-asyncio attaches the packages-scoped event loop
-            # fixture to the first collected module in that package.
-            package_scoped_loop_added = False
-            for subcollector in collector.__original_collect():
-                if (
-                    not package_scoped_loop_added
-                    and isinstance(subcollector, Module)
-                    and getattr(subcollector, "obj", None)
-                ):
-                    subcollector.obj.__pytest_asyncio_package_scoped_event_loop = (
-                        scoped_event_loop
-                    )
-                    package_scoped_loop_added = True
-                yield subcollector
-
-        collector.__original_collect = collector.collect
-        collector.collect = _patched_collect
+        # Packages do not have a corresponding Python object. Therefore, the fixture
+        # for the package-scoped event loop is added to a stack. When a module inside
+        # the package is collected, the module will attach the fixture to its
+        # Python object.
+        __package_loop_stack.append(scoped_event_loop)
     elif isinstance(collector, Module):
         # Accessing Module.obj triggers a module import executing module-level
         # statements. A module-level pytest.skip statement raises the "Skipped"
@@ -644,8 +628,14 @@ def pytest_collectstart(collector: pytest.Collector):
         # module before it runs the actual collection.
         def _patched_collect():
             # If the collected module is a DoctestTextfile, collector.obj is None
-            if collector.obj is not None:
-                collector.obj.__pytest_asyncio_scoped_event_loop = scoped_event_loop
+            module = collector.obj
+            if module is not None:
+                module.__pytest_asyncio_scoped_event_loop = scoped_event_loop
+                try:
+                    package_loop = __package_loop_stack.pop()
+                    module.__pytest_asyncio_package_scoped_event_loop = package_loop
+                except IndexError:
+                    pass
             return collector.__original_collect()
 
         collector.__original_collect = collector.collect
