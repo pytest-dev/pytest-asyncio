@@ -16,11 +16,14 @@ from typing import (
     Awaitable,
     Callable,
     Dict,
+    Generator,
     Iterable,
     Iterator,
     List,
     Literal,
+    Mapping,
     Optional,
+    Sequence,
     Set,
     Type,
     TypeVar,
@@ -47,16 +50,14 @@ from pytest import (
     StashKey,
 )
 
-_R = TypeVar("_R")
-
 _ScopeName = Literal["session", "package", "module", "class", "function"]
 _T = TypeVar("_T")
 
 SimpleFixtureFunction = TypeVar(
-    "SimpleFixtureFunction", bound=Callable[..., Awaitable[_R]]
+    "SimpleFixtureFunction", bound=Callable[..., Awaitable[object]]
 )
 FactoryFixtureFunction = TypeVar(
-    "FactoryFixtureFunction", bound=Callable[..., AsyncIterator[_R]]
+    "FactoryFixtureFunction", bound=Callable[..., AsyncIterator[object]]
 )
 FixtureFunction = Union[SimpleFixtureFunction, FactoryFixtureFunction]
 FixtureFunctionMarker = Callable[[FixtureFunction], FixtureFunction]
@@ -204,6 +205,7 @@ def _preprocess_async_fixtures(
     config = collector.config
     asyncio_mode = _get_asyncio_mode(config)
     fixturemanager = config.pluginmanager.get_plugin("funcmanage")
+    assert fixturemanager is not None
     for fixtures in fixturemanager._arg2fixturedefs.values():
         for fixturedef in fixtures:
             func = fixturedef.func
@@ -217,11 +219,13 @@ def _preprocess_async_fixtures(
                 continue
             scope = fixturedef.scope
             if scope == "function":
-                event_loop_fixture_id = "event_loop"
+                event_loop_fixture_id: Optional[str] = "event_loop"
             else:
                 event_loop_node = _retrieve_scope_root(collector, scope)
                 event_loop_fixture_id = event_loop_node.stash.get(
-                    _event_loop_fixture_id, None
+                    # Type ignored because of non-optimal mypy inference.
+                    _event_loop_fixture_id,  # type: ignore[arg-type]
+                    None,
                 )
             _make_asyncio_fixture_function(func)
             function_signature = inspect.signature(func)
@@ -234,8 +238,15 @@ def _preprocess_async_fixtures(
                         f"instead."
                     )
                 )
-            _inject_fixture_argnames(fixturedef, event_loop_fixture_id)
-            _synchronize_async_fixture(fixturedef, event_loop_fixture_id)
+            # TODO: Fix type errors below.
+            _inject_fixture_argnames(
+                fixturedef,
+                event_loop_fixture_id,  # type: ignore[arg-type]
+            )
+            _synchronize_async_fixture(
+                fixturedef,
+                event_loop_fixture_id,  # type: ignore[arg-type]
+            )
             assert _is_asyncio_fixture_function(fixturedef.func)
             processed_fixturedefs.add(fixturedef)
 
@@ -517,20 +528,20 @@ def pytest_pycollect_makeitem_preprocess_async_fixtures(
 @pytest.hookimpl(specname="pytest_pycollect_makeitem", hookwrapper=True)
 def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
     collector: Union[pytest.Module, pytest.Class], name: str, obj: object
-) -> Union[
-    pytest.Item, pytest.Collector, List[Union[pytest.Item, pytest.Collector]], None
-]:
+) -> Generator[None, Any, None]:
     """
     Converts coroutines and async generators collected as pytest.Functions
     to AsyncFunction items.
     """
     hook_result = yield
-    node_or_list_of_nodes = hook_result.get_result()
+    node_or_list_of_nodes: Union[
+        pytest.Item, pytest.Collector, List[Union[pytest.Item, pytest.Collector]], None
+    ] = hook_result.get_result()
     if not node_or_list_of_nodes:
         return
-    try:
+    if isinstance(node_or_list_of_nodes, Sequence):
         node_iterator = iter(node_or_list_of_nodes)
-    except TypeError:
+    else:
         # Treat single node as a single-element iterable
         node_iterator = iter((node_or_list_of_nodes,))
     updated_node_collection = []
@@ -549,8 +560,8 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
     hook_result.force_result(updated_node_collection)
 
 
-_event_loop_fixture_id = StashKey[str]
-_fixture_scope_by_collector_type = {
+_event_loop_fixture_id = StashKey[str]()
+_fixture_scope_by_collector_type: Mapping[Type[pytest.Collector], _ScopeName] = {
     Class: "class",
     # Package is a subclass of module and the dict is used in isinstance checks
     # Therefore, the order matters and Package needs to appear before Module
@@ -565,7 +576,7 @@ __package_loop_stack: List[Union[FixtureFunctionMarker, FixtureFunction]] = []
 
 
 @pytest.hookimpl
-def pytest_collectstart(collector: pytest.Collector):
+def pytest_collectstart(collector: pytest.Collector) -> None:
     try:
         collector_scope = next(
             scope
@@ -639,8 +650,8 @@ def pytest_collectstart(collector: pytest.Collector):
                     pass
             return collector.__original_collect()
 
-        collector.__original_collect = collector.collect
-        collector.collect = _patched_collect
+        collector.__original_collect = collector.collect  # type: ignore[attr-defined]
+        collector.collect = _patched_collect  # type: ignore[method-assign]
     elif isinstance(collector, Class):
         collector.obj.__pytest_asyncio_scoped_event_loop = scoped_event_loop
 
@@ -708,6 +719,7 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
         if event_loop_fixture_id in metafunc.fixturenames:
             return
         fixturemanager = metafunc.config.pluginmanager.get_plugin("funcmanage")
+        assert fixturemanager is not None
         if "event_loop" in metafunc.fixturenames:
             raise MultipleEventLoopsRequestedError(
                 _MULTIPLE_LOOPS_REQUESTED_ERROR.format(
@@ -728,8 +740,8 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_fixture_setup(
-    fixturedef: FixtureDef, request: SubRequest
-) -> Optional[object]:
+    fixturedef: FixtureDef,
+) -> Generator[None, Any, None]:
     """Adjust the event loop policy when an event loop is produced."""
     if fixturedef.argname == "event_loop":
         # The use of a fixture finalizer is preferred over the
@@ -744,7 +756,7 @@ def pytest_fixture_setup(
             _provide_clean_event_loop,
         )
         outcome = yield
-        loop = outcome.get_result()
+        loop: asyncio.AbstractEventLoop = outcome.get_result()
         # Weird behavior was observed when checking for an attribute of FixtureDef.func
         # Instead, we now check for a special attribute of the returned event loop
         fixture_filename = inspect.getsourcefile(fixturedef.func)
@@ -946,6 +958,7 @@ def _retrieve_scope_root(item: Union[Collector, Item], scope: str) -> Collector:
     scope_root_type = node_type_by_scope[scope]
     for node in reversed(item.listchain()):
         if isinstance(node, scope_root_type):
+            assert isinstance(node, pytest.Collector)
             return node
     error_message = (
         f"{item.name} is marked to be run in an event loop with scope {scope}, "
