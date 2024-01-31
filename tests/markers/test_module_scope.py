@@ -344,3 +344,39 @@ def test_asyncio_mark_handles_missing_event_loop_triggered_by_fixture(
     )
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=2)
+
+
+def test_asyncio_mark_module_level_loop_reused(
+    pytester: Pytester,
+):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import pytest
+            import asyncio
+            import pytest_asyncio
+
+            @pytest_asyncio.fixture(scope="module")
+            async def module_loop():
+                return asyncio.get_running_loop()
+
+            @pytest_asyncio.fixture(scope="function")
+            async def function_loop():
+                return asyncio.get_running_loop()
+
+            @pytest.mark.asyncio(scope="function")
+            async def test_function_loop(module_loop, function_loop):
+                assert asyncio.get_running_loop() is function_loop
+
+            @pytest.mark.asyncio(scope="module")
+            async def test_module_loop(module_loop):
+                assert asyncio.get_running_loop() is module_loop
+
+            @pytest.mark.asyncio(scope="module")
+            async def test_module_loop_function_fixture(module_loop, function_loop):
+                assert asyncio.get_running_loop() is module_loop
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=3)
