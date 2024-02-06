@@ -523,6 +523,7 @@ def pytest_pycollect_makeitem_preprocess_async_fixtures(
     return None
 
 
+# TODO: #778 Narrow down return type of function when dropping support for pytest 7
 # The function name needs to start with "pytest_"
 # see https://github.com/pytest-dev/pytest/issues/11307
 @pytest.hookimpl(specname="pytest_pycollect_makeitem", hookwrapper=True)
@@ -738,6 +739,7 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
         )
 
 
+# TODO: #778 Narrow down return type of function when dropping support for pytest 7
 @pytest.hookimpl(hookwrapper=True)
 def pytest_fixture_setup(
     fixturedef: FixtureDef,
