@@ -5,6 +5,7 @@ Changelog
 0.23.5 (UNRELEASED)
 ===================
 - Declare compatibility with pytest 8 `#737 <https://github.com/pytest-dev/pytest-asyncio/issues/737>`_
+- Fix typing errors with recent versions of mypy `#769 <https://github.com/pytest-dev/pytest-asyncio/issues/769>`_
 
 Known issues
 ------------
