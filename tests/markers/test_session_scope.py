@@ -44,7 +44,9 @@ def test_asyncio_mark_provides_session_scoped_loop_strict_mode(pytester: Pyteste
             """
         ),
     )
-    subpackage_name = "subpkg"
+
+    # subpackage_name must alphabetically come after test_module_one.py
+    subpackage_name = "z_subpkg"
     subpkg = pytester.mkpydir(subpackage_name)
     subpkg.joinpath("test_subpkg.py").write_text(
         dedent(

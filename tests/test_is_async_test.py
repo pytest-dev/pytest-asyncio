@@ -77,8 +77,10 @@ def test_returns_false_for_unmarked_coroutine_item_in_strict_mode(pytester: Pyte
     if pytest.version_tuple < (7, 2):
         # Probably related to https://github.com/pytest-dev/pytest/pull/10012
         result.assert_outcomes(failed=1)
-    else:
+    elif pytest.version_tuple < (8,):
         result.assert_outcomes(skipped=1)
+    else:
+        result.assert_outcomes(failed=1)
 
 
 def test_returns_true_for_unmarked_coroutine_item_in_auto_mode(pytester: Pytester):
