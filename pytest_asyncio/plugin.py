@@ -238,14 +238,14 @@ def _preprocess_async_fixtures(
                         f"instead."
                     )
                 )
-            # TODO: Fix type errors below.
+            assert event_loop_fixture_id
             _inject_fixture_argnames(
                 fixturedef,
-                event_loop_fixture_id,  # type: ignore[arg-type]
+                event_loop_fixture_id,
             )
             _synchronize_async_fixture(
                 fixturedef,
-                event_loop_fixture_id,  # type: ignore[arg-type]
+                event_loop_fixture_id,
             )
             assert _is_asyncio_fixture_function(fixturedef.func)
             processed_fixturedefs.add(fixturedef)
