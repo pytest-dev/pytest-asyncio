@@ -2,6 +2,15 @@
 Changelog
 =========
 
+0.23.5 (UNRELEASED)
+===================
+- Declare compatibility with pytest 8 `#737 <https://github.com/pytest-dev/pytest-asyncio/issues/737>`_
+
+Known issues
+------------
+As of v0.23, pytest-asyncio attaches an asyncio event loop to each item of the test suite (i.e. session, packages, modules, classes, functions) and allows tests to be run in those loops when marked accordingly. Pytest-asyncio currently assumes that async fixture scope is correlated with the new event loop scope. This prevents fixtures from being evaluated independently from the event loop scope and breaks some existing test suites (see `#706`_). For example, a test suite may require all fixtures and tests to run in the same event loop, but have async fixtures that are set up and torn down for each module. If you're affected by this issue, please continue using the v0.21 release, until it is resolved.
+
+
 0.23.4 (2024-01-28)
 ===================
 - pytest-asyncio no longer imports additional, unrelated packages during test collection `#729 <https://github.com/pytest-dev/pytest-asyncio/issues/729>`_
