@@ -50,7 +50,7 @@ jobs:
       id: version
       run: python ./tools/get-version.py >> $GITHUB_OUTPUT
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dist
         path: dist
@@ -84,10 +84,10 @@ jobs:
       run: python -m tox
 
     - name: Store coverage data
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: "!endsWith(matrix.os, 'windows')"
       with:
-        name: coverage-per-interpreter
+        name: coverage-python-${{ matrix.python-version }}
         path: .coverage.*
 
   check:
@@ -109,9 +109,10 @@ jobs:
         set -xe
         python -m pip install --upgrade coverage[toml]
     - name: Download coverage data for all test runs
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
-        name: coverage-per-interpreter
+        pattern: coverage-*
+        merge-multiple: true
     - name: Combine coverage data and create report
       run: |
         coverage combine
@@ -136,7 +137,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
     - name: Download distributions
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: dist
         path: dist
