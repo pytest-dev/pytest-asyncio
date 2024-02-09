@@ -667,7 +667,9 @@ def _removesuffix(s: str, suffix: str) -> str:
 def _temporary_event_loop_policy(policy: AbstractEventLoopPolicy) -> Iterator[None]:
     old_loop_policy = asyncio.get_event_loop_policy()
     try:
-        old_loop = asyncio.get_event_loop()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            old_loop = asyncio.get_event_loop()
     except RuntimeError:
         old_loop = None
     asyncio.set_event_loop_policy(policy)

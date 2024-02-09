@@ -2,10 +2,11 @@
 Changelog
 =========
 
-0.23.5 (UNRELEASED)
+0.23.5 (2024-02-09)
 ===================
 - Declare compatibility with pytest 8 `#737 <https://github.com/pytest-dev/pytest-asyncio/issues/737>`_
 - Fix typing errors with recent versions of mypy `#769 <https://github.com/pytest-dev/pytest-asyncio/issues/769>`_
+- Prevent DeprecationWarning about internal use of `asyncio.get_event_loop()` from affecting test cases `#757 <https://github.com/pytest-dev/pytest-asyncio/issues/757>`_
 
 Known issues
 ------------
