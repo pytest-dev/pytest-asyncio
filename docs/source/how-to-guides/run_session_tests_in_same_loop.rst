@@ -6,3 +6,5 @@ The easiest way to mark all tests is via a ``pytest_collection_modifyitems`` hoo
 
 .. include:: session_scoped_loop_example.py
     :code: python
+
+Note that this will also override *all* manually applied marks in *strict* mode.
