@@ -64,7 +64,6 @@ FixtureFunctionMarker = Callable[[FixtureFunction], FixtureFunction]
 
 # https://github.com/pytest-dev/pytest/pull/9510
 FixtureDef = Any
-SubRequest = Any
 
 
 class PytestAsyncioError(Exception):
@@ -282,7 +281,7 @@ def _add_kwargs(
     kwargs: Dict[str, Any],
     event_loop_fixture_id: str,
     event_loop: asyncio.AbstractEventLoop,
-    request: SubRequest,
+    request: FixtureRequest,
 ) -> Dict[str, Any]:
     sig = inspect.signature(func)
     ret = kwargs.copy()
@@ -316,7 +315,7 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -
     fixture = fixturedef.func
 
     @functools.wraps(fixture)
-    def _asyncgen_fixture_wrapper(request: SubRequest, **kwargs: Any):
+    def _asyncgen_fixture_wrapper(request: FixtureRequest, **kwargs: Any):
         func = _perhaps_rebind_fixture_func(
             fixture, request.instance, fixturedef.unittest
         )
@@ -355,7 +354,7 @@ def _wrap_async_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -> N
     fixture = fixturedef.func
 
     @functools.wraps(fixture)
-    def _async_fixture_wrapper(request: SubRequest, **kwargs: Any):
+    def _async_fixture_wrapper(request: FixtureRequest, **kwargs: Any):
         func = _perhaps_rebind_fixture_func(
             fixture, request.instance, fixturedef.unittest
         )
