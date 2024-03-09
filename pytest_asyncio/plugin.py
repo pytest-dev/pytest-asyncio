@@ -6,7 +6,6 @@ import enum
 import functools
 import inspect
 import socket
-import sys
 import warnings
 from asyncio import AbstractEventLoopPolicy
 from textwrap import dedent
@@ -654,12 +653,6 @@ def pytest_collectstart(collector: pytest.Collector) -> None:
         collector.collect = _patched_collect  # type: ignore[method-assign]
     elif isinstance(collector, Class):
         collector.obj.__pytest_asyncio_scoped_event_loop = scoped_event_loop
-
-
-def _removesuffix(s: str, suffix: str) -> str:
-    if sys.version_info < (3, 9):
-        return s[: -len(suffix)]
-    return s.removesuffix(suffix)
 
 
 @contextlib.contextmanager
