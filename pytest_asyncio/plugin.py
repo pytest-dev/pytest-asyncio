@@ -315,9 +315,8 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -
 
     @functools.wraps(fixture)
     def _asyncgen_fixture_wrapper(request: FixtureRequest, **kwargs: Any):
-        func = _perhaps_rebind_fixture_func(
-            fixture, request.instance, fixturedef.unittest
-        )
+        unittest = False if pytest.version_tuple >= (8, 2) else fixturedef.unittest
+        func = _perhaps_rebind_fixture_func(fixture, request.instance, unittest)
         event_loop = kwargs.pop(event_loop_fixture_id)
         gen_obj = func(
             **_add_kwargs(func, kwargs, event_loop_fixture_id, event_loop, request)
@@ -354,9 +353,8 @@ def _wrap_async_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -> N
 
     @functools.wraps(fixture)
     def _async_fixture_wrapper(request: FixtureRequest, **kwargs: Any):
-        func = _perhaps_rebind_fixture_func(
-            fixture, request.instance, fixturedef.unittest
-        )
+        unittest = False if pytest.version_tuple >= (8, 2) else fixturedef.unittest
+        func = _perhaps_rebind_fixture_func(fixture, request.instance, unittest)
         event_loop = kwargs.pop(event_loop_fixture_id)
 
         async def setup():
