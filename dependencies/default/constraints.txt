@@ -5,7 +5,7 @@ hypothesis==6.98.17
 iniconfig==2.0.0
 packaging==24.0
 pluggy==1.4.0
-pytest==8.0.2
+pytest==8.1.1
 sortedcontainers==2.4.0
 tomli==2.0.1
 typing_extensions==4.10.0
