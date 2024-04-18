@@ -891,7 +891,9 @@ def wrap_in_sync(
     @functools.wraps(func)
     def inner(*args, **kwargs):
         coro = func(*args, **kwargs)
-        _loop = asyncio.get_event_loop()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            _loop = asyncio.get_event_loop()
         task = asyncio.ensure_future(coro, loop=_loop)
         try:
             _loop.run_until_complete(task)
