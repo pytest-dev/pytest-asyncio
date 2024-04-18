@@ -673,7 +673,9 @@ def _temporary_event_loop_policy(policy: AbstractEventLoopPolicy) -> Iterator[No
         # subsequent tests from side-effects. We close this loop before restoring
         # the old loop to avoid ResourceWarnings.
         try:
-            asyncio.get_event_loop().close()
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", DeprecationWarning)
+                asyncio.get_event_loop().close()
         except RuntimeError:
             pass
         asyncio.set_event_loop(old_loop)
