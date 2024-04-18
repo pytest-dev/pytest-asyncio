@@ -1,5 +1,6 @@
 import asyncio
 import functools
+import warnings
 
 import pytest
 
@@ -33,7 +34,11 @@ async def port_with_event_loop_finalizer(request):
             # RuntimeError is raised if task is created on a different loop
             await finalizer
 
-        asyncio.get_event_loop().run_until_complete(port_afinalizer())
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            loop = asyncio.get_event_loop()
+
+        loop.run_until_complete(port_afinalizer())
 
     worker = asyncio.ensure_future(asyncio.sleep(0.2))
     request.addfinalizer(functools.partial(port_finalizer, worker))
