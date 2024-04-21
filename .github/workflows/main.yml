@@ -92,6 +92,7 @@ jobs:
 
   check:
     name: Check
+    environment: development
     if: always()
     needs: [lint, test]
     runs-on: ubuntu-latest
