@@ -657,9 +657,7 @@ def pytest_collectstart(collector: pytest.Collector) -> None:
 def _temporary_event_loop_policy(policy: AbstractEventLoopPolicy) -> Iterator[None]:
     old_loop_policy = asyncio.get_event_loop_policy()
     try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            old_loop = asyncio.get_event_loop()
+        old_loop = _get_event_loop_no_warn()
     except RuntimeError:
         old_loop = None
     asyncio.set_event_loop_policy(policy)
@@ -673,9 +671,7 @@ def _temporary_event_loop_policy(policy: AbstractEventLoopPolicy) -> Iterator[No
         # subsequent tests from side-effects. We close this loop before restoring
         # the old loop to avoid ResourceWarnings.
         try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", DeprecationWarning)
-                asyncio.get_event_loop().close()
+            _get_event_loop_no_warn().close()
         except RuntimeError:
             pass
         asyncio.set_event_loop(old_loop)
@@ -765,9 +761,7 @@ def pytest_fixture_setup(
             )
         policy = asyncio.get_event_loop_policy()
         try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", DeprecationWarning)
-                old_loop = policy.get_event_loop()
+            old_loop = _get_event_loop_no_warn(policy)
             is_pytest_asyncio_loop = getattr(old_loop, "__pytest_asyncio", False)
             if old_loop is not loop and not is_pytest_asyncio_loop:
                 old_loop.close()
@@ -829,9 +823,7 @@ def _restore_event_loop_policy(previous_policy) -> Callable[[], None]:
         # Close any event loop associated with the old loop policy
         # to avoid ResourceWarnings in the _provide_clean_event_loop finalizer
         try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", DeprecationWarning)
-                loop = previous_policy.get_event_loop()
+            loop = _get_event_loop_no_warn(previous_policy)
         except RuntimeError:
             loop = None
         if loop:
@@ -851,6 +843,17 @@ def _provide_clean_event_loop() -> None:
     policy = asyncio.get_event_loop_policy()
     new_loop = policy.new_event_loop()
     policy.set_event_loop(new_loop)
+
+
+def _get_event_loop_no_warn(
+    policy: Optional[AbstractEventLoopPolicy] = None,
+) -> asyncio.AbstractEventLoop:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        if policy is not None:
+            return policy.get_event_loop()
+        else:
+            return asyncio.get_event_loop()
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
@@ -893,9 +896,7 @@ def wrap_in_sync(
     @functools.wraps(func)
     def inner(*args, **kwargs):
         coro = func(*args, **kwargs)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            _loop = asyncio.get_event_loop()
+        _loop = _get_event_loop_no_warn()
         task = asyncio.ensure_future(coro, loop=_loop)
         try:
             _loop.run_until_complete(task)
