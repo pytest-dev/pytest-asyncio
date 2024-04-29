@@ -118,7 +118,7 @@ jobs:
       uses: codecov/codecov-action@v3
       with:
         files: coverage.xml
-        fail_ci_if_error: true
+        fail_ci_if_error: false
 
   deploy:
     name: Deploy
