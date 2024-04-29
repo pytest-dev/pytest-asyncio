@@ -1,6 +1,7 @@
 """Tests for the Hypothesis integration, which wraps async functions in a
 sync shim for Hypothesis.
 """
+
 from textwrap import dedent
 
 import pytest

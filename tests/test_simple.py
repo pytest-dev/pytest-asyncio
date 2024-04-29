@@ -1,4 +1,5 @@
 """Quick'n'dirty unit tests for provided fixtures and markers."""
+
 import asyncio
 from textwrap import dedent
 

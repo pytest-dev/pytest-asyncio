@@ -1,4 +1,5 @@
 """pytest-asyncio implementation."""
+
 import asyncio
 import contextlib
 import enum
@@ -102,8 +103,7 @@ def fixture(
         None,
     ] = ...,
     name: Optional[str] = ...,
-) -> FixtureFunction:
-    ...
+) -> FixtureFunction: ...
 
 
 @overload
@@ -119,8 +119,7 @@ def fixture(
         None,
     ] = ...,
     name: Optional[str] = None,
-) -> FixtureFunctionMarker:
-    ...
+) -> FixtureFunctionMarker: ...
 
 
 def fixture(

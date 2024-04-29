@@ -1,4 +1,5 @@
 """Test if pytestmark works when defined in a module."""
+
 import asyncio
 
 import pytest
