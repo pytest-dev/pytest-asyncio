@@ -2,6 +2,10 @@
 Changelog
 =========
 
+0.21.2 (2024-04-29)
+===================
+- Fix compatibility with pytest 8.2. Backport of `#800 <https://github.com/pytest-dev/pytest-asyncio/pull/800>`_ to pytest-asyncio v0.21 for users who are unable to upgrade to a more recent version (see `#706 <https://github.com/pytest-dev/pytest-asyncio/pull/706>`_)
+
 0.21.1 (2023-07-12)
 ===================
 - Output a proper error message when an invalid ``asyncio_mode`` is selected.
