@@ -240,7 +240,7 @@ def _add_kwargs(
     func: Callable[..., Any],
     kwargs: Dict[str, Any],
     event_loop: asyncio.AbstractEventLoop,
-    request: SubRequest,
+    request: FixtureRequest,
 ) -> Dict[str, Any]:
     sig = inspect.signature(func)
     ret = kwargs.copy()
@@ -277,9 +277,8 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
     def _asyncgen_fixture_wrapper(
         event_loop: asyncio.AbstractEventLoop, request: SubRequest, **kwargs: Any
     ):
-        func = _perhaps_rebind_fixture_func(
-            fixture, request.instance, fixturedef.unittest
-        )
+        unittest = False if pytest.version_tuple >= (8, 2) else fixturedef.unittest
+        func = _perhaps_rebind_fixture_func(fixture, request.instance, unittest)
         gen_obj = func(**_add_kwargs(func, kwargs, event_loop, request))
 
         async def setup():
@@ -315,9 +314,8 @@ def _wrap_async_fixture(fixturedef: FixtureDef) -> None:
     def _async_fixture_wrapper(
         event_loop: asyncio.AbstractEventLoop, request: SubRequest, **kwargs: Any
     ):
-        func = _perhaps_rebind_fixture_func(
-            fixture, request.instance, fixturedef.unittest
-        )
+        unittest = False if pytest.version_tuple >= (8, 2) else fixturedef.unittest
+        func = _perhaps_rebind_fixture_func(fixture, request.instance, unittest)
 
         async def setup():
             res = await func(**_add_kwargs(func, kwargs, event_loop, request))
