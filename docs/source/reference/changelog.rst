@@ -2,6 +2,10 @@
 Changelog
 =========
 
+0.23.7 (UNRELEASED)
+===================
+- Silence deprecation warnings about unclosed event loops that occurred with certain CPython patch releases `#817 <https://github.com/pytest-dev/pytest-asyncio/pull/817>`_
+
 0.23.6 (2024-03-19)
 ===================
 - Fix compatibility with pytest 8.2 `#800 <https://github.com/pytest-dev/pytest-asyncio/pull/800>`_
