@@ -392,7 +392,8 @@ class PytestAsyncioFunction(Function):
         Instantiates this specific PytestAsyncioFunction type from the specified
         Function item.
         """
-        assert function.get_closest_marker("asyncio")
+        asyncio_marker = function.get_closest_marker("asyncio")
+        assert asyncio_marker
         subclass_instance = cls.from_parent(
             function.parent,
             name=function.name,
@@ -402,7 +403,7 @@ class PytestAsyncioFunction(Function):
             keywords=function.keywords,
             originalname=function.originalname,
         )
-        subclass_instance.own_markers.extend(function.own_markers)
+        subclass_instance.own_markers.append(asyncio_marker)
         subclassed_function_signature = inspect.signature(subclass_instance.obj)
         if "event_loop" in subclassed_function_signature.parameters:
             subclass_instance.warn(
