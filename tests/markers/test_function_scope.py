@@ -197,3 +197,34 @@ def test_standalone_test_does_not_trigger_warning_about_no_current_event_loop_be
     )
     result = pytester.runpytest_subprocess("--asyncio-mode=strict")
     result.assert_outcomes(warnings=0, passed=1)
+
+
+def test_asyncio_mark_does_not_duplicate_other_marks_in_auto_mode(
+    pytester: Pytester,
+):
+    pytester.makeconftest(
+        dedent(
+            """\
+            def pytest_configure(config):
+                config.addinivalue_line(
+                    "markers", "dummy_marker: mark used for testing purposes"
+                )
+            """
+        )
+    )
+    pytester.makepyfile(
+        dedent(
+            """\
+            import pytest
+
+            @pytest.mark.dummy_marker
+            async def test_markers_not_duplicated(request):
+                markers = []
+                for node, marker in request.node.iter_markers_with_node():
+                    markers.append(marker)
+                assert len(markers) == 2
+            """
+        )
+    )
+    result = pytester.runpytest_subprocess("--asyncio-mode=auto")
+    result.assert_outcomes(warnings=0, passed=1)

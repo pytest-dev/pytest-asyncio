@@ -405,7 +405,8 @@ class PytestAsyncioFunction(Function):
             keywords=function.keywords,
             originalname=function.originalname,
         )
-        subclass_instance.own_markers.extend(function.own_markers)
+        subclass_instance.own_markers = function.own_markers
+        assert subclass_instance.own_markers == function.own_markers
         subclassed_function_signature = inspect.signature(subclass_instance.obj)
         if "event_loop" in subclassed_function_signature.parameters:
             subclass_instance.warn(
