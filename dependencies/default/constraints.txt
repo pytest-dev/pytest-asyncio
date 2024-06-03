@@ -1,5 +1,5 @@
 attrs==23.2.0
-coverage==7.5.1
+coverage==7.5.3
 exceptiongroup==1.2.1
 hypothesis==6.102.4
 iniconfig==2.0.0
