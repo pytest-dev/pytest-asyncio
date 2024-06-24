@@ -61,8 +61,11 @@ FactoryFixtureFunction = TypeVar(
 FixtureFunction = Union[SimpleFixtureFunction, FactoryFixtureFunction]
 FixtureFunctionMarker = Callable[[FixtureFunction], FixtureFunction]
 
-# https://github.com/pytest-dev/pytest/pull/9510
-FixtureDef = Any
+# https://github.com/pytest-dev/pytest/commit/fb55615d5e999dd44306596f340036c195428ef1
+if pytest.version_tuple < (8, 0):
+    FixtureDef = Any
+else:
+    from pytest import FixtureDef
 
 
 class PytestAsyncioError(Exception):
@@ -315,7 +318,7 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef, event_loop_fixture_id: str) -
 
     @functools.wraps(fixture)
     def _asyncgen_fixture_wrapper(request: FixtureRequest, **kwargs: Any):
-        unittest = False if pytest.version_tuple >= (8, 2) else fixturedef.unittest
+        unittest = fixturedef.unittest if hasattr(fixturedef, "unittest") else False
         func = _perhaps_rebind_fixture_func(fixture, request.instance, unittest)
         event_loop = kwargs.pop(event_loop_fixture_id)
         gen_obj = func(
