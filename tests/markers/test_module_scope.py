@@ -48,7 +48,7 @@ def test_asyncio_mark_works_on_module_level(pytester: Pytester):
             """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=strict", "-W default")
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
     result.assert_outcomes(passed=2, warnings=2)
     result.stdout.fnmatch_lines(
         '*is asynchronous and explicitly requests the "event_loop" fixture*'

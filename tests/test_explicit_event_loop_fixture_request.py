@@ -17,7 +17,7 @@ def test_emit_warning_when_event_loop_is_explicitly_requested_in_coroutine(
             """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=strict", "-W default")
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
     result.assert_outcomes(passed=1, warnings=1)
     result.stdout.fnmatch_lines(
         ['*is asynchronous and explicitly requests the "event_loop" fixture*']
@@ -39,7 +39,7 @@ def test_emit_warning_when_event_loop_is_explicitly_requested_in_coroutine_metho
             """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=strict", "-W default")
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
     result.assert_outcomes(passed=1, warnings=1)
     result.stdout.fnmatch_lines(
         ['*is asynchronous and explicitly requests the "event_loop" fixture*']
@@ -62,7 +62,7 @@ def test_emit_warning_when_event_loop_is_explicitly_requested_in_coroutine_stati
             """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=strict", "-W default")
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
     result.assert_outcomes(passed=1, warnings=1)
     result.stdout.fnmatch_lines(
         ['*is asynchronous and explicitly requests the "event_loop" fixture*']
@@ -88,7 +88,7 @@ def test_emit_warning_when_event_loop_is_explicitly_requested_in_coroutine_fixtu
             """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=strict", "-W default")
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
     result.assert_outcomes(passed=1, warnings=1)
     result.stdout.fnmatch_lines(
         ['*is asynchronous and explicitly requests the "event_loop" fixture*']
@@ -114,7 +114,7 @@ def test_emit_warning_when_event_loop_is_explicitly_requested_in_async_gen_fixtu
             """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=strict", "-W default")
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
     result.assert_outcomes(passed=1, warnings=1)
     result.stdout.fnmatch_lines(
         ['*is asynchronous and explicitly requests the "event_loop" fixture*']
