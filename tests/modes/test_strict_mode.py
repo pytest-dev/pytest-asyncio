@@ -79,7 +79,7 @@ def test_strict_mode_ignores_unmarked_coroutine(testdir):
         """
         )
     )
-    result = testdir.runpytest("--asyncio-mode=strict", "-W default")
+    result = testdir.runpytest_subprocess("--asyncio-mode=strict", "-W default")
     result.assert_outcomes(skipped=1, warnings=1)
     result.stdout.fnmatch_lines(["*async def functions are not natively supported*"])
 
@@ -100,7 +100,7 @@ def test_strict_mode_ignores_unmarked_fixture(testdir):
         """
         )
     )
-    result = testdir.runpytest("--asyncio-mode=strict", "-W default")
+    result = testdir.runpytest_subprocess("--asyncio-mode=strict", "-W default")
     result.assert_outcomes(skipped=1, warnings=2)
     result.stdout.fnmatch_lines(
         [

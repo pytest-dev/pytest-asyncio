@@ -23,7 +23,7 @@ def test_hypothesis_given_decorator_before_asyncio_mark(pytester: Pytester):
             """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=strict", "-W default")
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
     result.assert_outcomes(passed=1)
 
 
@@ -67,7 +67,7 @@ def test_can_use_explicit_event_loop_fixture(pytester: Pytester):
             """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=strict", "-W default")
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
     result.assert_outcomes(passed=1, warnings=2)
     result.stdout.fnmatch_lines(
         [
