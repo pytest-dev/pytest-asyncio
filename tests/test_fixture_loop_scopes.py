@@ -1,19 +1,36 @@
-import asyncio
+from textwrap import dedent
 
 import pytest
-
-import pytest_asyncio
-
-loop: asyncio.AbstractEventLoop
+from pytest import Pytester
 
 
-@pytest_asyncio.fixture(loop_scope="session")
-async def fixture():
-    global loop
-    loop = asyncio.get_running_loop()
+@pytest.mark.parametrize(
+    "fixture_scope", ("session", "package", "module", "class", "function")
+)
+def test_loop_scope_session_is_independent_of_fixture_scope(
+    pytester: Pytester,
+    fixture_scope: str,
+):
+    pytester.makepyfile(
+        dedent(
+            f"""\
+            import asyncio
+            import pytest
+            import pytest_asyncio
 
+            loop: asyncio.AbstractEventLoop = None
 
-@pytest.mark.asyncio(scope="session")
-async def test_fixture_loop_scopes(fixture):
-    global loop
-    assert loop == asyncio.get_running_loop()
+            @pytest_asyncio.fixture(scope="{fixture_scope}", loop_scope="session")
+            async def fixture():
+                global loop
+                loop = asyncio.get_running_loop()
+
+            @pytest.mark.asyncio(scope="session")
+            async def test_runs_in_same_loop_as_fixture(fixture):
+                global loop
+                assert loop == asyncio.get_running_loop()
+            """
+        )
+    )
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)
