@@ -110,6 +110,7 @@ def fixture(
     fixture_function: FixtureFunction,
     *,
     scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]" = ...,
+    loop_scope: Union[_ScopeName, None] = ...,
     params: Optional[Iterable[object]] = ...,
     autouse: bool = ...,
     ids: Union[
@@ -126,6 +127,7 @@ def fixture(
     fixture_function: None = ...,
     *,
     scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]" = ...,
+    loop_scope: Union[_ScopeName, None] = ...,
     params: Optional[Iterable[object]] = ...,
     autouse: bool = ...,
     ids: Union[
@@ -138,17 +140,19 @@ def fixture(
 
 
 def fixture(
-    fixture_function: Optional[FixtureFunction] = None, **kwargs: Any
+    fixture_function: Optional[FixtureFunction] = None,
+    loop_scope: Union[_ScopeName, None] = None,
+    **kwargs: Any,
 ) -> Union[FixtureFunction, FixtureFunctionMarker]:
     if fixture_function is not None:
-        _make_asyncio_fixture_function(fixture_function)
+        _make_asyncio_fixture_function(fixture_function, loop_scope)
         return pytest.fixture(fixture_function, **kwargs)
 
     else:
 
         @functools.wraps(fixture)
         def inner(fixture_function: FixtureFunction) -> FixtureFunction:
-            return fixture(fixture_function, **kwargs)
+            return fixture(fixture_function, loop_scope=loop_scope, **kwargs)
 
         return inner
 
@@ -158,11 +162,14 @@ def _is_asyncio_fixture_function(obj: Any) -> bool:
     return getattr(obj, "_force_asyncio_fixture", False)
 
 
-def _make_asyncio_fixture_function(obj: Any) -> None:
+def _make_asyncio_fixture_function(
+    obj: Any, loop_scope: Union[_ScopeName, None]
+) -> None:
     if hasattr(obj, "__func__"):
         # instance method, check the function object
         obj = obj.__func__
     obj._force_asyncio_fixture = True
+    obj._loop_scope = loop_scope
 
 
 def _is_coroutine_or_asyncgen(obj: Any) -> bool:
@@ -218,7 +225,7 @@ def _preprocess_async_fixtures(
                 # Ignore async fixtures without explicit asyncio mark in strict mode
                 # This applies to pytest_trio fixtures, for example
                 continue
-            scope = fixturedef.scope
+            scope = getattr(func, "_loop_scope", None) or fixturedef.scope
             if scope == "function":
                 event_loop_fixture_id: Optional[str] = "event_loop"
             else:
@@ -228,7 +235,7 @@ def _preprocess_async_fixtures(
                     _event_loop_fixture_id,  # type: ignore[arg-type]
                     None,
                 )
-            _make_asyncio_fixture_function(func)
+            _make_asyncio_fixture_function(func, scope)
             function_signature = inspect.signature(func)
             if "event_loop" in function_signature.parameters:
                 warnings.warn(
