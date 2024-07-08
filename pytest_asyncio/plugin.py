@@ -730,14 +730,6 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
     event_loop_fixture_id = event_loop_node.stash.get(_event_loop_fixture_id, None)
 
     if event_loop_fixture_id:
-        # This specific fixture name may already be in metafunc.argnames, if this
-        # test indirectly depends on the fixture. For example, this is the case
-        # when the test depends on an async fixture, both of which share the same
-        # event loop fixture mark.
-        if event_loop_fixture_id in metafunc.fixturenames:
-            return
-        fixturemanager = metafunc.config.pluginmanager.get_plugin("funcmanage")
-        assert fixturemanager is not None
         if "event_loop" in metafunc.fixturenames:
             raise MultipleEventLoopsRequestedError(
                 _MULTIPLE_LOOPS_REQUESTED_ERROR.format(
@@ -746,6 +738,14 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
                     scoped_loop_node=event_loop_node.nodeid,
                 ),
             )
+        # This specific fixture name may already be in metafunc.argnames, if this
+        # test indirectly depends on the fixture. For example, this is the case
+        # when the test depends on an async fixture, both of which share the same
+        # event loop fixture mark.
+        if event_loop_fixture_id in metafunc.fixturenames:
+            return
+        fixturemanager = metafunc.config.pluginmanager.get_plugin("funcmanage")
+        assert fixturemanager is not None
         # Add the scoped event loop fixture to Metafunc's list of fixture names and
         # fixturedefs and leave the actual parametrization to pytest
         # The fixture needs to be appended to avoid messing up the fixture evaluation

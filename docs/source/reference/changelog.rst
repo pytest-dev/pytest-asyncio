@@ -9,6 +9,7 @@ Changelog
 - Deprecates the optional `scope` keyword argument to `pytest.mark.asyncio` for API consistency with ``pytest_asyncio.fixture``. Users are encouraged to use the `loop_scope` keyword argument, which does exactly the same.
 - Raises an error when passing `scope` or `loop_scope` as a positional argument to ``@pytest.mark.asyncio``. `#812 <https://github.com/pytest-dev/pytest-asyncio/issues/812>`_
 - Fixes a bug that caused module-scoped async fixtures to fail when reused in other modules `#862 <https://github.com/pytest-dev/pytest-asyncio/issues/862>`_ `#668 <https://github.com/pytest-dev/pytest-asyncio/issues/668>`_
+- Improves detection of multiple event loops being requested by the same test in strict mode `#868 <https://github.com/pytest-dev/pytest-asyncio/issues/868>`_
 
 
 0.23.8 (2024-07-17)
