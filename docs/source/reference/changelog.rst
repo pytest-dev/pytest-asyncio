@@ -5,6 +5,7 @@ Changelog
 0.23.8 (UNRELEASED)
 ===================
 - Fixes a bug that caused duplicate markers in async tests `#813 <https://github.com/pytest-dev/pytest-asyncio/issues/813>`_
+- Improves detection of multiple event loops being requested by the same test in strict mode `#868 <https://github.com/pytest-dev/pytest-asyncio/issues/868>`_
 
 Known issues
 ------------
