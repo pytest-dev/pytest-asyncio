@@ -34,3 +34,103 @@ def test_loop_scope_session_is_independent_of_fixture_scope(
     )
     result = pytester.runpytest_subprocess("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
+
+
+@pytest.mark.parametrize("default_loop_scope", ("function", "module", "session"))
+def test_default_loop_scope_config_option_changes_fixture_loop_scope(
+    pytester: Pytester,
+    default_loop_scope: str,
+):
+    pytester.makeini(
+        dedent(
+            f"""\
+            [pytest]
+            asyncio_default_fixture_loop_scope = {default_loop_scope}
+            """
+        )
+    )
+    pytester.makepyfile(
+        dedent(
+            f"""\
+            import asyncio
+            import pytest
+            import pytest_asyncio
+
+            @pytest_asyncio.fixture
+            async def fixture_loop():
+                return asyncio.get_running_loop()
+
+            @pytest.mark.asyncio(scope="{default_loop_scope}")
+            async def test_runs_in_fixture_loop(fixture_loop):
+                assert asyncio.get_running_loop() is fixture_loop
+            """
+        )
+    )
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)
+
+
+def test_default_class_loop_scope_config_option_changes_fixture_loop_scope(
+    pytester: Pytester,
+):
+    pytester.makeini(
+        dedent(
+            """\
+            [pytest]
+            asyncio_default_fixture_loop_scope = class
+            """
+        )
+    )
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+            import pytest
+            import pytest_asyncio
+
+            class TestClass:
+                @pytest_asyncio.fixture
+                async def fixture_loop(self):
+                    return asyncio.get_running_loop()
+
+                @pytest.mark.asyncio(scope="class")
+                async def test_runs_in_fixture_loop(self, fixture_loop):
+                    assert asyncio.get_running_loop() is fixture_loop
+            """
+        )
+    )
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)
+
+
+def test_default_package_loop_scope_config_option_changes_fixture_loop_scope(
+    pytester: Pytester,
+):
+    pytester.makeini(
+        dedent(
+            """\
+            [pytest]
+            asyncio_default_fixture_loop_scope = package
+            """
+        )
+    )
+    pytester.makepyfile(
+        __init__="",
+        test_a=dedent(
+            """\
+            import asyncio
+            import pytest
+            import pytest_asyncio
+
+            @pytest_asyncio.fixture
+            async def fixture_loop():
+                return asyncio.get_running_loop()
+
+            @pytest.mark.asyncio(scope="package")
+            async def test_runs_in_fixture_loop(fixture_loop):
+                assert asyncio.get_running_loop() is fixture_loop
+            """
+        ),
+    )
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)

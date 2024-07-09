@@ -103,6 +103,12 @@ def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager) -> None
         help="default value for --asyncio-mode",
         default="strict",
     )
+    parser.addini(
+        "asyncio_default_fixture_loop_scope",
+        type="string",
+        help="default scope of the asyncio event loop used to execute async fixtures",
+        default=None,
+    )
 
 
 @overload
@@ -189,8 +195,20 @@ def _get_asyncio_mode(config: Config) -> Mode:
         )
 
 
+_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET = """\
+The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching \
+scope. Future versions of pytest-asyncio will default the loop scope for asynchronous \
+fixtures to function scope. Set the default fixture loop scope explicitly in order to \
+avoid unexpected behavior in the future. Valid fixture loop scopes are: \
+"function", "class", "module", "package", "session"
+"""
+
+
 def pytest_configure(config: Config) -> None:
-    """Inject documentation."""
+    default_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
+    if not default_loop_scope:
+        warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
     config.addinivalue_line(
         "markers",
         "asyncio: "
@@ -203,7 +221,8 @@ def pytest_configure(config: Config) -> None:
 def pytest_report_header(config: Config) -> List[str]:
     """Add asyncio config to pytest header."""
     mode = _get_asyncio_mode(config)
-    return [f"asyncio: mode={mode}"]
+    default_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
+    return [f"asyncio: mode={mode}, default_loop_scope={default_loop_scope}"]
 
 
 def _preprocess_async_fixtures(
@@ -211,6 +230,7 @@ def _preprocess_async_fixtures(
     processed_fixturedefs: Set[FixtureDef],
 ) -> None:
     config = collector.config
+    default_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
     asyncio_mode = _get_asyncio_mode(config)
     fixturemanager = config.pluginmanager.get_plugin("funcmanage")
     assert fixturemanager is not None
@@ -225,7 +245,11 @@ def _preprocess_async_fixtures(
                 # Ignore async fixtures without explicit asyncio mark in strict mode
                 # This applies to pytest_trio fixtures, for example
                 continue
-            scope = getattr(func, "_loop_scope", None) or fixturedef.scope
+            scope = (
+                getattr(func, "_loop_scope", None)
+                or default_loop_scope
+                or fixturedef.scope
+            )
             if scope == "function":
                 event_loop_fixture_id: Optional[str] = "event_loop"
             else:

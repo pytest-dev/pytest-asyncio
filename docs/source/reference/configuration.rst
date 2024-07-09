@@ -2,6 +2,12 @@
 Configuration
 =============
 
+asyncio_default_fixture_loop_scope
+==================================
+Determines the default event loop scope of asynchronous fixtures. When this configuration option is unset, it defaults to the fixture scope. In future versions of pytest-asyncio, the value will default to ``function`` when unset. Possible values are: ``function``, ``class``, ``module``, ``package``, ``session``
+
+asyncio_mode
+============
 The pytest-asyncio mode can be set by the ``asyncio_mode`` configuration option in the `configuration file
 <https://docs.pytest.org/en/latest/reference/customize.html>`_:
 
