@@ -542,9 +542,16 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
     to AsyncFunction items.
     """
     hook_result = yield
-    node_or_list_of_nodes: Union[
-        pytest.Item, pytest.Collector, List[Union[pytest.Item, pytest.Collector]], None
-    ] = hook_result.get_result()
+    try:
+        node_or_list_of_nodes: Union[
+            pytest.Item,
+            pytest.Collector,
+            List[Union[pytest.Item, pytest.Collector]],
+            None,
+        ] = hook_result.get_result()
+    except BaseException as e:
+        hook_result.force_exception(e)
+        return
     if not node_or_list_of_nodes:
         return
     if isinstance(node_or_list_of_nodes, Sequence):
