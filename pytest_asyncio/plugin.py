@@ -8,6 +8,7 @@ import inspect
 import socket
 import warnings
 from asyncio import AbstractEventLoopPolicy
+from itertools import dropwhile
 from textwrap import dedent
 from typing import (
     Any,
@@ -1009,16 +1010,24 @@ def _retrieve_scope_root(item: Union[Collector, Item], scope: str) -> Collector:
         "package": Package,
         "session": Session,
     }
+    collectors = _iter_collectors(item)
     scope_root_type = node_type_by_scope[scope]
-    for node in reversed(item.listchain()):
-        if isinstance(node, scope_root_type):
-            assert isinstance(node, pytest.Collector)
-            return node
+    collector_with_specified_scope = next(
+        dropwhile(lambda c: not isinstance(c, scope_root_type), collectors), None
+    )
+    if collector_with_specified_scope:
+        return collector_with_specified_scope
     error_message = (
         f"{item.name} is marked to be run in an event loop with scope {scope}, "
         f"but is not part of any {scope}."
     )
     raise pytest.UsageError(error_message)
+
+
+def _iter_collectors(item: Union[Collector, Item]) -> Iterable[Collector]:
+    for node in reversed(item.listchain()):
+        if isinstance(node, pytest.Collector):
+            yield node
 
 
 @pytest.fixture
