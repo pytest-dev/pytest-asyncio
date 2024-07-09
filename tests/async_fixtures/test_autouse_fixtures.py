@@ -1,21 +1,24 @@
 from textwrap import dedent
 
+import pytest
 from pytest import Pytester
 
 
+@pytest.mark.parametrize("autouse_fixture_scope", ("function", "module"))
 def test_autouse_fixture_in_different_scope_triggers_multiple_event_loop_error(
     pytester: Pytester,
+    autouse_fixture_scope: str,
 ):
     pytester.makepyfile(
         dedent(
-            """\
+            f"""\
             import asyncio
             import pytest
             import pytest_asyncio
 
             loop: asyncio.AbstractEventLoop
 
-            @pytest_asyncio.fixture(autouse=True)
+            @pytest_asyncio.fixture(autouse=True, scope="{autouse_fixture_scope}")
             async def autouse_fixture():
                 pass
 

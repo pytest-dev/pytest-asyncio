@@ -731,7 +731,19 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
     event_loop_fixture_id = event_loop_node.stash.get(_event_loop_fixture_id, None)
 
     if event_loop_fixture_id:
-        if "event_loop" in metafunc.fixturenames:
+        collectors = _iter_collectors(metafunc.definition)
+        collector_event_loop_fixture_ids = (
+            c.stash.get(_event_loop_fixture_id, None)  # type: ignore[arg-type]
+            for c in collectors
+        )
+        possible_event_loop_fixture_ids = {"event_loop"} | set(
+            collector_event_loop_fixture_ids
+        )
+        used_fixture_ids = {event_loop_fixture_id, *metafunc.fixturenames}
+        used_event_loop_fixture_ids = possible_event_loop_fixture_ids.intersection(
+            used_fixture_ids
+        )
+        if len(used_event_loop_fixture_ids) > 1:
             raise MultipleEventLoopsRequestedError(
                 _MULTIPLE_LOOPS_REQUESTED_ERROR.format(
                     test_name=metafunc.definition.nodeid,
