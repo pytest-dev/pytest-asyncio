@@ -991,9 +991,21 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
         )
 
 
+_DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR = """\
+An asyncio pytest marker defines both "scope" and "loop_scope", \
+but it should only use "loop_scope".
+"""
+
+
 def _get_marked_loop_scope(asyncio_marker: Mark) -> _ScopeName:
     assert asyncio_marker.name == "asyncio"
-    return asyncio_marker.kwargs.get("scope", "function")
+    if "scope" in asyncio_marker.kwargs and "loop_scope" in asyncio_marker.kwargs:
+        raise pytest.UsageError(_DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR)
+    scope = asyncio_marker.kwargs.get("loop_scope") or asyncio_marker.kwargs.get(
+        "scope", "function"
+    )
+    assert scope in {"function", "class", "module", "package", "session"}
+    return scope
 
 
 def _retrieve_scope_root(item: Union[Collector, Item], scope: str) -> Collector:

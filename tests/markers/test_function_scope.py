@@ -28,6 +28,47 @@ def test_asyncio_mark_provides_function_scoped_loop_strict_mode(pytester: Pytest
     result.assert_outcomes(passed=2)
 
 
+def test_loop_scope_function_provides_function_scoped_event_loop(pytester: Pytester):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+            import pytest
+
+            pytestmark = pytest.mark.asyncio(loop_scope="function")
+
+            loop: asyncio.AbstractEventLoop
+
+            async def test_remember_loop():
+                global loop
+                loop = asyncio.get_running_loop()
+
+            async def test_does_not_run_in_same_loop():
+                global loop
+                assert asyncio.get_running_loop() is not loop
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=2)
+
+
+def test_raises_when_scope_and_loop_scope_arguments_are_present(pytester: Pytester):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import pytest
+
+            @pytest.mark.asyncio(scope="function", loop_scope="function")
+            async def test_raises():
+                ...
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(errors=1)
+
+
 def test_function_scope_supports_explicit_event_loop_fixture_request(
     pytester: Pytester,
 ):
