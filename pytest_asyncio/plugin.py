@@ -38,6 +38,7 @@ from pytest import (
     FixtureRequest,
     Function,
     Item,
+    Mark,
     Metafunc,
     Module,
     Package,
@@ -738,7 +739,7 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
     marker = metafunc.definition.get_closest_marker("asyncio")
     if not marker:
         return
-    scope = marker.kwargs.get("scope", "function")
+    scope = _get_marked_loop_scope(marker)
     if scope == "function":
         return
     event_loop_node = _retrieve_scope_root(metafunc.definition, scope)
@@ -971,7 +972,7 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
     marker = item.get_closest_marker("asyncio")
     if marker is None:
         return
-    scope = marker.kwargs.get("scope", "function")
+    scope = _get_marked_loop_scope(marker)
     if scope != "function":
         parent_node = _retrieve_scope_root(item, scope)
         event_loop_fixture_id = parent_node.stash[_event_loop_fixture_id]
@@ -988,6 +989,11 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
             f"test function `{item!r}` is using Hypothesis, but pytest-asyncio "
             "only works with Hypothesis 3.64.0 or later."
         )
+
+
+def _get_marked_loop_scope(asyncio_marker: Mark) -> _ScopeName:
+    assert asyncio_marker.name == "asyncio"
+    return asyncio_marker.kwargs.get("scope", "function")
 
 
 def _retrieve_scope_root(item: Union[Collector, Item], scope: str) -> Collector:
