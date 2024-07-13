@@ -32,7 +32,7 @@ You may notice that the individual levels resemble the possible `scopes of a pyt
 Pytest-asyncio provides one asyncio event loop for each pytest collector.
 By default, each test runs in the event loop provided by the *Function* collector, i.e. tests use the loop with the narrowest scope.
 This gives the highest level of isolation between tests.
-If two or more tests share a common ancestor collector, the tests can be configured to run in their ancestor's loop by passing the appropriate *scope* keyword argument to the *asyncio* mark.
+If two or more tests share a common ancestor collector, the tests can be configured to run in their ancestor's loop by passing the appropriate *loop_scope* keyword argument to the *asyncio* mark.
 For example, the following two tests use the asyncio event loop provided by the *Module* collector:
 
 .. include:: concepts_module_scope_example.py

@@ -996,11 +996,18 @@ An asyncio pytest marker defines both "scope" and "loop_scope", \
 but it should only use "loop_scope".
 """
 
+_MARKER_SCOPE_KWARG_DEPRECATION_WARNING = """\
+The "scope" keyword argument to the asyncio marker has been deprecated. \
+Please use the "loop_scope" argument instead.
+"""
+
 
 def _get_marked_loop_scope(asyncio_marker: Mark) -> _ScopeName:
     assert asyncio_marker.name == "asyncio"
-    if "scope" in asyncio_marker.kwargs and "loop_scope" in asyncio_marker.kwargs:
-        raise pytest.UsageError(_DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR)
+    if "scope" in asyncio_marker.kwargs:
+        if "loop_scope" in asyncio_marker.kwargs:
+            raise pytest.UsageError(_DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR)
+        warnings.warn(PytestDeprecationWarning(_MARKER_SCOPE_KWARG_DEPRECATION_WARNING))
     scope = asyncio_marker.kwargs.get("loop_scope") or asyncio_marker.kwargs.get(
         "scope", "function"
     )

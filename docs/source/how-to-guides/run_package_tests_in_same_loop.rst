@@ -1,7 +1,7 @@
 ========================================================
 How to run all tests in a package in the same event loop
 ========================================================
-All tests can be run inside the same event loop by marking them with ``pytest.mark.asyncio(scope="package")``.
+All tests can be run inside the same event loop by marking them with ``pytest.mark.asyncio(loop_scope="package")``.
 Add the following code to the ``__init__.py`` of the test package:
 
 .. include:: package_scoped_loop_example.py

@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.24.0 (UNRELEASED)
+===================
+- Deprecates the optional `scope` keyword argument of asyncio markers. Users are encouraged to use the `loop_scope` keyword argument. The `loop_scope` kwarg does exactly the same, though its naming is consistent with the `loop_scope` kwarg of ``pytest_asyncio.fixture``.
+
+
 0.23.8 (2024-07-17)
 ===================
 - Fixes a bug that caused duplicate markers in async tests `#813 <https://github.com/pytest-dev/pytest-asyncio/issues/813>`_

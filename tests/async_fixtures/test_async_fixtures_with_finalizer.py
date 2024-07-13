@@ -4,13 +4,13 @@ import functools
 import pytest
 
 
-@pytest.mark.asyncio(scope="module")
+@pytest.mark.asyncio(loop_scope="module")
 async def test_module_with_event_loop_finalizer(port_with_event_loop_finalizer):
     await asyncio.sleep(0.01)
     assert port_with_event_loop_finalizer
 
 
-@pytest.mark.asyncio(scope="module")
+@pytest.mark.asyncio(loop_scope="module")
 async def test_module_with_get_event_loop_finalizer(port_with_get_event_loop_finalizer):
     await asyncio.sleep(0.01)
     assert port_with_get_event_loop_finalizer
