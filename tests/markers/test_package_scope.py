@@ -22,7 +22,7 @@ def test_asyncio_mark_provides_package_scoped_loop_strict_mode(pytester: Pyteste
 
             from {package_name} import shared_module
 
-            @pytest.mark.asyncio(scope="package")
+            @pytest.mark.asyncio(loop_scope="package")
             async def test_remember_loop():
                 shared_module.loop = asyncio.get_running_loop()
             """
@@ -34,7 +34,7 @@ def test_asyncio_mark_provides_package_scoped_loop_strict_mode(pytester: Pyteste
 
             from {package_name} import shared_module
 
-            pytestmark = pytest.mark.asyncio(scope="package")
+            pytestmark = pytest.mark.asyncio(loop_scope="package")
 
             async def test_this_runs_in_same_loop():
                 assert asyncio.get_running_loop() is shared_module.loop
@@ -55,7 +55,7 @@ def test_asyncio_mark_provides_package_scoped_loop_strict_mode(pytester: Pyteste
 
             from {package_name} import shared_module
 
-            pytestmark = pytest.mark.asyncio(scope="package")
+            pytestmark = pytest.mark.asyncio(loop_scope="package")
 
             async def test_subpackage_runs_in_different_loop():
                 assert asyncio.get_running_loop() is not shared_module.loop
@@ -76,7 +76,7 @@ def test_raise_when_event_loop_fixture_is_requested_in_addition_to_scoped_loop(
             import asyncio
             import pytest
 
-            @pytest.mark.asyncio(scope="package")
+            @pytest.mark.asyncio(loop_scope="package")
             async def test_remember_loop(event_loop):
                 pass
             """
@@ -118,7 +118,7 @@ def test_asyncio_mark_respects_the_loop_policy(
 
             from .custom_policy import CustomEventLoopPolicy
 
-            pytestmark = pytest.mark.asyncio(scope="package")
+            pytestmark = pytest.mark.asyncio(loop_scope="package")
 
             async def test_uses_custom_event_loop_policy():
                 assert isinstance(
@@ -134,7 +134,7 @@ def test_asyncio_mark_respects_the_loop_policy(
 
             from .custom_policy import CustomEventLoopPolicy
 
-            pytestmark = pytest.mark.asyncio(scope="package")
+            pytestmark = pytest.mark.asyncio(loop_scope="package")
 
             async def test_also_uses_custom_event_loop_policy():
                 assert isinstance(
@@ -159,7 +159,7 @@ def test_asyncio_mark_respects_parametrized_loop_policies(
 
             import pytest
 
-            pytestmark = pytest.mark.asyncio(scope="package")
+            pytestmark = pytest.mark.asyncio(loop_scope="package")
 
             @pytest.fixture(
                 scope="package",
@@ -215,7 +215,7 @@ def test_asyncio_mark_provides_package_scoped_loop_to_fixtures(
 
             from {package_name} import shared_module
 
-            pytestmark = pytest.mark.asyncio(scope="package")
+            pytestmark = pytest.mark.asyncio(loop_scope="package")
 
             async def test_runs_in_same_loop_as_fixture(my_fixture):
                 assert asyncio.get_running_loop() is shared_module.loop
@@ -245,7 +245,7 @@ def test_asyncio_mark_allows_combining_package_scoped_fixture_with_module_scoped
                 global loop
                 loop = asyncio.get_running_loop()
 
-            @pytest.mark.asyncio(scope="module")
+            @pytest.mark.asyncio(loop_scope="module")
             async def test_runs_in_different_loop_as_fixture(async_fixture):
                 global loop
                 assert asyncio.get_running_loop() is not loop
@@ -275,7 +275,7 @@ def test_asyncio_mark_allows_combining_package_scoped_fixture_with_class_scoped_
                 global loop
                 loop = asyncio.get_running_loop()
 
-            @pytest.mark.asyncio(scope="class")
+            @pytest.mark.asyncio(loop_scope="class")
             class TestMixedScopes:
                 async def test_runs_in_different_loop_as_fixture(self, async_fixture):
                     global loop
@@ -340,7 +340,7 @@ def test_asyncio_mark_handles_missing_event_loop_triggered_by_fixture(
                 return asyncio.run(asyncio.sleep(0))
                 # asyncio.run() sets the current event loop to None when finished
 
-            @pytest.mark.asyncio(scope="package")
+            @pytest.mark.asyncio(loop_scope="package")
             # parametrization may impact fixture ordering
             @pytest.mark.parametrize("n", (0, 1))
             async def test_does_not_fail(sets_event_loop_to_none, n):
@@ -361,7 +361,7 @@ def test_standalone_test_does_not_trigger_warning_about_no_current_event_loop_be
             """\
             import pytest
 
-            @pytest.mark.asyncio(scope="package")
+            @pytest.mark.asyncio(loop_scope="package")
             async def test_anything():
                 pass
             """

@@ -62,7 +62,7 @@ def test_asyncio_mark_provides_module_scoped_loop_strict_mode(pytester: Pytester
             import asyncio
             import pytest
 
-            pytestmark = pytest.mark.asyncio(scope="module")
+            pytestmark = pytest.mark.asyncio(loop_scope="module")
 
             loop: asyncio.AbstractEventLoop
 
@@ -94,7 +94,7 @@ def test_raise_when_event_loop_fixture_is_requested_in_addition_to_scoped_loop(
             import asyncio
             import pytest
 
-            pytestmark = pytest.mark.asyncio(scope="module")
+            pytestmark = pytest.mark.asyncio(loop_scope="module")
 
             async def test_remember_loop(event_loop):
                 pass
@@ -126,7 +126,7 @@ def test_asyncio_mark_respects_the_loop_policy(
 
             from .custom_policy import CustomEventLoopPolicy
 
-            pytestmark = pytest.mark.asyncio(scope="module")
+            pytestmark = pytest.mark.asyncio(loop_scope="module")
 
             @pytest.fixture(scope="module")
             def event_loop_policy():
@@ -146,7 +146,7 @@ def test_asyncio_mark_respects_the_loop_policy(
 
             from .custom_policy import CustomEventLoopPolicy
 
-            pytestmark = pytest.mark.asyncio(scope="module")
+            pytestmark = pytest.mark.asyncio(loop_scope="module")
 
             async def test_does_not_use_custom_event_loop_policy():
                 assert not isinstance(
@@ -170,7 +170,7 @@ def test_asyncio_mark_respects_parametrized_loop_policies(
 
             import pytest
 
-            pytestmark = pytest.mark.asyncio(scope="module")
+            pytestmark = pytest.mark.asyncio(loop_scope="module")
 
             @pytest.fixture(
                 scope="module",
@@ -202,7 +202,7 @@ def test_asyncio_mark_provides_module_scoped_loop_to_fixtures(
             import pytest
             import pytest_asyncio
 
-            pytestmark = pytest.mark.asyncio(scope="module")
+            pytestmark = pytest.mark.asyncio(loop_scope="module")
 
             loop: asyncio.AbstractEventLoop
 
@@ -239,7 +239,7 @@ def test_asyncio_mark_allows_combining_module_scoped_fixture_with_class_scoped_t
                 global loop
                 loop = asyncio.get_running_loop()
 
-            @pytest.mark.asyncio(scope="class")
+            @pytest.mark.asyncio(loop_scope="class")
             class TestMixedScopes:
                 async def test_runs_in_different_loop_as_fixture(self, async_fixture):
                     global loop
@@ -271,7 +271,7 @@ def test_asyncio_mark_allows_combining_module_scoped_fixture_with_function_scope
                 global loop
                 loop = asyncio.get_running_loop()
 
-            @pytest.mark.asyncio(scope="function")
+            @pytest.mark.asyncio(loop_scope="function")
             async def test_runs_in_different_loop_as_fixture(async_fixture):
                 global loop
                 assert asyncio.get_running_loop() is not loop
@@ -301,7 +301,7 @@ def test_allows_combining_module_scoped_asyncgen_fixture_with_function_scoped_te
                 loop = asyncio.get_running_loop()
                 yield
 
-            @pytest.mark.asyncio(scope="function")
+            @pytest.mark.asyncio(loop_scope="function")
             async def test_runs_in_different_loop_as_fixture(async_fixture):
                 global loop
                 assert asyncio.get_running_loop() is not loop
@@ -334,7 +334,7 @@ def test_asyncio_mark_handles_missing_event_loop_triggered_by_fixture(
                 return asyncio.run(asyncio.sleep(0))
                 # asyncio.run() sets the current event loop to None when finished
 
-            @pytest.mark.asyncio(scope="module")
+            @pytest.mark.asyncio(loop_scope="module")
             # parametrization may impact fixture ordering
             @pytest.mark.parametrize("n", (0, 1))
             async def test_does_not_fail(sets_event_loop_to_none, n):
@@ -354,7 +354,7 @@ def test_standalone_test_does_not_trigger_warning_about_no_current_event_loop_be
             """\
             import pytest
 
-            @pytest.mark.asyncio(scope="module")
+            @pytest.mark.asyncio(loop_scope="module")
             async def test_anything():
                 pass
             """

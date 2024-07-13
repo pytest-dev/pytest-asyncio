@@ -39,11 +39,11 @@ def test_asyncio_mark_provides_class_scoped_loop_when_applied_to_functions(
             class TestClassScopedLoop:
                 loop: asyncio.AbstractEventLoop
 
-                @pytest.mark.asyncio(scope="class")
+                @pytest.mark.asyncio(loop_scope="class")
                 async def test_remember_loop(self):
                     TestClassScopedLoop.loop = asyncio.get_running_loop()
 
-                @pytest.mark.asyncio(scope="class")
+                @pytest.mark.asyncio(loop_scope="class")
                 async def test_this_runs_in_same_loop(self):
                     assert asyncio.get_running_loop() is TestClassScopedLoop.loop
             """
@@ -62,7 +62,7 @@ def test_asyncio_mark_provides_class_scoped_loop_when_applied_to_class(
             import asyncio
             import pytest
 
-            @pytest.mark.asyncio(scope="class")
+            @pytest.mark.asyncio(loop_scope="class")
             class TestClassScopedLoop:
                 loop: asyncio.AbstractEventLoop
 
@@ -87,7 +87,7 @@ def test_asyncio_mark_raises_when_class_scoped_is_request_without_class(
             import asyncio
             import pytest
 
-            @pytest.mark.asyncio(scope="class")
+            @pytest.mark.asyncio(loop_scope="class")
             async def test_has_no_surrounding_class():
                 pass
             """
@@ -107,7 +107,7 @@ def test_asyncio_mark_is_inherited_to_subclasses(pytester: pytest.Pytester):
             import asyncio
             import pytest
 
-            @pytest.mark.asyncio(scope="class")
+            @pytest.mark.asyncio(loop_scope="class")
             class TestSuperClassWithMark:
                 pass
 
@@ -183,7 +183,7 @@ def test_asyncio_mark_respects_parametrized_loop_policies(
             def event_loop_policy(request):
                 return request.param
 
-            @pytest.mark.asyncio(scope="class")
+            @pytest.mark.asyncio(loop_scope="class")
             class TestWithDifferentLoopPolicies:
                 async def test_parametrized_loop(self, request):
                     pass
@@ -205,7 +205,7 @@ def test_asyncio_mark_provides_class_scoped_loop_to_fixtures(
             import pytest
             import pytest_asyncio
 
-            @pytest.mark.asyncio(scope="class")
+            @pytest.mark.asyncio(loop_scope="class")
             class TestClassScopedLoop:
                 loop: asyncio.AbstractEventLoop
 
@@ -242,7 +242,7 @@ def test_asyncio_mark_allows_combining_class_scoped_fixture_with_function_scoped
                     global loop
                     loop = asyncio.get_running_loop()
 
-                @pytest.mark.asyncio(scope="function")
+                @pytest.mark.asyncio(loop_scope="function")
                 async def test_runs_in_different_loop_as_fixture(self, async_fixture):
                     global loop
                     assert asyncio.get_running_loop() is not loop
@@ -277,7 +277,7 @@ def test_asyncio_mark_handles_missing_event_loop_triggered_by_fixture(
                     return asyncio.run(asyncio.sleep(0))
                     # asyncio.run() sets the current event loop to None when finished
 
-                @pytest.mark.asyncio(scope="class")
+                @pytest.mark.asyncio(loop_scope="class")
                 # parametrization may impact fixture ordering
                 @pytest.mark.parametrize("n", (0, 1))
                 async def test_does_not_fail(self, sets_event_loop_to_none, n):
@@ -297,7 +297,7 @@ def test_standalone_test_does_not_trigger_warning_about_no_current_event_loop_be
             """\
             import pytest
 
-            @pytest.mark.asyncio(scope="class")
+            @pytest.mark.asyncio(loop_scope="class")
             class TestClass:
                 async def test_anything(self):
                     pass

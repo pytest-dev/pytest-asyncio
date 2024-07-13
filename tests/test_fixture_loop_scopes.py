@@ -25,7 +25,7 @@ def test_loop_scope_session_is_independent_of_fixture_scope(
                 global loop
                 loop = asyncio.get_running_loop()
 
-            @pytest.mark.asyncio(scope="session")
+            @pytest.mark.asyncio(loop_scope="session")
             async def test_runs_in_same_loop_as_fixture(fixture):
                 global loop
                 assert loop == asyncio.get_running_loop()
@@ -60,7 +60,7 @@ def test_default_loop_scope_config_option_changes_fixture_loop_scope(
             async def fixture_loop():
                 return asyncio.get_running_loop()
 
-            @pytest.mark.asyncio(scope="{default_loop_scope}")
+            @pytest.mark.asyncio(loop_scope="{default_loop_scope}")
             async def test_runs_in_fixture_loop(fixture_loop):
                 assert asyncio.get_running_loop() is fixture_loop
             """
@@ -93,7 +93,7 @@ def test_default_class_loop_scope_config_option_changes_fixture_loop_scope(
                 async def fixture_loop(self):
                     return asyncio.get_running_loop()
 
-                @pytest.mark.asyncio(scope="class")
+                @pytest.mark.asyncio(loop_scope="class")
                 async def test_runs_in_fixture_loop(self, fixture_loop):
                     assert asyncio.get_running_loop() is fixture_loop
             """
@@ -126,7 +126,7 @@ def test_default_package_loop_scope_config_option_changes_fixture_loop_scope(
             async def fixture_loop():
                 return asyncio.get_running_loop()
 
-            @pytest.mark.asyncio(scope="package")
+            @pytest.mark.asyncio(loop_scope="package")
             async def test_runs_in_fixture_loop(fixture_loop):
                 assert asyncio.get_running_loop() is fixture_loop
             """

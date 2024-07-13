@@ -69,6 +69,23 @@ def test_raises_when_scope_and_loop_scope_arguments_are_present(pytester: Pytest
     result.assert_outcomes(errors=1)
 
 
+def test_warns_when_scope_argument_is_present(pytester: Pytester):
+    pytester.makepyfile(
+        dedent(
+            """\
+            import pytest
+
+            @pytest.mark.asyncio(scope="function")
+            async def test_warns():
+                ...
+            """
+        )
+    )
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1, warnings=2)
+    result.stdout.fnmatch_lines("*DeprecationWarning*")
+
+
 def test_function_scope_supports_explicit_event_loop_fixture_request(
     pytester: Pytester,
 ):

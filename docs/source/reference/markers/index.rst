@@ -18,7 +18,7 @@ Multiple async tests in a single class or module can be marked using |pytestmark
 The ``pytest.mark.asyncio`` marker can be omitted entirely in |auto mode|_ where the *asyncio* marker is added automatically to *async* test functions.
 
 By default, each test runs in it's own asyncio event loop.
-Multiple tests can share the same event loop by providing a *scope* keyword argument to the *asyncio* mark.
+Multiple tests can share the same event loop by providing a *loop_scope* keyword argument to the *asyncio* mark.
 The supported scopes are *class,* and *module,* and *package*.
 The following code example provides a shared event loop for all tests in `TestClassScopedLoop`:
 
