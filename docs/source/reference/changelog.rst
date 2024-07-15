@@ -5,6 +5,7 @@ Changelog
 0.23.8 (UNRELEASED)
 ===================
 - Fixes a bug that caused duplicate markers in async tests `#813 <https://github.com/pytest-dev/pytest-asyncio/issues/813>`_
+- Declare support for Python 3.13
 
 Known issues
 ------------
