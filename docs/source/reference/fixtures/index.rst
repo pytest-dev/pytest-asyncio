@@ -51,8 +51,7 @@ when several unused TCP ports are required in a test.
 .. code-block:: python
 
     def a_test(unused_tcp_port_factory):
-        port1, port2 = unused_tcp_port_factory(), unused_tcp_port_factory()
-        ...
+        _port1, _port2 = unused_tcp_port_factory(), unused_tcp_port_factory()
 
 unused_udp_port and unused_udp_port_factory
 ===========================================

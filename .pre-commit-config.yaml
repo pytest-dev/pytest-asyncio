@@ -1,16 +1,16 @@
 ---
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.3.0
+  rev: v4.6.0
   hooks:
   - id: check-merge-conflict
     exclude: rst$
 - repo: https://github.com/asottile/yesqa
-  rev: v1.4.0
+  rev: v1.5.0
   hooks:
   - id: yesqa
 - repo: https://github.com/Zac-HD/shed
-  rev: 2024.1.1
+  rev: 2024.3.1
   hooks:
   - id: shed
     args:
@@ -20,12 +20,12 @@ repos:
     - markdown
     - rst
 - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
-  rev: 0.2.2
+  rev: 0.2.3
   hooks:
   - id: yamlfmt
     args: [--mapping, '2', --sequence, '2', --offset, '0']
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.3.0
+  rev: v4.6.0
   hooks:
   - id: trailing-whitespace
   - id: end-of-file-fixer
@@ -37,23 +37,23 @@ repos:
   - id: check-yaml
   - id: debug-statements
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.8.0
+  rev: v1.10.1
   hooks:
   - id: mypy
     exclude: ^(docs|tests)/.*
     additional_dependencies:
     - pytest
 - repo: https://github.com/pycqa/flake8
-  rev: 6.1.0
+  rev: 7.1.0
   hooks:
   - id: flake8
     language_version: python3
 - repo: https://github.com/pre-commit/pygrep-hooks
-  rev: v1.9.0
+  rev: v1.10.0
   hooks:
   - id: python-use-type-annotations
 - repo: https://github.com/sirosen/check-jsonschema
-  rev: 0.19.2
+  rev: 0.29.0
   hooks:
   - id: check-github-actions
 ci:
