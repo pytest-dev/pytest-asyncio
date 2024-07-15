@@ -882,6 +882,7 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> Optional[object]:
                 )
             )
     yield
+    return None
 
 
 def wrap_in_sync(
@@ -946,8 +947,8 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
         obj, "is_hypothesis_test", False
     ):
         pytest.fail(
-            "test function `%r` is using Hypothesis, but pytest-asyncio "
-            "only works with Hypothesis 3.64.0 or later." % item
+            f"test function `{item!r}` is using Hypothesis, but pytest-asyncio "
+            "only works with Hypothesis 3.64.0 or later."
         )
 
 
