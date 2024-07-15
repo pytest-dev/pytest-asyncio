@@ -35,7 +35,7 @@ jobs:
     - name: Run pre-commit checks
       run: pre-commit run --all-files --show-diff-on-failure
     - name: Install check-wheel-content, and twine
-      run: python -m pip install build check-wheel-contents tox twine
+      run: python -m pip install build check-wheel-contents twine
     - name: Build package
       run: python -m build
     - name: List result
