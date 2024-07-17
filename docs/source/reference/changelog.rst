@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.23.8 (UNRELEASED)
+0.23.8 (2024-07-17)
 ===================
 - Fixes a bug that caused duplicate markers in async tests `#813 <https://github.com/pytest-dev/pytest-asyncio/issues/813>`_
 - Declare support for Python 3.13
