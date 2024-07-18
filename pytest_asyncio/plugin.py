@@ -1004,6 +1004,10 @@ Please use the "loop_scope" argument instead.
 
 def _get_marked_loop_scope(asyncio_marker: Mark) -> _ScopeName:
     assert asyncio_marker.name == "asyncio"
+    if asyncio_marker.args or (
+        asyncio_marker.kwargs and set(asyncio_marker.kwargs) - {"loop_scope", "scope"}
+    ):
+        raise ValueError("mark.asyncio accepts only a keyword argument 'scope'.")
     if "scope" in asyncio_marker.kwargs:
         if "loop_scope" in asyncio_marker.kwargs:
             raise pytest.UsageError(_DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR)

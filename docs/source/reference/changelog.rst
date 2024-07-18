@@ -6,6 +6,7 @@ Changelog
 ===================
 - Adds an optional `loop_scope` keyword argument to `pytest.mark.asyncio`. This argument controls which event loop is used to run the marked async test. `#706`_, `#871 <https://github.com/pytest-dev/pytest-asyncio/pull/871>`_
 - Deprecates the optional `scope` keyword argument to `pytest.mark.asyncio` for API consistency with ``pytest_asyncio.fixture``. Users are encouraged to use the `loop_scope` keyword argument, which does exactly the same.
+- Raises an error when passing `scope` or `loop_scope` as a positional argument to ``@pytest.mark.asyncio``. `#812 <https://github.com/pytest-dev/pytest-asyncio/issues/812>`_
 
 
 0.23.8 (2024-07-17)
