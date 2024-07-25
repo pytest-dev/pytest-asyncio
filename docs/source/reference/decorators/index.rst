@@ -1,3 +1,5 @@
+.. _decorators/pytest_asyncio_fixture:
+
 ==========
 Decorators
 ==========

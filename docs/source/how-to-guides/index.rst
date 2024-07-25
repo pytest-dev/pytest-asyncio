@@ -5,6 +5,7 @@ How-To Guides
 .. toctree::
   :hidden:
 
+  change_fixture_loop
   run_class_tests_in_same_loop
   run_module_tests_in_same_loop
   run_package_tests_in_same_loop
