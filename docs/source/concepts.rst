@@ -2,6 +2,8 @@
 Concepts
 ========
 
+.. _concepts/event_loops:
+
 asyncio event loops
 ===================
 In order to understand how pytest-asyncio works, it helps to understand how pytest collectors work.
