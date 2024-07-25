@@ -3,15 +3,20 @@
 ==========
 Decorators
 ==========
-Asynchronous fixtures are defined just like ordinary pytest fixtures, except they should be decorated with ``@pytest_asyncio.fixture``.
+The ``@pytest_asyncio.fixture`` decorator allows coroutines and async generator functions to be used as pytest fixtures.
 
-.. include:: fixture_strict_mode_example.py
+The decorator takes all arguments supported by `@pytest.fixture`.
+Additionally, ``@pytest_asyncio.fixture`` supports the *loop_scope* keyword argument, which selects the event loop in which the fixture is run (see :ref:`concepts/event_loops`).
+The default event loop scope is *function* scope.
+Possible loop scopes are *session,* *package,* *module,* *class,* and *function*.
+
+The *loop_scope* of a fixture can be chosen independently from its caching *scope*.
+However, the event loop scope must be larger or the same as the fixture's caching scope.
+In other words, it's possible to reevaluate an async fixture multiple times within the same event loop, but it's not possible to switch out the running event loop in an async fixture.
+
+Examples:
+
+.. include:: pytest_asyncio_fixture_example.py
     :code: python
 
-All scopes are supported, but if you use a non-function scope you will need
-to redefine the ``event_loop`` fixture to have the same or broader scope.
-Async fixtures need the event loop, and so must have the same or narrower scope
-than the ``event_loop`` fixture.
-
-*auto* mode automatically converts async fixtures declared with the
-standard ``@pytest.fixture`` decorator to *asyncio-driven* versions.
+*auto* mode automatically converts coroutines and async generator functions declared with the standard ``@pytest.fixture`` decorator to pytest-asyncio fixtures.
