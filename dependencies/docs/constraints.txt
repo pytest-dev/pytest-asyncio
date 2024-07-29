@@ -18,6 +18,6 @@ sphinxcontrib-devhelp==1.0.6
 sphinxcontrib-htmlhelp==2.0.6
 sphinxcontrib-jquery==4.1
 sphinxcontrib-jsmath==1.0.1
-sphinxcontrib-qthelp==1.0.8
+sphinxcontrib-qthelp==2.0.0
 sphinxcontrib-serializinghtml==1.1.10
 urllib3==2.2.2
