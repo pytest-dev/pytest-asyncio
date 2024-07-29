@@ -11,7 +11,7 @@ packaging==24.1
 Pygments==2.18.0
 requests==2.32.3
 snowballstemmer==2.2.0
-Sphinx==7.4.7
+Sphinx==8.0.0
 sphinx-rtd-theme==2.0.0
 sphinxcontrib-applehelp==1.0.8
 sphinxcontrib-devhelp==1.0.6
