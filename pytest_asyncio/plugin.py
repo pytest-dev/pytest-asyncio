@@ -756,11 +756,10 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
         )
 
 
-# TODO: #778 Narrow down return type of function when dropping support for pytest 7
 @pytest.hookimpl(hookwrapper=True)
 def pytest_fixture_setup(
     fixturedef: FixtureDef,
-) -> Generator[None, Any, None]:
+) -> Generator[None, pluggy.Result, None]:
     """Adjust the event loop policy when an event loop is produced."""
     if fixturedef.argname == "event_loop":
         # The use of a fixture finalizer is preferred over the
