@@ -74,10 +74,7 @@ def test_returns_false_for_unmarked_coroutine_item_in_strict_mode(pytester: Pyte
         )
     )
     result = pytester.runpytest("--asyncio-mode=strict")
-    if pytest.version_tuple < (7, 2):
-        # Probably related to https://github.com/pytest-dev/pytest/pull/10012
-        result.assert_outcomes(failed=1)
-    elif pytest.version_tuple < (8,):
+    if pytest.version_tuple < (8,):
         result.assert_outcomes(skipped=1)
     else:
         result.assert_outcomes(failed=1)
