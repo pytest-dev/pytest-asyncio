@@ -52,10 +52,22 @@ repos:
   rev: v1.10.0
   hooks:
   - id: python-use-type-annotations
+- repo: https://github.com/rhysd/actionlint
+  rev: v1.6.22
+  hooks:
+  - id: actionlint-docker
+    args:
+    - -ignore
+    - 'SC2155:'
+    - -ignore
+    - 'SC2086:'
+    - -ignore
+    - 'SC1004:'
 - repo: https://github.com/sirosen/check-jsonschema
   rev: 0.29.1
   hooks:
   - id: check-github-actions
 ci:
   skip:
+  - actionlint-docker
   - check-github-actions
