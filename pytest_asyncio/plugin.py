@@ -291,9 +291,7 @@ def _add_kwargs(
     return ret
 
 
-def _perhaps_rebind_fixture_func(
-    func: _T, instance: Optional[Any], unittest: bool
-) -> _T:
+def _perhaps_rebind_fixture_func(func: _T, instance: Optional[Any]) -> _T:
     if instance is not None:
         # The fixture needs to be bound to the actual request.instance
         # so it is bound to the same object as the test method.
@@ -302,10 +300,9 @@ def _perhaps_rebind_fixture_func(
             unbound, cls = func.__func__, type(func.__self__)  # type: ignore
         except AttributeError:
             pass
-        # If unittest is true, the fixture is bound unconditionally.
-        # otherwise, only if the fixture was bound before to an instance of
+        # Only if the fixture was bound before to an instance of
         # the same type.
-        if unittest or (cls is not None and isinstance(instance, cls)):
+        if cls is not None and isinstance(instance, cls):
             func = unbound.__get__(instance)  # type: ignore
     return func
 
@@ -315,7 +312,7 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
 
     @functools.wraps(fixture)
     def _asyncgen_fixture_wrapper(request: FixtureRequest, **kwargs: Any):
-        func = _perhaps_rebind_fixture_func(fixture, request.instance, False)
+        func = _perhaps_rebind_fixture_func(fixture, request.instance)
         event_loop_fixture_id = _get_event_loop_fixture_id_for_async_fixture(
             request, func
         )
@@ -354,7 +351,7 @@ def _wrap_async_fixture(fixturedef: FixtureDef) -> None:
 
     @functools.wraps(fixture)
     def _async_fixture_wrapper(request: FixtureRequest, **kwargs: Any):
-        func = _perhaps_rebind_fixture_func(fixture, request.instance, False)
+        func = _perhaps_rebind_fixture_func(fixture, request.instance)
         event_loop_fixture_id = _get_event_loop_fixture_id_for_async_fixture(
             request, func
         )
