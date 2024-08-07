@@ -35,6 +35,7 @@ from pytest import (
     Class,
     Collector,
     Config,
+    FixtureDef,
     FixtureRequest,
     Function,
     Item,
@@ -61,12 +62,6 @@ FactoryFixtureFunction = TypeVar(
 )
 FixtureFunction = Union[SimpleFixtureFunction, FactoryFixtureFunction]
 FixtureFunctionMarker = Callable[[FixtureFunction], FixtureFunction]
-
-# https://github.com/pytest-dev/pytest/commit/fb55615d5e999dd44306596f340036c195428ef1
-if pytest.version_tuple < (8, 0):
-    FixtureDef = Any
-else:
-    from pytest import FixtureDef
 
 
 class PytestAsyncioError(Exception):
@@ -320,8 +315,7 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
 
     @functools.wraps(fixture)
     def _asyncgen_fixture_wrapper(request: FixtureRequest, **kwargs: Any):
-        unittest = fixturedef.unittest if hasattr(fixturedef, "unittest") else False
-        func = _perhaps_rebind_fixture_func(fixture, request.instance, unittest)
+        func = _perhaps_rebind_fixture_func(fixture, request.instance, False)
         event_loop_fixture_id = _get_event_loop_fixture_id_for_async_fixture(
             request, func
         )
@@ -330,7 +324,7 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
         gen_obj = func(**_add_kwargs(func, kwargs, event_loop, request))
 
         async def setup():
-            res = await gen_obj.__anext__()
+            res = await gen_obj.__anext__()  # type: ignore[union-attr]
             return res
 
         def finalizer() -> None:
@@ -338,7 +332,7 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
 
             async def async_finalizer() -> None:
                 try:
-                    await gen_obj.__anext__()
+                    await gen_obj.__anext__()  # type: ignore[union-attr]
                 except StopAsyncIteration:
                     pass
                 else:
@@ -352,7 +346,7 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
         request.addfinalizer(finalizer)
         return result
 
-    fixturedef.func = _asyncgen_fixture_wrapper
+    fixturedef.func = _asyncgen_fixture_wrapper  # type: ignore[misc]
 
 
 def _wrap_async_fixture(fixturedef: FixtureDef) -> None:
@@ -360,8 +354,7 @@ def _wrap_async_fixture(fixturedef: FixtureDef) -> None:
 
     @functools.wraps(fixture)
     def _async_fixture_wrapper(request: FixtureRequest, **kwargs: Any):
-        unittest = False if pytest.version_tuple >= (8, 2) else fixturedef.unittest
-        func = _perhaps_rebind_fixture_func(fixture, request.instance, unittest)
+        func = _perhaps_rebind_fixture_func(fixture, request.instance, False)
         event_loop_fixture_id = _get_event_loop_fixture_id_for_async_fixture(
             request, func
         )
@@ -374,7 +367,7 @@ def _wrap_async_fixture(fixturedef: FixtureDef) -> None:
 
         return event_loop.run_until_complete(setup())
 
-    fixturedef.func = _async_fixture_wrapper
+    fixturedef.func = _async_fixture_wrapper  # type: ignore[misc]
 
 
 def _get_event_loop_fixture_id_for_async_fixture(
