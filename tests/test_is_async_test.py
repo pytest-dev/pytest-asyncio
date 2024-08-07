@@ -1,6 +1,5 @@
 from textwrap import dedent
 
-import pytest
 from pytest import Pytester
 
 
@@ -74,10 +73,7 @@ def test_returns_false_for_unmarked_coroutine_item_in_strict_mode(pytester: Pyte
         )
     )
     result = pytester.runpytest("--asyncio-mode=strict")
-    if pytest.version_tuple < (8,):
-        result.assert_outcomes(skipped=1)
-    else:
-        result.assert_outcomes(failed=1)
+    result.assert_outcomes(failed=1)
 
 
 def test_returns_true_for_unmarked_coroutine_item_in_auto_mode(pytester: Pytester):
