@@ -30,6 +30,7 @@ from typing import (
     overload,
 )
 
+import pluggy
 import pytest
 from pytest import (
     Class,
@@ -539,13 +540,12 @@ def pytest_pycollect_makeitem_preprocess_async_fixtures(
     return None
 
 
-# TODO: #778 Narrow down return type of function when dropping support for pytest 7
 # The function name needs to start with "pytest_"
 # see https://github.com/pytest-dev/pytest/issues/11307
 @pytest.hookimpl(specname="pytest_pycollect_makeitem", hookwrapper=True)
 def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
     collector: Union[pytest.Module, pytest.Class], name: str, obj: object
-) -> Generator[None, Any, None]:
+) -> Generator[None, pluggy.Result, None]:
     """
     Converts coroutines and async generators collected as pytest.Functions
     to AsyncFunction items.
