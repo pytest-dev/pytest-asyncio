@@ -63,6 +63,7 @@ repos:
     - 'SC2086:'
     - -ignore
     - 'SC1004:'
+    stages: [manual]
 - repo: https://github.com/sirosen/check-jsonschema
   rev: 0.29.1
   hooks:
