@@ -16,3 +16,4 @@ python:
   install:
   - requirements: dependencies/default/constraints.txt
   - requirements: dependencies/docs/constraints.txt
+  - path: .
