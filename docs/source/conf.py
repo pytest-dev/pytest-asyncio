@@ -6,10 +6,12 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import importlib.metadata
+
 project = "pytest-asyncio"
 copyright = "2023, pytest-asyncio contributors"
 author = "Tin Tvrtković"
-release = "v0.23.0"
+release = importlib.metadata.version(project)
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
