@@ -5,6 +5,8 @@ How-To Guides
 .. toctree::
   :hidden:
 
+  migrate_from_0_21
+  migrate_from_0_23
   change_fixture_loop
   change_default_fixture_loop
   run_class_tests_in_same_loop
