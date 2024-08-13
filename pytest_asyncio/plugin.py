@@ -8,6 +8,7 @@ import inspect
 import socket
 import warnings
 from asyncio import AbstractEventLoopPolicy
+from itertools import dropwhile
 from textwrap import dedent
 from typing import (
     Any,
@@ -730,6 +731,26 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
     event_loop_fixture_id = event_loop_node.stash.get(_event_loop_fixture_id, None)
 
     if event_loop_fixture_id:
+        collectors = _iter_collectors(metafunc.definition)
+        collector_event_loop_fixture_ids = (
+            c.stash.get(_event_loop_fixture_id, None)  # type: ignore[arg-type]
+            for c in collectors
+        )
+        possible_event_loop_fixture_ids = {"event_loop"} | set(
+            collector_event_loop_fixture_ids
+        )
+        used_fixture_ids = {event_loop_fixture_id, *metafunc.fixturenames}
+        used_event_loop_fixture_ids = possible_event_loop_fixture_ids.intersection(
+            used_fixture_ids
+        )
+        if len(used_event_loop_fixture_ids) > 1:
+            raise MultipleEventLoopsRequestedError(
+                _MULTIPLE_LOOPS_REQUESTED_ERROR.format(
+                    test_name=metafunc.definition.nodeid,
+                    scope=scope,
+                    scoped_loop_node=event_loop_node.nodeid,
+                ),
+            )
         # This specific fixture name may already be in metafunc.argnames, if this
         # test indirectly depends on the fixture. For example, this is the case
         # when the test depends on an async fixture, both of which share the same
@@ -738,14 +759,6 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
             return
         fixturemanager = metafunc.config.pluginmanager.get_plugin("funcmanage")
         assert fixturemanager is not None
-        if "event_loop" in metafunc.fixturenames:
-            raise MultipleEventLoopsRequestedError(
-                _MULTIPLE_LOOPS_REQUESTED_ERROR.format(
-                    test_name=metafunc.definition.nodeid,
-                    scope=scope,
-                    scoped_loop_node=event_loop_node.nodeid,
-                ),
-            )
         # Add the scoped event loop fixture to Metafunc's list of fixture names and
         # fixturedefs and leave the actual parametrization to pytest
         # The fixture needs to be appended to avoid messing up the fixture evaluation
@@ -1009,16 +1022,24 @@ def _retrieve_scope_root(item: Union[Collector, Item], scope: str) -> Collector:
         "package": Package,
         "session": Session,
     }
+    collectors = _iter_collectors(item)
     scope_root_type = node_type_by_scope[scope]
-    for node in reversed(item.listchain()):
-        if isinstance(node, scope_root_type):
-            assert isinstance(node, pytest.Collector)
-            return node
+    collector_with_specified_scope = next(
+        dropwhile(lambda c: not isinstance(c, scope_root_type), collectors), None
+    )
+    if collector_with_specified_scope:
+        return collector_with_specified_scope
     error_message = (
         f"{item.name} is marked to be run in an event loop with scope {scope}, "
         f"but is not part of any {scope}."
     )
     raise pytest.UsageError(error_message)
+
+
+def _iter_collectors(item: Union[Collector, Item]) -> Iterable[Collector]:
+    for node in reversed(item.listchain()):
+        if isinstance(node, pytest.Collector):
+            yield node
 
 
 @pytest.fixture
