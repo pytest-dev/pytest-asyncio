@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.24.0 (UNRELEASED)
+0.24.0 (2024-08-22)
 ===================
 - BREAKING: Updated minimum supported pytest version to v8.2.0
 - Adds an optional `loop_scope` keyword argument to `pytest.mark.asyncio`. This argument controls which event loop is used to run the marked async test. `#706`_, `#871 <https://github.com/pytest-dev/pytest-asyncio/pull/871>`_
