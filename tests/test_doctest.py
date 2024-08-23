@@ -4,6 +4,7 @@ from pytest import Pytester
 
 
 def test_plugin_does_not_interfere_with_doctest_collection(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             '''\
@@ -20,6 +21,7 @@ def test_plugin_does_not_interfere_with_doctest_collection(pytester: Pytester):
 
 
 def test_plugin_does_not_interfere_with_doctest_textfile_collection(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makefile(".txt", "")  # collected as DoctestTextfile
     pytester.makepyfile(
         __init__="",
