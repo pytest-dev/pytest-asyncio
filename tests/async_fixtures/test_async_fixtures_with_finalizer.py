@@ -3,6 +3,8 @@ import functools
 
 import pytest
 
+import pytest_asyncio
+
 
 @pytest.mark.asyncio(loop_scope="module")
 async def test_module_with_event_loop_finalizer(port_with_event_loop_finalizer):
@@ -25,7 +27,7 @@ def event_loop():
     loop.close()
 
 
-@pytest.fixture(scope="module")
+@pytest_asyncio.fixture(loop_scope="module", scope="module")
 async def port_with_event_loop_finalizer(request):
     def port_finalizer(finalizer):
         async def port_afinalizer():
@@ -40,7 +42,7 @@ async def port_with_event_loop_finalizer(request):
     return True
 
 
-@pytest.fixture(scope="module")
+@pytest_asyncio.fixture(loop_scope="module", scope="module")
 async def port_with_get_event_loop_finalizer(request):
     def port_finalizer(finalizer):
         async def port_afinalizer():
