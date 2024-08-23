@@ -4,6 +4,7 @@ from pytest import Pytester
 
 
 def test_asyncio_mark_provides_function_scoped_loop_strict_mode(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -29,6 +30,7 @@ def test_asyncio_mark_provides_function_scoped_loop_strict_mode(pytester: Pytest
 
 
 def test_loop_scope_function_provides_function_scoped_event_loop(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -54,6 +56,7 @@ def test_loop_scope_function_provides_function_scoped_event_loop(pytester: Pytes
 
 
 def test_raises_when_scope_and_loop_scope_arguments_are_present(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -70,6 +73,7 @@ def test_raises_when_scope_and_loop_scope_arguments_are_present(pytester: Pytest
 
 
 def test_warns_when_scope_argument_is_present(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -89,6 +93,7 @@ def test_warns_when_scope_argument_is_present(pytester: Pytester):
 def test_function_scope_supports_explicit_event_loop_fixture_request(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -111,6 +116,7 @@ def test_function_scope_supports_explicit_event_loop_fixture_request(
 def test_asyncio_mark_respects_the_loop_policy(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -141,6 +147,7 @@ def test_asyncio_mark_respects_the_loop_policy(
 def test_asyncio_mark_respects_parametrized_loop_policies(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -178,6 +185,7 @@ def test_asyncio_mark_respects_parametrized_loop_policies(
 def test_asyncio_mark_provides_function_scoped_loop_to_fixtures(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -208,6 +216,7 @@ def test_asyncio_mark_provides_function_scoped_loop_to_fixtures(
 def test_asyncio_mark_handles_missing_event_loop_triggered_by_fixture(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -242,6 +251,7 @@ def test_asyncio_mark_handles_missing_event_loop_triggered_by_fixture(
 def test_standalone_test_does_not_trigger_warning_about_no_current_event_loop_being_set(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -260,6 +270,7 @@ def test_standalone_test_does_not_trigger_warning_about_no_current_event_loop_be
 def test_asyncio_mark_does_not_duplicate_other_marks_in_auto_mode(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makeconftest(
         dedent(
             """\
