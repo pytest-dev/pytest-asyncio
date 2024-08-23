@@ -1,8 +1,10 @@
 from textwrap import dedent
 
+from pytest import Pytester
 
-def test_auto_mode_cmdline(testdir):
-    testdir.makepyfile(
+
+def test_auto_mode_cmdline(pytester: Pytester):
+    pytester.makepyfile(
         dedent(
             """\
         import asyncio
@@ -15,12 +17,12 @@ def test_auto_mode_cmdline(testdir):
         """
         )
     )
-    result = testdir.runpytest("--asyncio-mode=auto")
+    result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
 
 
-def test_auto_mode_cfg(testdir):
-    testdir.makepyfile(
+def test_auto_mode_cfg(pytester: Pytester):
+    pytester.makepyfile(
         dedent(
             """\
         import asyncio
@@ -33,13 +35,13 @@ def test_auto_mode_cfg(testdir):
         """
         )
     )
-    testdir.makefile(".ini", pytest="[pytest]\nasyncio_mode = auto\n")
-    result = testdir.runpytest()
+    pytester.makefile(".ini", pytest="[pytest]\nasyncio_mode = auto\n")
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
 
-def test_auto_mode_async_fixture(testdir):
-    testdir.makepyfile(
+def test_auto_mode_async_fixture(pytester: Pytester):
+    pytester.makepyfile(
         dedent(
             """\
         import asyncio
@@ -58,12 +60,12 @@ def test_auto_mode_async_fixture(testdir):
         """
         )
     )
-    result = testdir.runpytest("--asyncio-mode=auto")
+    result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
 
 
-def test_auto_mode_method_fixture(testdir):
-    testdir.makepyfile(
+def test_auto_mode_method_fixture(pytester: Pytester):
+    pytester.makepyfile(
         dedent(
             """\
         import asyncio
@@ -85,12 +87,12 @@ def test_auto_mode_method_fixture(testdir):
         """
         )
     )
-    result = testdir.runpytest("--asyncio-mode=auto")
+    result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
 
 
-def test_auto_mode_static_method(testdir):
-    testdir.makepyfile(
+def test_auto_mode_static_method(pytester: Pytester):
+    pytester.makepyfile(
         dedent(
             """\
         import asyncio
@@ -106,12 +108,12 @@ def test_auto_mode_static_method(testdir):
         """
         )
     )
-    result = testdir.runpytest("--asyncio-mode=auto")
+    result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
 
 
-def test_auto_mode_static_method_fixture(testdir):
-    testdir.makepyfile(
+def test_auto_mode_static_method_fixture(pytester: Pytester):
+    pytester.makepyfile(
         dedent(
             """\
         import asyncio
@@ -135,5 +137,5 @@ def test_auto_mode_static_method_fixture(testdir):
         """
         )
     )
-    result = testdir.runpytest("--asyncio-mode=auto")
+    result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
