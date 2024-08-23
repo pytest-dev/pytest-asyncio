@@ -4,6 +4,7 @@ from pytest import Pytester
 
 
 def test_auto_mode_cmdline(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -22,6 +23,15 @@ def test_auto_mode_cmdline(pytester: Pytester):
 
 
 def test_auto_mode_cfg(pytester: Pytester):
+    pytester.makeini(
+        dedent(
+            """\
+            [pytest]
+            asyncio_default_fixture_loop_scope = function
+            asyncio_mode = auto
+            """
+        )
+    )
     pytester.makepyfile(
         dedent(
             """\
@@ -35,12 +45,12 @@ def test_auto_mode_cfg(pytester: Pytester):
         """
         )
     )
-    pytester.makefile(".ini", pytest="[pytest]\nasyncio_mode = auto\n")
-    result = pytester.runpytest()
+    result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
 
 
 def test_auto_mode_async_fixture(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -65,6 +75,7 @@ def test_auto_mode_async_fixture(pytester: Pytester):
 
 
 def test_auto_mode_method_fixture(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -92,6 +103,7 @@ def test_auto_mode_method_fixture(pytester: Pytester):
 
 
 def test_auto_mode_static_method(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -113,6 +125,7 @@ def test_auto_mode_static_method(pytester: Pytester):
 
 
 def test_auto_mode_static_method_fixture(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
