@@ -4,12 +4,13 @@ from pytest import Pytester
 
 
 def test_asyncio_mark_provides_package_scoped_loop_strict_mode(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         __init__="",
         conftest=dedent(
             """\
             import pytest_asyncio
-            @pytest_asyncio.fixture(scope="module")
+            @pytest_asyncio.fixture(loop_scope="module", scope="module")
             async def async_shared_module_fixture():
                 return True
             """
