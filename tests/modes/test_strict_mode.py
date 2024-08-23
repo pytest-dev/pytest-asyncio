@@ -1,8 +1,10 @@
 from textwrap import dedent
 
+from pytest import Pytester
 
-def test_strict_mode_cmdline(testdir):
-    testdir.makepyfile(
+
+def test_strict_mode_cmdline(pytester: Pytester):
+    pytester.makepyfile(
         dedent(
             """\
         import asyncio
@@ -16,12 +18,12 @@ def test_strict_mode_cmdline(testdir):
         """
         )
     )
-    result = testdir.runpytest("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
 
 
-def test_strict_mode_cfg(testdir):
-    testdir.makepyfile(
+def test_strict_mode_cfg(pytester: Pytester):
+    pytester.makepyfile(
         dedent(
             """\
         import asyncio
@@ -35,13 +37,13 @@ def test_strict_mode_cfg(testdir):
         """
         )
     )
-    testdir.makefile(".ini", pytest="[pytest]\nasyncio_mode = strict\n")
-    result = testdir.runpytest()
+    pytester.makefile(".ini", pytest="[pytest]\nasyncio_mode = strict\n")
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
 
-def test_strict_mode_method_fixture(testdir):
-    testdir.makepyfile(
+def test_strict_mode_method_fixture(pytester: Pytester):
+    pytester.makepyfile(
         dedent(
             """\
         import asyncio
@@ -64,12 +66,12 @@ def test_strict_mode_method_fixture(testdir):
         """
         )
     )
-    result = testdir.runpytest("--asyncio-mode=auto")
+    result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
 
 
-def test_strict_mode_ignores_unmarked_coroutine(testdir):
-    testdir.makepyfile(
+def test_strict_mode_ignores_unmarked_coroutine(pytester: Pytester):
+    pytester.makepyfile(
         dedent(
             """\
         import pytest
@@ -79,13 +81,13 @@ def test_strict_mode_ignores_unmarked_coroutine(testdir):
         """
         )
     )
-    result = testdir.runpytest_subprocess("--asyncio-mode=strict", "-W default")
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
     result.assert_outcomes(skipped=1, warnings=1)
     result.stdout.fnmatch_lines(["*async def functions are not natively supported*"])
 
 
-def test_strict_mode_ignores_unmarked_fixture(testdir):
-    testdir.makepyfile(
+def test_strict_mode_ignores_unmarked_fixture(pytester: Pytester):
+    pytester.makepyfile(
         dedent(
             """\
         import pytest
@@ -100,7 +102,7 @@ def test_strict_mode_ignores_unmarked_fixture(testdir):
         """
         )
     )
-    result = testdir.runpytest_subprocess("--asyncio-mode=strict", "-W default")
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
     result.assert_outcomes(skipped=1, warnings=2)
     result.stdout.fnmatch_lines(
         [
