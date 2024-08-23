@@ -2,6 +2,7 @@ import asyncio
 from textwrap import dedent
 
 import pytest
+from pytest import Pytester
 
 import pytest_asyncio
 
@@ -43,8 +44,9 @@ async def test_fixture_with_params(fixture_with_params):
 
 
 @pytest.mark.parametrize("mode", ("auto", "strict"))
-def test_sync_function_uses_async_fixture(testdir, mode):
-    testdir.makepyfile(
+def test_sync_function_uses_async_fixture(pytester: Pytester, mode):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(
         dedent(
             """\
         import pytest_asyncio
@@ -60,5 +62,5 @@ def test_sync_function_uses_async_fixture(testdir, mode):
         """
         )
     )
-    result = testdir.runpytest(f"--asyncio-mode={mode}")
+    result = pytester.runpytest(f"--asyncio-mode={mode}")
     result.assert_outcomes(passed=1)
