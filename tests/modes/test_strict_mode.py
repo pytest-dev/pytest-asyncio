@@ -4,6 +4,7 @@ from pytest import Pytester
 
 
 def test_strict_mode_cmdline(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -23,6 +24,15 @@ def test_strict_mode_cmdline(pytester: Pytester):
 
 
 def test_strict_mode_cfg(pytester: Pytester):
+    pytester.makeini(
+        dedent(
+            """\
+            [pytest]
+            asyncio_default_fixture_loop_scope = function
+            asyncio_mode = strict
+            """
+        )
+    )
     pytester.makepyfile(
         dedent(
             """\
@@ -37,12 +47,12 @@ def test_strict_mode_cfg(pytester: Pytester):
         """
         )
     )
-    pytester.makefile(".ini", pytest="[pytest]\nasyncio_mode = strict\n")
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
 
 def test_strict_mode_method_fixture(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -71,6 +81,7 @@ def test_strict_mode_method_fixture(pytester: Pytester):
 
 
 def test_strict_mode_ignores_unmarked_coroutine(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -87,6 +98,7 @@ def test_strict_mode_ignores_unmarked_coroutine(pytester: Pytester):
 
 
 def test_strict_mode_ignores_unmarked_fixture(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
