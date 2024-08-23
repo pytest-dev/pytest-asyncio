@@ -6,6 +6,7 @@ from pytest import Pytester
 def test_asyncio_mark_provides_package_scoped_loop_strict_mode(pytester: Pytester):
     package_name = pytester.path.name
     subpackage_name = "subpkg"
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         __init__="",
         shared_module=dedent(
@@ -69,6 +70,7 @@ def test_asyncio_mark_provides_package_scoped_loop_strict_mode(pytester: Pyteste
 def test_raise_when_event_loop_fixture_is_requested_in_addition_to_scoped_loop(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         __init__="",
         test_raises=dedent(
@@ -90,6 +92,7 @@ def test_raise_when_event_loop_fixture_is_requested_in_addition_to_scoped_loop(
 def test_asyncio_mark_respects_the_loop_policy(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         __init__="",
         conftest=dedent(
@@ -151,6 +154,7 @@ def test_asyncio_mark_respects_the_loop_policy(
 def test_asyncio_mark_respects_parametrized_loop_policies(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         __init__="",
         test_parametrization=dedent(
@@ -183,6 +187,7 @@ def test_asyncio_mark_respects_parametrized_loop_policies(
 def test_asyncio_mark_provides_package_scoped_loop_to_fixtures(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     package_name = pytester.path.name
     pytester.makepyfile(
         __init__="",
@@ -194,7 +199,7 @@ def test_asyncio_mark_provides_package_scoped_loop_to_fixtures(
 
             from {package_name} import shared_module
 
-            @pytest_asyncio.fixture(scope="package")
+            @pytest_asyncio.fixture(loop_scope="package", scope="package")
             async def my_fixture():
                 shared_module.loop = asyncio.get_running_loop()
             """
@@ -229,6 +234,7 @@ def test_asyncio_mark_provides_package_scoped_loop_to_fixtures(
 def test_asyncio_mark_allows_combining_package_scoped_fixture_with_module_scoped_test(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         __init__="",
         test_mixed_scopes=dedent(
@@ -240,7 +246,7 @@ def test_asyncio_mark_allows_combining_package_scoped_fixture_with_module_scoped
 
             loop: asyncio.AbstractEventLoop
 
-            @pytest_asyncio.fixture(scope="package")
+            @pytest_asyncio.fixture(loop_scope="package", scope="package")
             async def async_fixture():
                 global loop
                 loop = asyncio.get_running_loop()
@@ -259,6 +265,7 @@ def test_asyncio_mark_allows_combining_package_scoped_fixture_with_module_scoped
 def test_asyncio_mark_allows_combining_package_scoped_fixture_with_class_scoped_test(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         __init__="",
         test_mixed_scopes=dedent(
@@ -270,7 +277,7 @@ def test_asyncio_mark_allows_combining_package_scoped_fixture_with_class_scoped_
 
             loop: asyncio.AbstractEventLoop
 
-            @pytest_asyncio.fixture(scope="package")
+            @pytest_asyncio.fixture(loop_scope="package", scope="package")
             async def async_fixture():
                 global loop
                 loop = asyncio.get_running_loop()
@@ -290,6 +297,7 @@ def test_asyncio_mark_allows_combining_package_scoped_fixture_with_class_scoped_
 def test_asyncio_mark_allows_combining_package_scoped_fixture_with_function_scoped_test(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         __init__="",
         test_mixed_scopes=dedent(
@@ -301,7 +309,7 @@ def test_asyncio_mark_allows_combining_package_scoped_fixture_with_function_scop
 
             loop: asyncio.AbstractEventLoop
 
-            @pytest_asyncio.fixture(scope="package")
+            @pytest_asyncio.fixture(loop_scope="package", scope="package")
             async def async_fixture():
                 global loop
                 loop = asyncio.get_running_loop()
@@ -320,6 +328,7 @@ def test_asyncio_mark_allows_combining_package_scoped_fixture_with_function_scop
 def test_asyncio_mark_handles_missing_event_loop_triggered_by_fixture(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         __init__="",
         test_loop_is_none=dedent(
@@ -355,6 +364,7 @@ def test_asyncio_mark_handles_missing_event_loop_triggered_by_fixture(
 def test_standalone_test_does_not_trigger_warning_about_no_current_event_loop_being_set(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         __init__="",
         test_module=dedent(
