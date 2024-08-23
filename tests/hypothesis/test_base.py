@@ -10,6 +10,7 @@ from pytest import Pytester
 
 
 def test_hypothesis_given_decorator_before_asyncio_mark(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -42,6 +43,7 @@ async def test_mark_and_parametrize(x, y):
 
 
 def test_can_use_explicit_event_loop_fixture(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = module")
     pytester.makepyfile(
         dedent(
             """\
@@ -78,6 +80,7 @@ def test_can_use_explicit_event_loop_fixture(pytester: Pytester):
 
 
 def test_async_auto_marked(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -100,6 +103,7 @@ def test_async_auto_marked(pytester: Pytester):
 
 def test_sync_not_auto_marked(pytester: Pytester):
     """Assert that synchronous Hypothesis functions are not marked with asyncio"""
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
