@@ -4,6 +4,7 @@ from pytest import Pytester
 
 
 def test_asyncio_strict_mode_skip(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -22,6 +23,7 @@ def test_asyncio_strict_mode_skip(pytester: Pytester):
 
 
 def test_asyncio_auto_mode_skip(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -39,6 +41,7 @@ def test_asyncio_auto_mode_skip(pytester: Pytester):
 
 
 def test_asyncio_strict_mode_module_level_skip(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -57,6 +60,7 @@ def test_asyncio_strict_mode_module_level_skip(pytester: Pytester):
 
 
 def test_asyncio_auto_mode_module_level_skip(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -74,6 +78,7 @@ def test_asyncio_auto_mode_module_level_skip(pytester: Pytester):
 
 
 def test_asyncio_auto_mode_wrong_skip_usage(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -91,6 +96,7 @@ def test_asyncio_auto_mode_wrong_skip_usage(pytester: Pytester):
 
 
 def test_unittest_skiptest_compatibility(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -108,6 +114,7 @@ def test_unittest_skiptest_compatibility(pytester: Pytester):
 
 
 def test_skip_in_module_does_not_skip_package(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         __init__="",
         test_skip=dedent(

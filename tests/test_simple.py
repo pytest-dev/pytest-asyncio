@@ -26,6 +26,7 @@ async def test_asyncio_marker():
 
 
 def test_asyncio_marker_compatibility_with_xfail(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -45,6 +46,7 @@ def test_asyncio_marker_compatibility_with_xfail(pytester: Pytester):
 
 
 def test_asyncio_auto_mode_compatibility_with_xfail(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -101,8 +103,9 @@ class TestEventLoopStartedBeforeFixtures:
         assert await loop.run_in_executor(None, self.foo) == 1
 
 
-def test_invalid_asyncio_mode(testdir):
-    result = testdir.runpytest("-o", "asyncio_mode=True")
+def test_invalid_asyncio_mode(pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    result = pytester.runpytest("-o", "asyncio_mode=True")
     result.stderr.no_fnmatch_line("INTERNALERROR> *")
     result.stderr.fnmatch_lines(
         "ERROR: 'True' is not a valid asyncio_mode. Valid modes: auto, strict."
