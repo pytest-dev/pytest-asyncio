@@ -6,6 +6,7 @@ from pytest import Pytester
 def test_emit_warning_when_event_loop_is_explicitly_requested_in_coroutine(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -27,6 +28,7 @@ def test_emit_warning_when_event_loop_is_explicitly_requested_in_coroutine(
 def test_emit_warning_when_event_loop_is_explicitly_requested_in_coroutine_method(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -49,6 +51,7 @@ def test_emit_warning_when_event_loop_is_explicitly_requested_in_coroutine_metho
 def test_emit_warning_when_event_loop_is_explicitly_requested_in_coroutine_staticmethod(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -72,6 +75,7 @@ def test_emit_warning_when_event_loop_is_explicitly_requested_in_coroutine_stati
 def test_emit_warning_when_event_loop_is_explicitly_requested_in_coroutine_fixture(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -98,6 +102,7 @@ def test_emit_warning_when_event_loop_is_explicitly_requested_in_coroutine_fixtu
 def test_emit_warning_when_event_loop_is_explicitly_requested_in_async_gen_fixture(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -124,6 +129,7 @@ def test_emit_warning_when_event_loop_is_explicitly_requested_in_async_gen_fixtu
 def test_does_not_emit_warning_when_event_loop_is_explicitly_requested_in_sync_function(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -141,6 +147,7 @@ def test_does_not_emit_warning_when_event_loop_is_explicitly_requested_in_sync_f
 def test_does_not_emit_warning_when_event_loop_is_explicitly_requested_in_sync_fixture(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
