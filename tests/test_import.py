@@ -4,6 +4,7 @@ from pytest import Pytester
 
 
 def test_import_warning_does_not_cause_internal_error(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -19,6 +20,7 @@ def test_import_warning_does_not_cause_internal_error(pytester: Pytester):
 
 
 def test_import_warning_in_package_does_not_cause_internal_error(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         __init__=dedent(
             """\
@@ -37,6 +39,7 @@ def test_import_warning_in_package_does_not_cause_internal_error(pytester: Pytes
 
 
 def test_does_not_import_unrelated_packages(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pkg_dir = pytester.mkpydir("mypkg")
     pkg_dir.joinpath("__init__.py").write_text(
         dedent(
