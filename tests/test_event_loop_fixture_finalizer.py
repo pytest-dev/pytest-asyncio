@@ -4,6 +4,7 @@ from pytest import Pytester
 
 
 def test_event_loop_fixture_finalizer_returns_fresh_loop_after_test(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -36,6 +37,7 @@ def test_event_loop_fixture_finalizer_returns_fresh_loop_after_test(pytester: Py
 def test_event_loop_fixture_finalizer_handles_loop_set_to_none_sync(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -53,6 +55,7 @@ def test_event_loop_fixture_finalizer_handles_loop_set_to_none_sync(
 def test_event_loop_fixture_finalizer_handles_loop_set_to_none_async_without_fixture(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -72,6 +75,7 @@ def test_event_loop_fixture_finalizer_handles_loop_set_to_none_async_without_fix
 def test_event_loop_fixture_finalizer_handles_loop_set_to_none_async_with_fixture(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -94,6 +98,7 @@ def test_event_loop_fixture_finalizer_handles_loop_set_to_none_async_with_fixtur
 def test_event_loop_fixture_finalizer_raises_warning_when_fixture_leaves_loop_unclosed(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -121,6 +126,7 @@ def test_event_loop_fixture_finalizer_raises_warning_when_fixture_leaves_loop_un
 def test_event_loop_fixture_finalizer_raises_warning_when_test_leaves_loop_unclosed(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
