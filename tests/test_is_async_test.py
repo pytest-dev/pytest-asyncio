@@ -4,6 +4,7 @@ from pytest import Pytester
 
 
 def test_returns_false_for_sync_item(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -28,6 +29,7 @@ def test_returns_false_for_sync_item(pytester: Pytester):
 
 
 def test_returns_true_for_marked_coroutine_item_in_strict_mode(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -53,6 +55,7 @@ def test_returns_true_for_marked_coroutine_item_in_strict_mode(pytester: Pyteste
 
 
 def test_returns_false_for_unmarked_coroutine_item_in_strict_mode(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -77,6 +80,7 @@ def test_returns_false_for_unmarked_coroutine_item_in_strict_mode(pytester: Pyte
 
 
 def test_returns_true_for_unmarked_coroutine_item_in_auto_mode(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
