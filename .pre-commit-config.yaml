@@ -37,7 +37,7 @@ repos:
   - id: check-yaml
   - id: debug-statements
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.11.1
+  rev: v1.11.2
   hooks:
   - id: mypy
     exclude: ^(docs|tests)/.*
@@ -65,7 +65,7 @@ repos:
     - 'SC1004:'
     stages: [manual]
 - repo: https://github.com/sirosen/check-jsonschema
-  rev: 0.29.1
+  rev: 0.29.2
   hooks:
   - id: check-github-actions
 ci:
