@@ -176,7 +176,7 @@ def _make_asyncio_fixture_function(
 
 
 def _is_coroutine_or_asyncgen(obj: Any) -> bool:
-    return asyncio.iscoroutinefunction(obj) or inspect.isasyncgenfunction(obj)
+    return inspect.iscoroutinefunction(obj) or inspect.isasyncgenfunction(obj)
 
 
 def _get_asyncio_mode(config: Config) -> Mode:
@@ -447,7 +447,7 @@ class Coroutine(PytestAsyncioFunction):
     @staticmethod
     def _can_substitute(item: Function) -> bool:
         func = item.obj
-        return asyncio.iscoroutinefunction(func)
+        return inspect.iscoroutinefunction(func)
 
     def runtest(self) -> None:
         self.obj = wrap_in_sync(
@@ -512,7 +512,7 @@ class AsyncHypothesisTest(PytestAsyncioFunction):
         return (
             getattr(func, "is_hypothesis_test", False)  # type: ignore[return-value]
             and getattr(func, "hypothesis", None)
-            and asyncio.iscoroutinefunction(func.hypothesis.inner_test)
+            and inspect.iscoroutinefunction(func.hypothesis.inner_test)
         )
 
     def runtest(self) -> None:
