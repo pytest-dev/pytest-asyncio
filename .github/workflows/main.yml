@@ -151,6 +151,7 @@ jobs:
     - name: PyPI upload
       uses: pypa/gh-action-pypi-publish@v1.10.0
       with:
+        attestations: true
         packages-dir: dist
         password: ${{ secrets.PYPI_API_TOKEN }}
     - name: GitHub Release
