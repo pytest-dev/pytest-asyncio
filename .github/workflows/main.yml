@@ -89,6 +89,7 @@ jobs:
       with:
         name: coverage-python-${{ matrix.python-version }}
         path: .coverage.*
+        if-no-files-found: error
 
   check:
     name: Check
