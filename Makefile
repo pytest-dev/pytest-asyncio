@@ -21,7 +21,7 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 
 test:
-	coverage run --parallel-mode --omit */_version.py -m pytest
+	coverage run --parallel-mode -m pytest
 
 install:
 	pip install -U pre-commit
