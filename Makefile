@@ -17,7 +17,7 @@ clean-pyc: ## remove Python file artifacts
 
 clean-test: ## remove test and coverage artifacts
 	rm -fr .tox/
-	rm -f .coverage
+	rm -fr coverage/
 	rm -fr htmlcov/
 
 test:
