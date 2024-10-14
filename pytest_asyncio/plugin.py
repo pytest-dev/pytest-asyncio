@@ -8,21 +8,23 @@ import inspect
 import socket
 import warnings
 from asyncio import AbstractEventLoopPolicy
-from textwrap import dedent
-from typing import (
-    Any,
+from collections.abc import (
     AsyncIterator,
     Awaitable,
-    Callable,
-    Dict,
     Generator,
     Iterable,
     Iterator,
+    Mapping,
+    Sequence,
+)
+from textwrap import dedent
+from typing import (
+    Any,
+    Callable,
+    Dict,
     List,
     Literal,
-    Mapping,
     Optional,
-    Sequence,
     Set,
     Type,
     TypeVar,

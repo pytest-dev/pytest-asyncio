@@ -10,7 +10,7 @@ repos:
   hooks:
   - id: yesqa
 - repo: https://github.com/Zac-HD/shed
-  rev: 2024.3.1
+  rev: 2024.10.1
   hooks:
   - id: shed
     args:
@@ -65,7 +65,7 @@ repos:
     - 'SC1004:'
     stages: [manual]
 - repo: https://github.com/sirosen/check-jsonschema
-  rev: 0.29.3
+  rev: 0.29.4
   hooks:
   - id: check-github-actions
 ci:
