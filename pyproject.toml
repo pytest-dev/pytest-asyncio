@@ -68,8 +68,10 @@ write_to = "pytest_asyncio/_version.py"
 
 [tool.ruff]
 line-length = 88
+format.docstring-code-format = true
 lint.select = [
   "B",      # bugbear
+  "D",      # pydocstyle
   "E",      # pycodestyle
   "F",      # pyflakes
   "PGH004", # pygrep-hooks - Use specific rule codes when using noqa
@@ -80,9 +82,28 @@ lint.select = [
   "UP",     # pyupgrade
   "W",      # pycodestyle
 ]
+
 lint.ignore = [
   # bugbear ignore
   "B028", # No explicit `stacklevel` keyword argument found
+  # pydocstyle ignore
+  "D100", # Missing docstring in public module
+  "D101", # Missing docstring in public class
+  "D102", # Missing docstring in public method
+  "D103", # Missing docstring in public function
+  "D104", # Missing docstring in public package
+  "D105", # Missing docstring in magic method
+  "D106", # Missing docstring in public nested class
+  "D107", # Missing docstring in `__init__`
+  "D203", # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible
+  "D205", # 1 blank line required between summary line and description
+  "D209", # [*] Multi-line docstring closing quotes should be on a separate line
+  "D212", # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible.
+  "D400", # First line should end with a period
+  "D401", # First line of docstring should be in imperative mood
+  "D402", # First line should not be the function's signature
+  "D404", # First word of the docstring should not be "This"
+  "D415", # First line should end with a period, question mark, or exclamation point
 ]
 
 [tool.pytest.ini_options]
