@@ -69,9 +69,15 @@ write_to = "pytest_asyncio/_version.py"
 [tool.ruff]
 line-length = 88
 lint.select = [
-  "E", # pycodestyle
-  "F", # pyflakes
-  "W", # pycodestyle
+  "E",      # pycodestyle
+  "F",      # pyflakes
+  "PGH004", # pygrep-hooks - Use specific rule codes when using noqa
+  "PIE",    # flake8-pie
+  "PYI",    # flake8-pyi
+  "RUF",    # ruff
+  "T100",   # flake8-debugger
+  "UP",     # pyupgrade
+  "W",      # pycodestyle
 ]
 
 [tool.pytest.ini_options]
