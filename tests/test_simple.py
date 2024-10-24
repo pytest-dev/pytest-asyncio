@@ -1,5 +1,7 @@
 """Quick'n'dirty unit tests for provided fixtures and markers."""
 
+from __future__ import annotations
+
 import asyncio
 from textwrap import dedent
 
