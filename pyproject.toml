@@ -9,3 +9,11 @@ requires = [
 
 [tool.setuptools_scm]
 write_to = "pytest_asyncio/_version.py"
+
+[tool.ruff]
+line-length = 88
+lint.select = [
+  "E", # pycodestyle
+  "F", # pyflakes
+  "W", # pycodestyle
+]
