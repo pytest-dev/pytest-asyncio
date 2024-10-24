@@ -63,9 +63,6 @@ license-files = [
   "LICENSE",
 ]
 
-[tool.setuptools.dynamic.version]
-attr = "pytest_asyncio.__version__"
-
 [tool.setuptools_scm]
 write_to = "pytest_asyncio/_version.py"
 
