@@ -3,6 +3,8 @@ We support module-scoped async fixtures, but only if the event loop is
 module-scoped too.
 """
 
+from __future__ import annotations
+
 import asyncio
 
 import pytest

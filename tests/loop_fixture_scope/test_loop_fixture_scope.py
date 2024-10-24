@@ -1,5 +1,7 @@
 """Unit tests for overriding the event loop with a larger scoped one."""
 
+from __future__ import annotations
+
 import asyncio
 
 import pytest

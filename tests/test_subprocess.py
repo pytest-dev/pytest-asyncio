@@ -1,5 +1,7 @@
 """Tests for using subprocesses in tests."""
 
+from __future__ import annotations
+
 import asyncio.subprocess
 import sys
 

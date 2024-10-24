@@ -1,6 +1,9 @@
-"""Tests for the Hypothesis integration, which wraps async functions in a
+"""
+Tests for the Hypothesis integration, which wraps async functions in a
 sync shim for Hypothesis.
 """
+
+from __future__ import annotations
 
 from textwrap import dedent
 
