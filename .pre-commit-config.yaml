@@ -68,6 +68,12 @@ repos:
   rev: 0.29.3
   hooks:
   - id: check-github-actions
+- repo: https://github.com/tox-dev/pyproject-fmt
+  rev: 2.3.1
+  hooks:
+  - id: pyproject-fmt
+      # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
+    additional_dependencies: [tox>=4.9]
 ci:
   skip:
   - actionlint-docker
