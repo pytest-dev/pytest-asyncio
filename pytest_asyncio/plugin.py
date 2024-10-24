@@ -1,5 +1,7 @@
 """pytest-asyncio implementation."""
 
+from __future__ import annotations
+
 import asyncio
 import contextlib
 import enum
@@ -22,7 +24,6 @@ from typing import (
     Any,
     Callable,
     Literal,
-    Optional,
     TypeVar,
     Union,
     overload,
@@ -110,16 +111,16 @@ def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager) -> None
 def fixture(
     fixture_function: FixtureFunction,
     *,
-    scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]" = ...,
-    loop_scope: Union[_ScopeName, None] = ...,
-    params: Optional[Iterable[object]] = ...,
+    scope: _ScopeName | Callable[[str, Config], _ScopeName] = ...,
+    loop_scope: _ScopeName | None = ...,
+    params: Iterable[object] | None = ...,
     autouse: bool = ...,
-    ids: Union[
-        Iterable[Union[str, float, int, bool, None]],
-        Callable[[Any], Optional[object]],
-        None,
-    ] = ...,
-    name: Optional[str] = ...,
+    ids: (
+        Iterable[str | float | int | bool | None]
+        | Callable[[Any], object | None]
+        | None
+    ) = ...,
+    name: str | None = ...,
 ) -> FixtureFunction: ...
 
 
@@ -127,24 +128,24 @@ def fixture(
 def fixture(
     fixture_function: None = ...,
     *,
-    scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]" = ...,
-    loop_scope: Union[_ScopeName, None] = ...,
-    params: Optional[Iterable[object]] = ...,
+    scope: _ScopeName | Callable[[str, Config], _ScopeName] = ...,
+    loop_scope: _ScopeName | None = ...,
+    params: Iterable[object] | None = ...,
     autouse: bool = ...,
-    ids: Union[
-        Iterable[Union[str, float, int, bool, None]],
-        Callable[[Any], Optional[object]],
-        None,
-    ] = ...,
-    name: Optional[str] = None,
+    ids: (
+        Iterable[str | float | int | bool | None]
+        | Callable[[Any], object | None]
+        | None
+    ) = ...,
+    name: str | None = None,
 ) -> FixtureFunctionMarker: ...
 
 
 def fixture(
-    fixture_function: Optional[FixtureFunction] = None,
-    loop_scope: Union[_ScopeName, None] = None,
+    fixture_function: FixtureFunction | None = None,
+    loop_scope: _ScopeName | None = None,
     **kwargs: Any,
-) -> Union[FixtureFunction, FixtureFunctionMarker]:
+) -> FixtureFunction | FixtureFunctionMarker:
     if fixture_function is not None:
         _make_asyncio_fixture_function(fixture_function, loop_scope)
         return pytest.fixture(fixture_function, **kwargs)
@@ -163,9 +164,7 @@ def _is_asyncio_fixture_function(obj: Any) -> bool:
     return getattr(obj, "_force_asyncio_fixture", False)
 
 
-def _make_asyncio_fixture_function(
-    obj: Any, loop_scope: Union[_ScopeName, None]
-) -> None:
+def _make_asyncio_fixture_function(obj: Any, loop_scope: _ScopeName | None) -> None:
     if hasattr(obj, "__func__"):
         # instance method, check the function object
         obj = obj.__func__
@@ -288,7 +287,7 @@ def _add_kwargs(
     return ret
 
 
-def _perhaps_rebind_fixture_func(func: _T, instance: Optional[Any]) -> _T:
+def _perhaps_rebind_fixture_func(func: _T, instance: Any | None) -> _T:
     if instance is not None:
         # The fixture needs to be bound to the actual request.instance
         # so it is bound to the same object as the test method.
@@ -388,9 +387,7 @@ class PytestAsyncioFunction(Function):
     """Base class for all test functions managed by pytest-asyncio."""
 
     @classmethod
-    def item_subclass_for(
-        cls, item: Function, /
-    ) -> Union[type["PytestAsyncioFunction"], None]:
+    def item_subclass_for(cls, item: Function, /) -> type[PytestAsyncioFunction] | None:
         """
         Returns a subclass of PytestAsyncioFunction if there is a specialized subclass
         for the specified function item.
@@ -525,10 +522,8 @@ _HOLDER: set[FixtureDef] = set()
 # see https://github.com/pytest-dev/pytest/issues/11307
 @pytest.hookimpl(specname="pytest_pycollect_makeitem", tryfirst=True)
 def pytest_pycollect_makeitem_preprocess_async_fixtures(
-    collector: Union[pytest.Module, pytest.Class], name: str, obj: object
-) -> Union[
-    pytest.Item, pytest.Collector, list[Union[pytest.Item, pytest.Collector]], None
-]:
+    collector: pytest.Module | pytest.Class, name: str, obj: object
+) -> pytest.Item | pytest.Collector | list[pytest.Item | pytest.Collector] | None:
     """A pytest hook to collect asyncio coroutines."""
     if not collector.funcnamefilter(name):
         return None
@@ -540,7 +535,7 @@ def pytest_pycollect_makeitem_preprocess_async_fixtures(
 # see https://github.com/pytest-dev/pytest/issues/11307
 @pytest.hookimpl(specname="pytest_pycollect_makeitem", hookwrapper=True)
 def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
-    collector: Union[pytest.Module, pytest.Class], name: str, obj: object
+    collector: pytest.Module | pytest.Class, name: str, obj: object
 ) -> Generator[None, pluggy.Result, None]:
     """
     Converts coroutines and async generators collected as pytest.Functions
@@ -548,12 +543,9 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
     """
     hook_result = yield
     try:
-        node_or_list_of_nodes: Union[
-            pytest.Item,
-            pytest.Collector,
-            list[Union[pytest.Item, pytest.Collector]],
-            None,
-        ] = hook_result.get_result()
+        node_or_list_of_nodes: (
+            pytest.Item | pytest.Collector | list[pytest.Item | pytest.Collector] | None
+        ) = hook_result.get_result()
     except BaseException as e:
         hook_result.force_exception(e)
         return
@@ -592,7 +584,7 @@ _fixture_scope_by_collector_type: Mapping[type[pytest.Collector], _ScopeName] = 
 
 # A stack used to push package-scoped loops during collection of a package
 # and pop those loops during collection of a Module
-__package_loop_stack: list[Union[FixtureFunctionMarker, FixtureFunction]] = []
+__package_loop_stack: list[FixtureFunctionMarker | FixtureFunction] = []
 
 
 @pytest.hookimpl
@@ -868,7 +860,7 @@ def _provide_clean_event_loop() -> None:
 
 
 def _get_event_loop_no_warn(
-    policy: Optional[AbstractEventLoopPolicy] = None,
+    policy: AbstractEventLoopPolicy | None = None,
 ) -> asyncio.AbstractEventLoop:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
@@ -879,7 +871,7 @@ def _get_event_loop_no_warn(
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_pyfunc_call(pyfuncitem: Function) -> Optional[object]:
+def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
     """
     Pytest hook called before a test case is run.
 
@@ -999,7 +991,7 @@ def _get_marked_loop_scope(asyncio_marker: Mark) -> _ScopeName:
     return scope
 
 
-def _retrieve_scope_root(item: Union[Collector, Item], scope: str) -> Collector:
+def _retrieve_scope_root(item: Collector | Item, scope: str) -> Collector:
     node_type_by_scope = {
         "class": Class,
         "module": Module,
