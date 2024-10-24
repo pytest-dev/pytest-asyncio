@@ -75,8 +75,10 @@ class TestMarkerInClassBasedTests:
 
     @pytest.mark.asyncio
     async def test_asyncio_marker_with_implicit_loop_fixture(self):
-        """Test the "asyncio" marker works on a method in
-        a class-based test with implicit loop fixture."""
+        """
+        Test the "asyncio" marker works on a method in
+        a class-based test with implicit loop fixture.
+        """
         ret = await async_coro()
         assert ret == "ok"
 

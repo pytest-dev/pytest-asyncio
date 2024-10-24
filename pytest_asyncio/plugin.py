@@ -266,9 +266,7 @@ def _preprocess_async_fixtures(
 
 
 def _synchronize_async_fixture(fixturedef: FixtureDef) -> None:
-    """
-    Wraps the fixture function of an async fixture in a synchronous function.
-    """
+    """Wraps the fixture function of an async fixture in a synchronous function."""
     if inspect.isasyncgenfunction(fixturedef.func):
         _wrap_asyncgen_fixture(fixturedef)
     elif inspect.iscoroutinefunction(fixturedef.func):
@@ -908,9 +906,10 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> Optional[object]:
 def wrap_in_sync(
     func: Callable[..., Awaitable[Any]],
 ):
-    """Return a sync wrapper around an async function executing it in the
-    current event loop."""
-
+    """
+    Return a sync wrapper around an async function executing it in the
+    current event loop.
+    """
     # if the function is already wrapped, we rewrap using the original one
     # not using __wrapped__ because the original function may already be
     # a wrapped one

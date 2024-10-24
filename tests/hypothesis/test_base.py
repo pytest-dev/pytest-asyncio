@@ -1,4 +1,5 @@
-"""Tests for the Hypothesis integration, which wraps async functions in a
+"""
+Tests for the Hypothesis integration, which wraps async functions in a
 sync shim for Hypothesis.
 """
 
