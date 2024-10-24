@@ -8,23 +8,21 @@ import inspect
 import socket
 import warnings
 from asyncio import AbstractEventLoopPolicy
-from textwrap import dedent
-from typing import (
-    Any,
+from collections.abc import (
     AsyncIterator,
     Awaitable,
-    Callable,
-    Dict,
     Generator,
     Iterable,
     Iterator,
-    List,
-    Literal,
     Mapping,
-    Optional,
     Sequence,
-    Set,
-    Type,
+)
+from textwrap import dedent
+from typing import (
+    Any,
+    Callable,
+    Literal,
+    Optional,
     TypeVar,
     Union,
     overload,
@@ -215,7 +213,7 @@ def pytest_configure(config: Config) -> None:
 
 
 @pytest.hookimpl(tryfirst=True)
-def pytest_report_header(config: Config) -> List[str]:
+def pytest_report_header(config: Config) -> list[str]:
     """Add asyncio config to pytest header."""
     mode = _get_asyncio_mode(config)
     default_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
@@ -224,7 +222,7 @@ def pytest_report_header(config: Config) -> List[str]:
 
 def _preprocess_async_fixtures(
     collector: Collector,
-    processed_fixturedefs: Set[FixtureDef],
+    processed_fixturedefs: set[FixtureDef],
 ) -> None:
     config = collector.config
     default_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
@@ -279,10 +277,10 @@ def _synchronize_async_fixture(fixturedef: FixtureDef) -> None:
 
 def _add_kwargs(
     func: Callable[..., Any],
-    kwargs: Dict[str, Any],
+    kwargs: dict[str, Any],
     event_loop: asyncio.AbstractEventLoop,
     request: FixtureRequest,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     sig = inspect.signature(func)
     ret = kwargs.copy()
     if "request" in sig.parameters:
@@ -394,7 +392,7 @@ class PytestAsyncioFunction(Function):
     @classmethod
     def item_subclass_for(
         cls, item: Function, /
-    ) -> Union[Type["PytestAsyncioFunction"], None]:
+    ) -> Union[type["PytestAsyncioFunction"], None]:
         """
         Returns a subclass of PytestAsyncioFunction if there is a specialized subclass
         for the specified function item.
@@ -522,7 +520,7 @@ class AsyncHypothesisTest(PytestAsyncioFunction):
         super().runtest()
 
 
-_HOLDER: Set[FixtureDef] = set()
+_HOLDER: set[FixtureDef] = set()
 
 
 # The function name needs to start with "pytest_"
@@ -531,7 +529,7 @@ _HOLDER: Set[FixtureDef] = set()
 def pytest_pycollect_makeitem_preprocess_async_fixtures(
     collector: Union[pytest.Module, pytest.Class], name: str, obj: object
 ) -> Union[
-    pytest.Item, pytest.Collector, List[Union[pytest.Item, pytest.Collector]], None
+    pytest.Item, pytest.Collector, list[Union[pytest.Item, pytest.Collector]], None
 ]:
     """A pytest hook to collect asyncio coroutines."""
     if not collector.funcnamefilter(name):
@@ -555,7 +553,7 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
         node_or_list_of_nodes: Union[
             pytest.Item,
             pytest.Collector,
-            List[Union[pytest.Item, pytest.Collector]],
+            list[Union[pytest.Item, pytest.Collector]],
             None,
         ] = hook_result.get_result()
     except BaseException as e:
@@ -585,7 +583,7 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
 
 
 _event_loop_fixture_id = StashKey[str]()
-_fixture_scope_by_collector_type: Mapping[Type[pytest.Collector], _ScopeName] = {
+_fixture_scope_by_collector_type: Mapping[type[pytest.Collector], _ScopeName] = {
     Class: "class",
     # Package is a subclass of module and the dict is used in isinstance checks
     # Therefore, the order matters and Package needs to appear before Module
@@ -596,7 +594,7 @@ _fixture_scope_by_collector_type: Mapping[Type[pytest.Collector], _ScopeName] = 
 
 # A stack used to push package-scoped loops during collection of a package
 # and pop those loops during collection of a Module
-__package_loop_stack: List[Union[FixtureFunctionMarker, FixtureFunction]] = []
+__package_loop_stack: list[Union[FixtureFunctionMarker, FixtureFunction]] = []
 
 
 @pytest.hookimpl
