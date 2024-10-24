@@ -183,11 +183,11 @@ def _get_asyncio_mode(config: Config) -> Mode:
         val = config.getini("asyncio_mode")
     try:
         return Mode(val)
-    except ValueError:
+    except ValueError as e:
         modes = ", ".join(m.value for m in Mode)
         raise pytest.UsageError(
             f"{val!r} is not a valid asyncio_mode. Valid modes: {modes}."
-        )
+        ) from e
 
 
 _DEFAULT_FIXTURE_LOOP_SCOPE_UNSET = """\

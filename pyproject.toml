@@ -69,6 +69,7 @@ write_to = "pytest_asyncio/_version.py"
 [tool.ruff]
 line-length = 88
 lint.select = [
+  "B",      # bugbear
   "E",      # pycodestyle
   "F",      # pyflakes
   "PGH004", # pygrep-hooks - Use specific rule codes when using noqa
@@ -78,6 +79,10 @@ lint.select = [
   "T100",   # flake8-debugger
   "UP",     # pyupgrade
   "W",      # pycodestyle
+]
+lint.ignore = [
+  # bugbear ignore
+  "B028", # No explicit `stacklevel` keyword argument found
 ]
 
 [tool.pytest.ini_options]
