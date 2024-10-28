@@ -6,7 +6,7 @@ repos:
   - id: check-merge-conflict
     exclude: rst$
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.7.0
+  rev: v0.7.1
   hooks:
   - id: ruff
     args: [--fix]
@@ -15,7 +15,7 @@ repos:
   hooks:
   - id: yesqa
 - repo: https://github.com/Zac-HD/shed
-  rev: 2024.3.1
+  rev: 2024.10.1
   hooks:
   - id: shed
     args:
@@ -42,7 +42,7 @@ repos:
   - id: check-yaml
   - id: debug-statements
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.11.2
+  rev: v1.13.0
   hooks:
   - id: mypy
     exclude: ^(docs|tests)/.*
@@ -65,11 +65,11 @@ repos:
     - 'SC1004:'
     stages: [manual]
 - repo: https://github.com/sirosen/check-jsonschema
-  rev: 0.29.3
+  rev: 0.29.4
   hooks:
   - id: check-github-actions
 - repo: https://github.com/tox-dev/pyproject-fmt
-  rev: 2.3.1
+  rev: v2.4.3
   hooks:
   - id: pyproject-fmt
       # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
