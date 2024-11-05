@@ -124,3 +124,90 @@ def test_strict_mode_ignores_unmarked_fixture(pytester: Pytester):
             "*coroutine 'any_fixture' was never awaited*",
         ],
     )
+
+
+def test_strict_mode_marked_test_unmarked_fixture_warning(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(
+        dedent(
+            """\
+        import pytest
+
+        # Not using pytest_asyncio.fixture
+        @pytest.fixture()
+        async def any_fixture():
+            pass
+
+        @pytest.mark.asyncio
+        async def test_anything(any_fixture):
+            # suppress unawaited coroutine warning
+            try:
+                any_fixture.send(None)
+            except StopIteration:
+                pass
+        """
+        )
+    )
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
+    result.assert_outcomes(passed=1, failed=0, skipped=0, warnings=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*warnings summary*",
+            (
+                "test_strict_mode_marked_test_unmarked_fixture_warning.py::"
+                "test_anything"
+            ),
+            (
+                "*/pytest_asyncio/plugin.py:*: PytestDeprecationWarning: "
+                "asyncio test 'test_anything' requested async "
+                "@pytest.fixture 'any_fixture' in strict mode. "
+                "You might want to use @pytest_asyncio.fixture or switch to "
+                "auto mode. "
+                "This will become an error in future versions of flake8-asyncio."
+            ),
+        ],
+    )
+
+
+# autouse is not handled in any special way currently
+def test_strict_mode_marked_test_unmarked_autouse_fixture_warning(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(
+        dedent(
+            """\
+        import pytest
+
+        # Not using pytest_asyncio.fixture
+        @pytest.fixture(autouse=True)
+        async def any_fixture():
+            pass
+
+        @pytest.mark.asyncio
+        async def test_anything(any_fixture):
+            # suppress unawaited coroutine warning
+            try:
+                any_fixture.send(None)
+            except StopIteration:
+                pass
+        """
+        )
+    )
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
+    result.assert_outcomes(passed=1, warnings=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*warnings summary*",
+            (
+                "test_strict_mode_marked_test_unmarked_autouse_fixture_warning.py::"
+                "test_anything"
+            ),
+            (
+                "*/pytest_asyncio/plugin.py:*: PytestDeprecationWarning: "
+                "*asyncio test 'test_anything' requested async "
+                "@pytest.fixture 'any_fixture' in strict mode. "
+                "You might want to use @pytest_asyncio.fixture or switch to "
+                "auto mode. "
+                "This will become an error in future versions of flake8-asyncio."
+            ),
+        ],
+    )
