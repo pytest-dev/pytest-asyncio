@@ -2,6 +2,10 @@
 Changelog
 =========
 
+0.25.0 (UNRELEASED)
+===================
+- Deprecated: Added warning when asyncio test requests async ``@pytest.fixture`` in strict mode. This will become an error in a future version of flake8-asyncio. `#979 <https://github.com/pytest-dev/pytest-asyncio/pull/979>`_
+
 0.24.0 (2024-08-22)
 ===================
 - BREAKING: Updated minimum supported pytest version to v8.2.0

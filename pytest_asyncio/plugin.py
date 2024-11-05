@@ -880,7 +880,32 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
     """
     if pyfuncitem.get_closest_marker("asyncio") is not None:
         if isinstance(pyfuncitem, PytestAsyncioFunction):
-            pass
+            asyncio_mode = _get_asyncio_mode(pyfuncitem.config)
+            for fixname, fixtures in pyfuncitem._fixtureinfo.name2fixturedefs.items():
+                # name2fixturedefs is a dict between fixture name and a list of matching
+                # fixturedefs. The last entry in the list is closest and the one used.
+                func = fixtures[-1].func
+                if (
+                    _is_coroutine_or_asyncgen(func)
+                    and not _is_asyncio_fixture_function(func)
+                    and asyncio_mode == Mode.STRICT
+                ):
+                    warnings.warn(
+                        PytestDeprecationWarning(
+                            f"asyncio test {pyfuncitem.name!r} requested async "
+                            "@pytest.fixture "
+                            f"{fixname!r} in strict mode. "
+                            "You might want to use @pytest_asyncio.fixture or switch "
+                            "to auto mode. "
+                            "This will become an error in future versions of "
+                            "flake8-asyncio."
+                        ),
+                        stacklevel=1,
+                    )
+                    # no stacklevel points at the users code, so we set stacklevel=1
+                    # so it at least indicates that it's the plugin complaining.
+                    # Pytest gives the test file & name in the warnings summary at least
+
         else:
             pyfuncitem.warn(
                 pytest.PytestWarning(
