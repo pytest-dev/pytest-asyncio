@@ -151,7 +151,7 @@ jobs:
       run: |
         pandoc -s -o README.md README.rst
     - name: PyPI upload
-      uses: pypa/gh-action-pypi-publish@v1.11.0
+      uses: pypa/gh-action-pypi-publish@v1.12.0
       with:
         attestations: true
         packages-dir: dist
