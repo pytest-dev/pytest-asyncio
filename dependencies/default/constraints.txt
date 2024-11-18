@@ -7,5 +7,5 @@ packaging==24.1
 pluggy==1.5.0
 pytest==8.3.3
 sortedcontainers==2.4.0
-tomli==2.0.2
+tomli==2.1.0
 typing_extensions==4.12.2
