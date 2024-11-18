@@ -216,7 +216,9 @@ def pytest_report_header(config: Config) -> list[str]:
     """Add asyncio config to pytest header."""
     mode = _get_asyncio_mode(config)
     default_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
-    return [f"asyncio: mode={mode}, default_loop_scope={default_loop_scope}"]
+    return [
+        f"asyncio: mode={mode}, asyncio_default_fixture_loop_scope={default_loop_scope}"
+    ]
 
 
 def _preprocess_async_fixtures(
