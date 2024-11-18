@@ -3,7 +3,7 @@ coverage==7.6.7
 exceptiongroup==1.2.2
 hypothesis==6.119.3
 iniconfig==2.0.0
-packaging==24.1
+packaging==24.2
 pluggy==1.5.0
 pytest==8.3.3
 sortedcontainers==2.4.0
