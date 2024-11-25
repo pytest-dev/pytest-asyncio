@@ -6,7 +6,7 @@ repos:
   - id: check-merge-conflict
     exclude: rst$
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.7.4
+  rev: v0.8.0
   hooks:
   - id: ruff
     args: [--fix]
