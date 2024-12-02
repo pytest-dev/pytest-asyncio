@@ -6,7 +6,7 @@ repos:
   - id: check-merge-conflict
     exclude: rst$
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.8.0
+  rev: v0.8.1
   hooks:
   - id: ruff
     args: [--fix]
@@ -65,7 +65,7 @@ repos:
     - 'SC1004:'
     stages: [manual]
 - repo: https://github.com/sirosen/check-jsonschema
-  rev: 0.29.4
+  rev: 0.30.0
   hooks:
   - id: check-github-actions
 - repo: https://github.com/tox-dev/pyproject-fmt
