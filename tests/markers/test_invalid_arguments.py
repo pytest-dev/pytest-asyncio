@@ -62,7 +62,7 @@ def test_error_when_wrong_keyword_argument_is_passed(
     result = pytester.runpytest_subprocess()
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
-        ["*ValueError: mark.asyncio accepts only a keyword argument 'scope'*"]
+        ["*ValueError: mark.asyncio accepts only a keyword argument 'loop_scope'*"]
     )
 
 
