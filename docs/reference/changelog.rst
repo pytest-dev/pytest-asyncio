@@ -5,6 +5,7 @@ Changelog
 0.25.0 (UNRELEASED)
 ===================
 - Deprecated: Added warning when asyncio test requests async ``@pytest.fixture`` in strict mode. This will become an error in a future version of flake8-asyncio. `#979 <https://github.com/pytest-dev/pytest-asyncio/pull/979>`_
+- Updates the error message about `pytest.mark.asyncio`'s `scope` keyword argument to say `loop_scope` instead. `#1004 <https://github.com/pytest-dev/pytest-asyncio/pull/1004>`_
 
 0.24.0 (2024-08-22)
 ===================
