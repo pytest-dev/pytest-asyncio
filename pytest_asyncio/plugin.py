@@ -319,11 +319,26 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
         kwargs.pop(event_loop_fixture_id, None)
         gen_obj = func(**_add_kwargs(func, kwargs, event_loop, request))
 
-        context = _event_loop_context.get(None)
-
         async def setup():
             res = await gen_obj.__anext__()  # type: ignore[union-attr]
             return res
+
+        context = contextvars.copy_context()
+        setup_task = _create_task_in_context(event_loop, setup(), context)
+        result = event_loop.run_until_complete(setup_task)
+
+        # Copy the context vars set by the setup task back into the ambient
+        # context for the test.
+        context_tokens = []
+        for var in context:
+            try:
+                if var.get() is context.get(var):
+                    # Not modified by the fixture, so leave it as-is.
+                    continue
+            except LookupError:
+                pass
+            token = var.set(context.get(var))
+            context_tokens.append((var, token))
 
         def finalizer() -> None:
             """Yield again, to finalize."""
@@ -341,12 +356,37 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
             task = _create_task_in_context(event_loop, async_finalizer(), context)
             event_loop.run_until_complete(task)
 
-        setup_task = _create_task_in_context(event_loop, setup(), context)
-        result = event_loop.run_until_complete(setup_task)
+            # Since the fixture is now complete, restore any context variables
+            # it had set back to their original values.
+            while context_tokens:
+                (var, token) = context_tokens.pop()
+                var.reset(token)
+
         request.addfinalizer(finalizer)
         return result
 
     fixturedef.func = _asyncgen_fixture_wrapper  # type: ignore[misc]
+
+
+def _create_task_in_context(loop, coro, context):
+    """
+    Return an asyncio task that runs the coro in the specified context,
+    if possible.
+
+    This allows fixture setup and teardown to be run as separate asyncio tasks,
+    while still being able to use context-manager idioms to maintain context
+    variables and make those variables visible to test functions.
+
+    This is only fully supported on Python 3.11 and newer, as it requires
+    the API added for https://github.com/python/cpython/issues/91150.
+    On earlier versions, the returned task will use the default context instead.
+    """
+    if context is not None:
+        try:
+            return loop.create_task(coro, context=context)
+        except TypeError:
+            pass
+    return loop.create_task(coro)
 
 
 def _wrap_async_fixture(fixturedef: FixtureDef) -> None:
@@ -365,10 +405,11 @@ def _wrap_async_fixture(fixturedef: FixtureDef) -> None:
             res = await func(**_add_kwargs(func, kwargs, event_loop, request))
             return res
 
-        task = _create_task_in_context(
-            event_loop, setup(), _event_loop_context.get(None)
-        )
-        return event_loop.run_until_complete(task)
+        # Since the fixture doesn't have a cleanup phase, if it set any context
+        # variables we don't have a good way to clear them again.
+        # Instead, treat this fixture like an asyncio.Task, which has its own
+        # independent Context that doesn't affect the caller.
+        return event_loop.run_until_complete(setup())
 
     fixturedef.func = _async_fixture_wrapper  # type: ignore[misc]
 
@@ -592,46 +633,6 @@ _fixture_scope_by_collector_type: Mapping[type[pytest.Collector], _ScopeName] = 
     Session: "session",
 }
 
-# _event_loop_context stores the Context in which asyncio tasks on the fixture
-# event loop should be run. After fixture setup, individual async test functions
-# are run on copies of this context.
-_event_loop_context: contextvars.ContextVar[contextvars.Context] = (
-    contextvars.ContextVar("pytest_asyncio_event_loop_context")
-)
-
-
-@contextlib.contextmanager
-def _set_event_loop_context():
-    """Set event_loop_context to a copy of the calling thread's current context."""
-    context = contextvars.copy_context()
-    token = _event_loop_context.set(context)
-    try:
-        yield
-    finally:
-        _event_loop_context.reset(token)
-
-
-def _create_task_in_context(loop, coro, context):
-    """
-    Return an asyncio task that runs the coro in the specified context,
-    if possible.
-
-    This allows fixture setup and teardown to be run as separate asyncio tasks,
-    while still being able to use context-manager idioms to maintain context
-    variables and make those variables visible to test functions.
-
-    This is only fully supported on Python 3.11 and newer, as it requires
-    the API added for https://github.com/python/cpython/issues/91150.
-    On earlier versions, the returned task will use the default context instead.
-    """
-    if context is not None:
-        try:
-            return loop.create_task(coro, context=context)
-        except TypeError:
-            pass
-    return loop.create_task(coro)
-
-
 # A stack used to push package-scoped loops during collection of a package
 # and pop those loops during collection of a Module
 __package_loop_stack: list[FixtureFunctionMarker | FixtureFunction] = []
@@ -679,8 +680,7 @@ def pytest_collectstart(collector: pytest.Collector) -> None:
             loop = asyncio.new_event_loop()
             loop.__pytest_asyncio = True  # type: ignore[attr-defined]
             asyncio.set_event_loop(loop)
-            with _set_event_loop_context():
-                yield loop
+            yield loop
             loop.close()
 
     # @pytest.fixture does not register the fixture anywhere, so pytest doesn't
@@ -987,16 +987,9 @@ def wrap_in_sync(
 
     @functools.wraps(func)
     def inner(*args, **kwargs):
-        # Give each test its own context based on the loop's main context.
-        context = _event_loop_context.get(None)
-        if context is not None:
-            # We are using our own event loop fixture, so make a new copy of the
-            # fixture context so that the test won't pollute it.
-            context = context.copy()
-
         coro = func(*args, **kwargs)
         _loop = _get_event_loop_no_warn()
-        task = _create_task_in_context(_loop, coro, context)
+        task = asyncio.ensure_future(coro, loop=_loop)
         try:
             _loop.run_until_complete(task)
         except BaseException:
@@ -1105,8 +1098,7 @@ def event_loop(request: FixtureRequest) -> Iterator[asyncio.AbstractEventLoop]:
     # The magic value must be set as part of the function definition, because pytest
     # seems to have multiple instances of the same FixtureDef or fixture function
     loop.__original_fixture_loop = True  # type: ignore[attr-defined]
-    with _set_event_loop_context():
-        yield loop
+    yield loop
     loop.close()
 
 
@@ -1119,8 +1111,7 @@ def _session_event_loop(
         loop = asyncio.new_event_loop()
         loop.__pytest_asyncio = True  # type: ignore[attr-defined]
         asyncio.set_event_loop(loop)
-        with _set_event_loop_context():
-            yield loop
+        yield loop
         loop.close()
 
 
