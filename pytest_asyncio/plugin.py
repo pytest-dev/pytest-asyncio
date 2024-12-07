@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import contextvars
 import enum
 import functools
 import inspect
@@ -322,6 +323,23 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
             res = await gen_obj.__anext__()  # type: ignore[union-attr]
             return res
 
+        context = contextvars.copy_context()
+        setup_task = _create_task_in_context(event_loop, setup(), context)
+        result = event_loop.run_until_complete(setup_task)
+
+        # Copy the context vars set by the setup task back into the ambient
+        # context for the test.
+        context_tokens = []
+        for var in context:
+            try:
+                if var.get() is context.get(var):
+                    # Not modified by the fixture, so leave it as-is.
+                    continue
+            except LookupError:
+                pass
+            token = var.set(context.get(var))
+            context_tokens.append((var, token))
+
         def finalizer() -> None:
             """Yield again, to finalize."""
 
@@ -335,13 +353,38 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
                     msg += "Yield only once."
                     raise ValueError(msg)
 
-            event_loop.run_until_complete(async_finalizer())
+            task = _create_task_in_context(event_loop, async_finalizer(), context)
+            event_loop.run_until_complete(task)
 
-        result = event_loop.run_until_complete(setup())
+            # Since the fixture is now complete, restore any context variables
+            # it had set back to their original values.
+            while context_tokens:
+                (var, token) = context_tokens.pop()
+                var.reset(token)
+
         request.addfinalizer(finalizer)
         return result
 
     fixturedef.func = _asyncgen_fixture_wrapper  # type: ignore[misc]
+
+
+def _create_task_in_context(loop, coro, context):
+    """
+    Return an asyncio task that runs the coro in the specified context,
+    if possible.
+
+    This allows fixture setup and teardown to be run as separate asyncio tasks,
+    while still being able to use context-manager idioms to maintain context
+    variables and make those variables visible to test functions.
+
+    This is only fully supported on Python 3.11 and newer, as it requires
+    the API added for https://github.com/python/cpython/issues/91150.
+    On earlier versions, the returned task will use the default context instead.
+    """
+    try:
+        return loop.create_task(coro, context=context)
+    except TypeError:
+        return loop.create_task(coro)
 
 
 def _wrap_async_fixture(fixturedef: FixtureDef) -> None:
@@ -360,6 +403,10 @@ def _wrap_async_fixture(fixturedef: FixtureDef) -> None:
             res = await func(**_add_kwargs(func, kwargs, event_loop, request))
             return res
 
+        # Since the fixture doesn't have a cleanup phase, if it set any context
+        # variables we don't have a good way to clear them again.
+        # Instead, treat this fixture like an asyncio.Task, which has its own
+        # independent Context that doesn't affect the caller.
         return event_loop.run_until_complete(setup())
 
     fixturedef.func = _async_fixture_wrapper  # type: ignore[misc]
