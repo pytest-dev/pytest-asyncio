@@ -33,21 +33,28 @@ async def no_var_fixture():
 
 
 @pytest.fixture(scope="function")
-async def var_fixture(no_var_fixture):
-    with context_var_manager("value"):
+async def var_fixture_1(no_var_fixture):
+    with context_var_manager("value1"):
         yield
 
 
 @pytest.fixture(scope="function")
-async def var_nop_fixture(var_fixture):
+async def var_nop_fixture(var_fixture_1):
     with context_var_manager(_context_var.get()):
         yield
 
 
 @pytest.fixture(scope="function")
-def inner_var_fixture(var_nop_fixture):
-    assert _context_var.get() == "value"
+def var_fixture_2(var_nop_fixture):
+    assert _context_var.get() == "value1"
     with context_var_manager("value2"):
+        yield
+
+
+@pytest.fixture(scope="function")
+async def var_fixture_3(var_fixture_2):
+    assert _context_var.get() == "value2"
+    with context_var_manager("value3"):
         yield
 
 
@@ -55,5 +62,5 @@ def inner_var_fixture(var_nop_fixture):
 @pytest.mark.xfail(
     sys.version_info < (3, 11), reason="requires asyncio Task context support"
 )
-async def test(inner_var_fixture):
-    assert _context_var.get() == "value2"
+async def test(var_fixture_3):
+    assert _context_var.get() == "value3"
