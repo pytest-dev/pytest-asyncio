@@ -381,12 +381,10 @@ def _create_task_in_context(loop, coro, context):
     the API added for https://github.com/python/cpython/issues/91150.
     On earlier versions, the returned task will use the default context instead.
     """
-    if context is not None:
-        try:
-            return loop.create_task(coro, context=context)
-        except TypeError:
-            pass
-    return loop.create_task(coro)
+    try:
+        return loop.create_task(coro, context=context)
+    except TypeError:
+        return loop.create_task(coro)
 
 
 def _wrap_async_fixture(fixturedef: FixtureDef) -> None:
