@@ -25,7 +25,7 @@ The following code example provides a shared event loop for all tests in `TestCl
 .. include:: class_scoped_loop_strict_mode_example.py
     :code: python
 
-Requesting class scope with the test being part of a class will give a *UsageError*.
+If you request class scope for a test that is not part of a class, it will result in a *UsageError*.
 Similar to class-scoped event loops, a module-scoped loop is provided when setting mark's scope to *module:*
 
 .. include:: module_scoped_loop_strict_mode_example.py
