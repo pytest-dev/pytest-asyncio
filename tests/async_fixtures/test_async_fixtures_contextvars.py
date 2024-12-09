@@ -58,9 +58,16 @@ async def var_fixture_3(var_fixture_2):
         yield
 
 
+@pytest.fixture(scope="function")
+async def var_fixture_4(var_fixture_3, request):
+    assert _context_var.get() == "value3"
+    _context_var.set("value4")
+    # Rely on fixture teardown to reset the context var.
+
+
 @pytest.mark.asyncio
 @pytest.mark.xfail(
     sys.version_info < (3, 11), reason="requires asyncio Task context support"
 )
-async def test(var_fixture_3):
-    assert _context_var.get() == "value3"
+async def test(var_fixture_4):
+    assert _context_var.get() == "value4"
