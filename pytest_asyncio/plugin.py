@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import contextvars
 import enum
 import functools
 import inspect
@@ -322,6 +323,12 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
             res = await gen_obj.__anext__()  # type: ignore[union-attr]
             return res
 
+        context = contextvars.copy_context()
+        setup_task = _create_task_in_context(event_loop, setup(), context)
+        result = event_loop.run_until_complete(setup_task)
+
+        reset_contextvars = _apply_contextvar_changes(context)
+
         def finalizer() -> None:
             """Yield again, to finalize."""
 
@@ -335,9 +342,11 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
                     msg += "Yield only once."
                     raise ValueError(msg)
 
-            event_loop.run_until_complete(async_finalizer())
+            task = _create_task_in_context(event_loop, async_finalizer(), context)
+            event_loop.run_until_complete(task)
+            if reset_contextvars is not None:
+                reset_contextvars()
 
-        result = event_loop.run_until_complete(setup())
         request.addfinalizer(finalizer)
         return result
 
@@ -360,7 +369,23 @@ def _wrap_async_fixture(fixturedef: FixtureDef) -> None:
             res = await func(**_add_kwargs(func, kwargs, event_loop, request))
             return res
 
-        return event_loop.run_until_complete(setup())
+        context = contextvars.copy_context()
+        setup_task = _create_task_in_context(event_loop, setup(), context)
+        result = event_loop.run_until_complete(setup_task)
+
+        # Copy the context vars modified by the setup task into the current
+        # context, and (if needed) add a finalizer to reset them.
+        #
+        # Note that this is slightly different from the behavior of a non-async
+        # fixture, which would rely on the fixture author to add a finalizer
+        # to reset the variables. In this case, the author of the fixture can't
+        # write such a finalizer because they have no way to capture the Context
+        # in which the setup function was run, so we need to do it for them.
+        reset_contextvars = _apply_contextvar_changes(context)
+        if reset_contextvars is not None:
+            request.addfinalizer(reset_contextvars)
+
+        return result
 
     fixturedef.func = _async_fixture_wrapper  # type: ignore[misc]
 
@@ -383,6 +408,57 @@ def _get_event_loop_fixture_id_for_async_fixture(
         )
     assert event_loop_fixture_id
     return event_loop_fixture_id
+
+
+def _create_task_in_context(loop, coro, context):
+    """
+    Return an asyncio task that runs the coro in the specified context,
+    if possible.
+
+    This allows fixture setup and teardown to be run as separate asyncio tasks,
+    while still being able to use context-manager idioms to maintain context
+    variables and make those variables visible to test functions.
+
+    This is only fully supported on Python 3.11 and newer, as it requires
+    the API added for https://github.com/python/cpython/issues/91150.
+    On earlier versions, the returned task will use the default context instead.
+    """
+    try:
+        return loop.create_task(coro, context=context)
+    except TypeError:
+        return loop.create_task(coro)
+
+
+def _apply_contextvar_changes(
+    context: contextvars.Context,
+) -> Callable[[], None] | None:
+    """
+    Copy contextvar changes from the given context to the current context.
+
+    If any contextvars were modified by the fixture, return a finalizer that
+    will restore them.
+    """
+    context_tokens = []
+    for var in context:
+        try:
+            if var.get() is context.get(var):
+                # This variable is not modified, so leave it as-is.
+                continue
+        except LookupError:
+            # This variable isn't yet set in the current context at all.
+            pass
+        token = var.set(context.get(var))
+        context_tokens.append((var, token))
+
+    if not context_tokens:
+        return None
+
+    def restore_contextvars():
+        while context_tokens:
+            (var, token) = context_tokens.pop()
+            var.reset(token)
+
+    return restore_contextvars
 
 
 class PytestAsyncioFunction(Function):
