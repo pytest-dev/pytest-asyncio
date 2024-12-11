@@ -14,6 +14,7 @@ from asyncio import AbstractEventLoopPolicy
 from collections.abc import (
     AsyncIterator,
     Awaitable,
+    Coroutine as AbstractCoroutine,
     Generator,
     Iterable,
     Iterator,
@@ -410,7 +411,11 @@ def _get_event_loop_fixture_id_for_async_fixture(
     return event_loop_fixture_id
 
 
-def _create_task_in_context(loop, coro, context):
+def _create_task_in_context(
+    loop: asyncio.AbstractEventLoop,
+    coro: AbstractCoroutine[Any, Any, _T],
+    context: contextvars.Context,
+) -> asyncio.Task[_T]:
     """
     Return an asyncio task that runs the coro in the specified context,
     if possible.
