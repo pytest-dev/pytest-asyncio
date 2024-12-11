@@ -10,6 +10,7 @@ Changelog
 - Propagates `contextvars` set in async fixtures to other fixtures and tests on Python 3.11 and above. `#1008 <https://github.com/pytest-dev/pytest-asyncio/pull/1008>`_
 
 
+
 0.24.0 (2024-08-22)
 ===================
 - BREAKING: Updated minimum supported pytest version to v8.2.0
@@ -17,6 +18,7 @@ Changelog
 - Deprecates the optional `scope` keyword argument to `pytest.mark.asyncio` for API consistency with ``pytest_asyncio.fixture``. Users are encouraged to use the `loop_scope` keyword argument, which does exactly the same.
 - Raises an error when passing `scope` or `loop_scope` as a positional argument to ``@pytest.mark.asyncio``. `#812 <https://github.com/pytest-dev/pytest-asyncio/issues/812>`_
 - Fixes a bug that caused module-scoped async fixtures to fail when reused in other modules `#862 <https://github.com/pytest-dev/pytest-asyncio/issues/862>`_ `#668 <https://github.com/pytest-dev/pytest-asyncio/issues/668>`_
+- Added the ``asyncio_default_fixture_loop_scope`` configuration option `c74d1c3 <https://github.com/pytest-dev/pytest-asyncio/commit/c74d1c3fba1afac0b8316763257c915bfba5f5e3>`_
 
 
 0.23.8 (2024-07-17)
