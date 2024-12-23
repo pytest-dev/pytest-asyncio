@@ -239,7 +239,7 @@ def _preprocess_async_fixtures(
                 func
             ):
                 continue
-            if not _is_asyncio_fixture_function(func) and asyncio_mode == Mode.STRICT:
+            if asyncio_mode == Mode.STRICT and not _is_asyncio_fixture_function(func):
                 # Ignore async fixtures without explicit asyncio mark in strict mode
                 # This applies to pytest_trio fixtures, for example
                 continue
@@ -969,9 +969,9 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
                 # fixturedefs. The last entry in the list is closest and the one used.
                 func = fixtures[-1].func
                 if (
-                    _is_coroutine_or_asyncgen(func)
+                    asyncio_mode == Mode.STRICT
+                    and _is_coroutine_or_asyncgen(func)
                     and not _is_asyncio_fixture_function(func)
-                    and asyncio_mode == Mode.STRICT
                 ):
                     warnings.warn(
                         PytestDeprecationWarning(
