@@ -6,7 +6,7 @@ repos:
   - id: check-merge-conflict
     exclude: rst$
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.8.3
+  rev: v0.8.4
   hooks:
   - id: ruff
     args: [--fix]
@@ -42,7 +42,7 @@ repos:
   - id: check-yaml
   - id: debug-statements
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.13.0
+  rev: v1.14.0
   hooks:
   - id: mypy
     exclude: ^(docs|tests)/.*
