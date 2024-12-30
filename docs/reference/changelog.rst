@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.25.1 (UNRELEASED)
+===================
+- Fixes an issue that caused a broken event loop when a function-scoped test was executed in between two tests with wider loop scope `#950 <https://github.com/pytest-dev/pytest-asyncio/issues/950>`_
+
+
 0.25.0 (2024-12-13)
 ===================
 - Deprecated: Added warning when asyncio test requests async ``@pytest.fixture`` in strict mode. This will become an error in a future version of flake8-asyncio. `#979 <https://github.com/pytest-dev/pytest-asyncio/pull/979>`_

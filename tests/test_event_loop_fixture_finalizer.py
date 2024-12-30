@@ -14,7 +14,8 @@ def test_event_loop_fixture_finalizer_returns_fresh_loop_after_test(pytester: Py
 
             import pytest
 
-            loop = asyncio.get_event_loop_policy().get_event_loop()
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
 
             @pytest.mark.asyncio
             async def test_1():
