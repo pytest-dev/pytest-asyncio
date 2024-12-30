@@ -861,7 +861,7 @@ def pytest_fixture_setup(
         # Weird behavior was observed when checking for an attribute of FixtureDef.func
         # Instead, we now check for a special attribute of the returned event loop
         fixture_filename = inspect.getsourcefile(fixturedef.func)
-        if not getattr(loop, "__original_fixture_loop", False):
+        if not _is_pytest_asyncio_loop(loop):
             _, fixture_line_number = inspect.getsourcelines(fixturedef.func)
             warnings.warn(
                 _REDEFINED_EVENT_LOOP_FIXTURE_WARNING
@@ -1154,7 +1154,7 @@ def event_loop(request: FixtureRequest) -> Iterator[asyncio.AbstractEventLoop]:
         # set this value.
         # The magic value must be set as part of the function definition, because pytest
         # seems to have multiple instances of the same FixtureDef or fixture function
-        loop.__original_fixture_loop = True  # type: ignore[attr-defined]
+        loop = _make_pytest_asyncio_loop(loop)
         yield loop
         loop.close()
 
