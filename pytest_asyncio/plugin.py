@@ -872,8 +872,7 @@ def pytest_fixture_setup(
         policy = asyncio.get_event_loop_policy()
         try:
             old_loop = _get_event_loop_no_warn(policy)
-            is_pytest_asyncio_loop = getattr(old_loop, "__pytest_asyncio", False)
-            if old_loop is not loop and not is_pytest_asyncio_loop:
+            if old_loop is not loop and not _is_pytest_asyncio_loop(old_loop):
                 old_loop.close()
         except RuntimeError:
             # Either the current event loop has been set to None
@@ -884,6 +883,10 @@ def pytest_fixture_setup(
         return
 
     yield
+
+
+def _is_pytest_asyncio_loop(loop: AbstractEventLoop) -> bool:
+    return getattr(loop, "__pytest_asyncio", False)
 
 
 def _add_finalizers(fixturedef: FixtureDef, *finalizers: Callable[[], object]) -> None:
@@ -919,7 +922,7 @@ def _close_event_loop() -> None:
         loop = policy.get_event_loop()
     except RuntimeError:
         loop = None
-    if loop is not None and not getattr(loop, "__pytest_asyncio", False):
+    if loop is not None and not _is_pytest_asyncio_loop(loop):
         if not loop.is_closed():
             warnings.warn(
                 _UNCLOSED_EVENT_LOOP_WARNING % loop,
@@ -936,7 +939,7 @@ def _restore_event_loop_policy(previous_policy) -> Callable[[], None]:
             loop = _get_event_loop_no_warn(previous_policy)
         except RuntimeError:
             loop = None
-        if loop and not getattr(loop, "__pytest_asyncio", False):
+        if loop and not _is_pytest_asyncio_loop(loop):
             loop.close()
         asyncio.set_event_loop_policy(previous_policy)
 
@@ -955,7 +958,7 @@ def _provide_clean_event_loop() -> None:
         old_loop = _get_event_loop_no_warn(policy)
     except RuntimeError:
         old_loop = None
-    if old_loop is not None and not getattr(old_loop, "__pytest_asyncio", False):
+    if old_loop is not None and not _is_pytest_asyncio_loop(old_loop):
         new_loop = policy.new_event_loop()
         policy.set_event_loop(new_loop)
 
