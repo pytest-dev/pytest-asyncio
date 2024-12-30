@@ -709,8 +709,7 @@ def pytest_collectstart(collector: pytest.Collector) -> None:
     ) -> Iterator[asyncio.AbstractEventLoop]:
         new_loop_policy = event_loop_policy
         with _temporary_event_loop_policy(new_loop_policy):
-            loop = asyncio.new_event_loop()
-            loop.__pytest_asyncio = True  # type: ignore[attr-defined]
+            loop = _make_pytest_asyncio_loop(asyncio.new_event_loop())
             asyncio.set_event_loop(loop)
             yield loop
             loop.close()
@@ -883,6 +882,11 @@ def pytest_fixture_setup(
         return
 
     yield
+
+
+def _make_pytest_asyncio_loop(loop: AbstractEventLoop) -> AbstractEventLoop:
+    loop.__pytest_asyncio = True  # type: ignore[attr-defined]
+    return loop
 
 
 def _is_pytest_asyncio_loop(loop: AbstractEventLoop) -> bool:
@@ -1161,8 +1165,7 @@ def _session_event_loop(
 ) -> Iterator[asyncio.AbstractEventLoop]:
     new_loop_policy = event_loop_policy
     with _temporary_event_loop_policy(new_loop_policy):
-        loop = asyncio.new_event_loop()
-        loop.__pytest_asyncio = True  # type: ignore[attr-defined]
+        loop = _make_pytest_asyncio_loop(asyncio.new_event_loop())
         asyncio.set_event_loop(loop)
         yield loop
         loop.close()
