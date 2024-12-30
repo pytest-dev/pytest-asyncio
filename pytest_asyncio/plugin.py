@@ -10,7 +10,7 @@ import functools
 import inspect
 import socket
 import warnings
-from asyncio import AbstractEventLoopPolicy
+from asyncio import AbstractEventLoop, AbstractEventLoopPolicy
 from collections.abc import (
     AsyncIterator,
     Awaitable,
@@ -762,6 +762,19 @@ def _temporary_event_loop_policy(policy: AbstractEventLoopPolicy) -> Iterator[No
     try:
         yield
     finally:
+        # Try detecting user-created event loops that were left unclosed
+        # at the end of a test.
+        try:
+            current_loop: AbstractEventLoop | None = _get_event_loop_no_warn()
+        except RuntimeError:
+            current_loop = None
+        if current_loop is not None and not current_loop.is_closed():
+            warnings.warn(
+                _UNCLOSED_EVENT_LOOP_WARNING % current_loop,
+                DeprecationWarning,
+            )
+            current_loop.close()
+
         asyncio.set_event_loop_policy(old_loop_policy)
         # When a test uses both a scoped event loop and the event_loop fixture,
         # the "_provide_clean_event_loop" finalizer of the event_loop fixture
@@ -906,7 +919,7 @@ def _close_event_loop() -> None:
         loop = policy.get_event_loop()
     except RuntimeError:
         loop = None
-    if loop is not None:
+    if loop is not None and not getattr(loop, "__pytest_asyncio", False):
         if not loop.is_closed():
             warnings.warn(
                 _UNCLOSED_EVENT_LOOP_WARNING % loop,
@@ -923,7 +936,7 @@ def _restore_event_loop_policy(previous_policy) -> Callable[[], None]:
             loop = _get_event_loop_no_warn(previous_policy)
         except RuntimeError:
             loop = None
-        if loop:
+        if loop and not getattr(loop, "__pytest_asyncio", False):
             loop.close()
         asyncio.set_event_loop_policy(previous_policy)
 
@@ -938,8 +951,13 @@ def _provide_clean_event_loop() -> None:
     # Note that we cannot set the loop to None, because get_event_loop only creates
     # a new loop, when set_event_loop has not been called.
     policy = asyncio.get_event_loop_policy()
-    new_loop = policy.new_event_loop()
-    policy.set_event_loop(new_loop)
+    try:
+        old_loop = _get_event_loop_no_warn(policy)
+    except RuntimeError:
+        old_loop = None
+    if old_loop is not None and not getattr(old_loop, "__pytest_asyncio", False):
+        new_loop = policy.new_event_loop()
+        policy.set_event_loop(new_loop)
 
 
 def _get_event_loop_no_warn(
@@ -1122,16 +1140,16 @@ def _retrieve_scope_root(item: Collector | Item, scope: str) -> Collector:
 def event_loop(request: FixtureRequest) -> Iterator[asyncio.AbstractEventLoop]:
     """Create an instance of the default event loop for each test case."""
     new_loop_policy = request.getfixturevalue(event_loop_policy.__name__)
-    asyncio.set_event_loop_policy(new_loop_policy)
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    # Add a magic value to the event loop, so pytest-asyncio can determine if the
-    # event_loop fixture was overridden. Other implementations of event_loop don't
-    # set this value.
-    # The magic value must be set as part of the function definition, because pytest
-    # seems to have multiple instances of the same FixtureDef or fixture function
-    loop.__original_fixture_loop = True  # type: ignore[attr-defined]
-    yield loop
-    loop.close()
+    with _temporary_event_loop_policy(new_loop_policy):
+        loop = asyncio.get_event_loop_policy().new_event_loop()
+        # Add a magic value to the event loop, so pytest-asyncio can determine if the
+        # event_loop fixture was overridden. Other implementations of event_loop don't
+        # set this value.
+        # The magic value must be set as part of the function definition, because pytest
+        # seems to have multiple instances of the same FixtureDef or fixture function
+        loop.__original_fixture_loop = True  # type: ignore[attr-defined]
+        yield loop
+        loop.close()
 
 
 @pytest.fixture(scope="session")
