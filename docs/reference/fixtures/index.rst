@@ -19,7 +19,7 @@ The fixture scope defaults to ``function`` scope.
 .. include:: event_loop_example.py
     :code: python
 
-Note that, when using the ``event_loop`` fixture, you need to interact with the event loop using methods like ``event_loop.run_until_complete``. If you want to *await* code inside your test function, you need to write a coroutine and use it as a test function. The `asyncio <#pytest-mark-asyncio>`__ marker
+Note that, when using the ``event_loop`` fixture, you need to interact with the event loop using methods like ``event_loop.run_until_complete``. If you want to *await* code inside your test function, you need to write a coroutine and use it as a test function. The :ref:`asyncio <reference/markers/asyncio>` marker
 is used to mark coroutines that should be treated as test functions.
 
 If you need to change the type of the event loop, prefer setting a custom event loop policy over redefining the ``event_loop`` fixture.
