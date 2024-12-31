@@ -794,7 +794,7 @@ _REDEFINED_EVENT_LOOP_FIXTURE_WARNING = dedent(
     Replacing the event_loop fixture with a custom implementation is deprecated
     and will lead to errors in the future.
     If you want to request an asyncio event loop with a scope other than function
-    scope, use the "scope" argument to the asyncio mark when marking the tests.
+    scope, use the "loop_scope" argument to the asyncio mark when marking the tests.
     If you want to return different types of event loops, use the event_loop_policy
     fixture.
     """

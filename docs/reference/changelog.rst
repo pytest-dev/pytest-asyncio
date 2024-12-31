@@ -6,6 +6,7 @@ Changelog
 ===================
 - Fixes an issue that caused a broken event loop when a function-scoped test was executed in between two tests with wider loop scope `#950 <https://github.com/pytest-dev/pytest-asyncio/issues/950>`_
 - Improves test collection speed in auto mode `#1020 <https://github.com/pytest-dev/pytest-asyncio/pull/1020>`_
+- Corrects the warning that is emitted upon redefining the event_loop fixture
 
 
 0.25.0 (2024-12-13)
