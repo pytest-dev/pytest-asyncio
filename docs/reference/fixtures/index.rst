@@ -4,6 +4,13 @@ Fixtures
 
 event_loop
 ==========
+*This fixture is deprecated.*
+
+*If you want to request an asyncio event loop with a scope other than function
+scope, use the "loop_scope" argument to* :ref:`reference/markers/asyncio` *when marking the tests.
+If you want to return different types of event loops, use the* :ref:`reference/fixtures/event_loop_policy`
+*fixture.*
+
 Creates a new asyncio event loop based on the current event loop policy. The new loop
 is available as the return value of this fixture for synchronous functions, or via `asyncio.get_running_loop <https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.get_running_loop>`__ for asynchronous functions.
 The event loop is closed when the fixture scope ends.
@@ -19,6 +26,8 @@ If you need to change the type of the event loop, prefer setting a custom event 
 
 If the ``pytest.mark.asyncio`` decorator is applied to a test function, the ``event_loop``
 fixture will be requested automatically by the test function.
+
+.. _reference/fixtures/event_loop_policy:
 
 event_loop_policy
 =================

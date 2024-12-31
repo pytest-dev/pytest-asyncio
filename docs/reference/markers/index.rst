@@ -2,6 +2,8 @@
 Markers
 =======
 
+.. _reference/markers/asyncio:
+
 ``pytest.mark.asyncio``
 =======================
 A coroutine or async generator with this marker is treated as a test function by pytest.
