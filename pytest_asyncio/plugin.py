@@ -708,11 +708,12 @@ def pytest_collectstart(collector: pytest.Collector) -> None:
         event_loop_policy,
     ) -> Iterator[asyncio.AbstractEventLoop]:
         new_loop_policy = event_loop_policy
-        with _temporary_event_loop_policy(new_loop_policy):
-            loop = _make_pytest_asyncio_loop(asyncio.new_event_loop())
+        with (
+            _temporary_event_loop_policy(new_loop_policy),
+            _provide_event_loop() as loop,
+        ):
             asyncio.set_event_loop(loop)
             yield loop
-            loop.close()
 
     # @pytest.fixture does not register the fixture anywhere, so pytest doesn't
     # know it exists. We work around this by attaching the fixture function to the
@@ -1147,16 +1148,26 @@ def _retrieve_scope_root(item: Collector | Item, scope: str) -> Collector:
 def event_loop(request: FixtureRequest) -> Iterator[asyncio.AbstractEventLoop]:
     """Create an instance of the default event loop for each test case."""
     new_loop_policy = request.getfixturevalue(event_loop_policy.__name__)
-    with _temporary_event_loop_policy(new_loop_policy):
-        loop = asyncio.get_event_loop_policy().new_event_loop()
-        # Add a magic value to the event loop, so pytest-asyncio can determine if the
-        # event_loop fixture was overridden. Other implementations of event_loop don't
-        # set this value.
-        # The magic value must be set as part of the function definition, because pytest
-        # seems to have multiple instances of the same FixtureDef or fixture function
-        loop = _make_pytest_asyncio_loop(loop)
+    with _temporary_event_loop_policy(new_loop_policy), _provide_event_loop() as loop:
         yield loop
-        loop.close()
+
+
+@contextlib.contextmanager
+def _provide_event_loop() -> Iterator[asyncio.AbstractEventLoop]:
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    # Add a magic value to the event loop, so pytest-asyncio can determine if the
+    # event_loop fixture was overridden. Other implementations of event_loop don't
+    # set this value.
+    # The magic value must be set as part of the function definition, because pytest
+    # seems to have multiple instances of the same FixtureDef or fixture function
+    loop = _make_pytest_asyncio_loop(loop)
+    try:
+        yield loop
+    finally:
+        try:
+            loop.run_until_complete(loop.shutdown_asyncgens())
+        finally:
+            loop.close()
 
 
 @pytest.fixture(scope="session")
@@ -1164,11 +1175,9 @@ def _session_event_loop(
     request: FixtureRequest, event_loop_policy: AbstractEventLoopPolicy
 ) -> Iterator[asyncio.AbstractEventLoop]:
     new_loop_policy = event_loop_policy
-    with _temporary_event_loop_policy(new_loop_policy):
-        loop = _make_pytest_asyncio_loop(asyncio.new_event_loop())
+    with _temporary_event_loop_policy(new_loop_policy), _provide_event_loop() as loop:
         asyncio.set_event_loop(loop)
         yield loop
-        loop.close()
 
 
 @pytest.fixture(scope="session", autouse=True)

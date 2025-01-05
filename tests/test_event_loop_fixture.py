@@ -53,3 +53,30 @@ def test_event_loop_fixture_respects_event_loop_policy(pytester: Pytester):
     )
     result = pytester.runpytest_subprocess("--asyncio-mode=strict")
     result.assert_outcomes(passed=2)
+
+
+def test_event_loop_fixture_handles_unclosed_async_gen(
+    pytester: Pytester,
+):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+            import pytest
+
+            pytest_plugins = 'pytest_asyncio'
+
+            @pytest.mark.asyncio
+            async def test_something():
+                async def generator_fn():
+                    yield
+                    yield
+
+                gen = generator_fn()
+                await gen.__anext__()
+            """
+        )
+    )
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W", "default")
+    result.assert_outcomes(passed=1, warnings=0)

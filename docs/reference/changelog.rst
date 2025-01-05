@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.25.2 (UNRELEASED)
+===================
+
+- Call ``loop.shutdown_asyncgens()`` before closing the event loop to ensure async generators are closed in the same manner as ``asyncio.run`` does `#1034 <https://github.com/pytest-dev/pytest-asyncio/pull/1034>`_
+
 0.25.1 (2025-01-02)
 ===================
 - Fixes an issue that caused a broken event loop when a function-scoped test was executed in between two tests with wider loop scope `#950 <https://github.com/pytest-dev/pytest-asyncio/issues/950>`_
