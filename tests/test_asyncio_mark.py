@@ -146,3 +146,80 @@ def test_asyncio_mark_on_async_generator_staticmethod_emits_warning_in_auto_mode
     result.stdout.fnmatch_lines(
         ["*Tests based on asynchronous generators are not supported*"]
     )
+
+
+def test_asyncio_marker_fallbacks_to_configured_default_loop_scope_if_not_set(
+    pytester: Pytester,
+):
+    pytester.makeini(
+        dedent(
+            """\
+            [pytest]
+            asyncio_default_fixture_loop_scope = function
+            asyncio_default_test_loop_scope = session
+            """
+        )
+    )
+
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+            import pytest_asyncio
+            import pytest
+
+            loop: asyncio.AbstractEventLoop
+
+            @pytest_asyncio.fixture(loop_scope="session", scope="session")
+            async def session_loop_fixture():
+                global loop
+                loop = asyncio.get_running_loop()
+
+            async def test_a(session_loop_fixture):
+                global loop
+                assert asyncio.get_running_loop() is loop
+            """
+        )
+    )
+
+    result = pytester.runpytest("--asyncio-mode=auto")
+    result.assert_outcomes(passed=1)
+
+
+def test_asyncio_marker_uses_marker_loop_scope_even_if_config_is_set(
+    pytester: Pytester,
+):
+    pytester.makeini(
+        dedent(
+            """\
+            [pytest]
+            asyncio_default_fixture_loop_scope = function
+            asyncio_default_test_loop_scope = module
+            """
+        )
+    )
+
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+            import pytest_asyncio
+            import pytest
+
+            loop: asyncio.AbstractEventLoop
+
+            @pytest_asyncio.fixture(loop_scope="session", scope="session")
+            async def session_loop_fixture():
+                global loop
+                loop = asyncio.get_running_loop()
+
+            @pytest.mark.asyncio(loop_scope="session")
+            async def test_a(session_loop_fixture):
+                global loop
+                assert asyncio.get_running_loop() is loop
+            """
+        )
+    )
+
+    result = pytester.runpytest("--asyncio-mode=auto")
+    result.assert_outcomes(passed=1)
