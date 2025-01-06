@@ -107,6 +107,12 @@ def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager) -> None
         help="default scope of the asyncio event loop used to execute async fixtures",
         default=None,
     )
+    parser.addini(
+        "asyncio_default_test_loop_scope",
+        type="string",
+        help="default scope of the asyncio event loop used to execute tests",
+        default="function",
+    )
 
 
 @overload
@@ -217,9 +223,15 @@ def pytest_configure(config: Config) -> None:
 def pytest_report_header(config: Config) -> list[str]:
     """Add asyncio config to pytest header."""
     mode = _get_asyncio_mode(config)
-    default_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
+    default_fixture_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
+    default_test_loop_scope = _get_default_test_loop_scope(config)
+    header = [
+        f"mode={mode}",
+        f"asyncio_default_fixture_loop_scope={default_fixture_loop_scope}",
+        f"asyncio_default_test_loop_scope={default_test_loop_scope}",
+    ]
     return [
-        f"asyncio: mode={mode}, asyncio_default_fixture_loop_scope={default_loop_scope}"
+        "asyncio: " + ", ".join(header),
     ]
 
 
@@ -807,7 +819,8 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
     marker = metafunc.definition.get_closest_marker("asyncio")
     if not marker:
         return
-    scope = _get_marked_loop_scope(marker)
+    default_loop_scope = _get_default_test_loop_scope(metafunc.config)
+    scope = _get_marked_loop_scope(marker, default_loop_scope)
     if scope == "function":
         return
     event_loop_node = _retrieve_scope_root(metafunc.definition, scope)
@@ -1078,7 +1091,8 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
     marker = item.get_closest_marker("asyncio")
     if marker is None:
         return
-    scope = _get_marked_loop_scope(marker)
+    default_loop_scope = _get_default_test_loop_scope(item.config)
+    scope = _get_marked_loop_scope(marker, default_loop_scope)
     if scope != "function":
         parent_node = _retrieve_scope_root(item, scope)
         event_loop_fixture_id = parent_node.stash[_event_loop_fixture_id]
@@ -1108,7 +1122,9 @@ Please use the "loop_scope" argument instead.
 """
 
 
-def _get_marked_loop_scope(asyncio_marker: Mark) -> _ScopeName:
+def _get_marked_loop_scope(
+    asyncio_marker: Mark, default_loop_scope: _ScopeName
+) -> _ScopeName:
     assert asyncio_marker.name == "asyncio"
     if asyncio_marker.args or (
         asyncio_marker.kwargs and set(asyncio_marker.kwargs) - {"loop_scope", "scope"}
@@ -1119,10 +1135,16 @@ def _get_marked_loop_scope(asyncio_marker: Mark) -> _ScopeName:
             raise pytest.UsageError(_DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR)
         warnings.warn(PytestDeprecationWarning(_MARKER_SCOPE_KWARG_DEPRECATION_WARNING))
     scope = asyncio_marker.kwargs.get("loop_scope") or asyncio_marker.kwargs.get(
-        "scope", "function"
+        "scope"
     )
+    if scope is None:
+        scope = default_loop_scope
     assert scope in {"function", "class", "module", "package", "session"}
     return scope
+
+
+def _get_default_test_loop_scope(config: Config) -> _ScopeName:
+    return config.getini("asyncio_default_test_loop_scope")
 
 
 def _retrieve_scope_root(item: Collector | Item, scope: str) -> Collector:

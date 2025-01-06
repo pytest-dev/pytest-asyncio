@@ -2,9 +2,13 @@
 Changelog
 =========
 
+0.26.0 (UNRELEASED)
+===================
+- Adds configuration option that sets default event loop scope for all testss `#793 <https://github.com/pytest-dev/pytest-asyncio/issues/793>`_
+
+
 0.25.2 (2025-01-08)
 ===================
-
 - Call ``loop.shutdown_asyncgens()`` before closing the event loop to ensure async generators are closed in the same manner as ``asyncio.run`` does `#1034 <https://github.com/pytest-dev/pytest-asyncio/pull/1034>`_
 
 0.25.1 (2025-01-02)
