@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.25.2 (UNRELEASED)
+0.25.2 (2025-01-08)
 ===================
 
 - Call ``loop.shutdown_asyncgens()`` before closing the event loop to ensure async generators are closed in the same manner as ``asyncio.run`` does `#1034 <https://github.com/pytest-dev/pytest-asyncio/pull/1034>`_
