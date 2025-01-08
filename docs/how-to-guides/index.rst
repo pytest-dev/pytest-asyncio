@@ -9,10 +9,10 @@ How-To Guides
   migrate_from_0_23
   change_fixture_loop
   change_default_fixture_loop
+  change_default_test_loop
   run_class_tests_in_same_loop
   run_module_tests_in_same_loop
   run_package_tests_in_same_loop
-  run_session_tests_in_same_loop
   multiple_loops
   uvloop
   test_item_is_async
