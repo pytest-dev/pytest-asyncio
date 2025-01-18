@@ -683,9 +683,7 @@ _fixture_scope_by_collector_type: Mapping[type[pytest.Collector], _ScopeName] = 
 
 # A stack used to push package-scoped loops during collection of a package
 # and pop those loops during collection of a Module
-__package_loop_stack: list[
-    FixtureFunctionMarker[FixtureFunctionType] | FixtureFunctionType
-] = []
+__package_loop_stack: list[Callable[..., Any]] = []
 
 
 @pytest.hookimpl
