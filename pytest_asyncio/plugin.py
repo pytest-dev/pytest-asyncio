@@ -56,14 +56,18 @@ from pytest import (
 _ScopeName = Literal["session", "package", "module", "class", "function"]
 _T = TypeVar("_T")
 
-SimpleFixtureFunction = TypeVar(
-    "SimpleFixtureFunction", bound=Callable[..., Awaitable[object]]
+FixtureFunctionT = TypeVar(
+    "FixtureFunctionT",
+    bound=Union[Callable[..., Awaitable[Any]], Callable[..., AsyncIterator[Any]]],
 )
-FactoryFixtureFunction = TypeVar(
-    "FactoryFixtureFunction", bound=Callable[..., AsyncIterator[object]]
+FixtureFunctionU = TypeVar(
+    "FixtureFunctionU",
+    bound=Union[Callable[..., Awaitable[Any]], Callable[..., AsyncIterator[Any]]],
 )
-FixtureFunction = Union[SimpleFixtureFunction, FactoryFixtureFunction]
-FixtureFunctionMarker = Callable[[FixtureFunction], FixtureFunction]
+FixtureFunctionType = Union[
+    Callable[..., Awaitable[Any]], Callable[..., AsyncIterator[Any]]
+]
+FixtureFunctionMarker = Callable[[FixtureFunctionT], FixtureFunctionT]
 
 
 class PytestAsyncioError(Exception):
@@ -117,7 +121,7 @@ def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager) -> None
 
 @overload
 def fixture(
-    fixture_function: FixtureFunction,
+    fixture_function: FixtureFunctionT,
     *,
     scope: _ScopeName | Callable[[str, Config], _ScopeName] = ...,
     loop_scope: _ScopeName | None = ...,
@@ -129,7 +133,7 @@ def fixture(
         | None
     ) = ...,
     name: str | None = ...,
-) -> FixtureFunction: ...
+) -> FixtureFunctionT: ...
 
 
 @overload
@@ -146,14 +150,14 @@ def fixture(
         | None
     ) = ...,
     name: str | None = None,
-) -> FixtureFunctionMarker: ...
+) -> FixtureFunctionMarker[FixtureFunctionU]: ...
 
 
 def fixture(
-    fixture_function: FixtureFunction | None = None,
+    fixture_function: FixtureFunctionT | None = None,
     loop_scope: _ScopeName | None = None,
     **kwargs: Any,
-) -> FixtureFunction | FixtureFunctionMarker:
+) -> FixtureFunctionT | FixtureFunctionMarker[FixtureFunctionU]:
     if fixture_function is not None:
         _make_asyncio_fixture_function(fixture_function, loop_scope)
         return pytest.fixture(fixture_function, **kwargs)
@@ -161,7 +165,7 @@ def fixture(
     else:
 
         @functools.wraps(fixture)
-        def inner(fixture_function: FixtureFunction) -> FixtureFunction:
+        def inner(fixture_function: FixtureFunctionU) -> FixtureFunctionU:
             return fixture(fixture_function, loop_scope=loop_scope, **kwargs)
 
         return inner
@@ -679,7 +683,9 @@ _fixture_scope_by_collector_type: Mapping[type[pytest.Collector], _ScopeName] = 
 
 # A stack used to push package-scoped loops during collection of a package
 # and pop those loops during collection of a Module
-__package_loop_stack: list[FixtureFunctionMarker | FixtureFunction] = []
+__package_loop_stack: list[
+    FixtureFunctionMarker[FixtureFunctionType] | FixtureFunctionType
+] = []
 
 
 @pytest.hookimpl
