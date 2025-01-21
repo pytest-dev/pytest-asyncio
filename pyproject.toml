@@ -38,6 +38,7 @@ dynamic = [
 
 dependencies = [
   "pytest>=8.2,<9",
+  "typing-extensions>=4.12; python_version<'3.10'",
 ]
 optional-dependencies.docs = [
   "sphinx>=5.3",

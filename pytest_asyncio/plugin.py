@@ -9,6 +9,7 @@ import enum
 import functools
 import inspect
 import socket
+import sys
 import warnings
 from asyncio import AbstractEventLoop, AbstractEventLoopPolicy
 from collections.abc import (
@@ -53,21 +54,17 @@ from pytest import (
     StashKey,
 )
 
+if sys.version_info >= (3, 10):
+    from typing import ParamSpec
+else:
+    from typing_extensions import ParamSpec
+
+
 _ScopeName = Literal["session", "package", "module", "class", "function"]
 _T = TypeVar("_T")
-
-FixtureFunctionT = TypeVar(
-    "FixtureFunctionT",
-    bound=Union[Callable[..., Awaitable[Any]], Callable[..., AsyncIterator[Any]]],
-)
-FixtureFunctionU = TypeVar(
-    "FixtureFunctionU",
-    bound=Union[Callable[..., Awaitable[Any]], Callable[..., AsyncIterator[Any]]],
-)
-FixtureFunctionType = Union[
-    Callable[..., Awaitable[Any]], Callable[..., AsyncIterator[Any]]
-]
-FixtureFunctionMarker = Callable[[FixtureFunctionT], FixtureFunctionT]
+_R = TypeVar("_R", bound=Union[Awaitable[Any], AsyncIterator[Any]])
+_P = ParamSpec("_P")
+FixtureFunction = Callable[_P, _R]
 
 
 class PytestAsyncioError(Exception):
@@ -121,7 +118,7 @@ def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager) -> None
 
 @overload
 def fixture(
-    fixture_function: FixtureFunctionT,
+    fixture_function: FixtureFunction[_P, _R],
     *,
     scope: _ScopeName | Callable[[str, Config], _ScopeName] = ...,
     loop_scope: _ScopeName | None = ...,
@@ -133,7 +130,7 @@ def fixture(
         | None
     ) = ...,
     name: str | None = ...,
-) -> FixtureFunctionT: ...
+) -> FixtureFunction[_P, _R]: ...
 
 
 @overload
@@ -150,14 +147,17 @@ def fixture(
         | None
     ) = ...,
     name: str | None = None,
-) -> FixtureFunctionMarker[FixtureFunctionU]: ...
+) -> Callable[[FixtureFunction[_P, _R]], FixtureFunction[_P, _R]]: ...
 
 
 def fixture(
-    fixture_function: FixtureFunctionT | None = None,
+    fixture_function: FixtureFunction[_P, _R] | None = None,
     loop_scope: _ScopeName | None = None,
     **kwargs: Any,
-) -> FixtureFunctionT | FixtureFunctionMarker[FixtureFunctionU]:
+) -> (
+    FixtureFunction[_P, _R]
+    | Callable[[FixtureFunction[_P, _R]], FixtureFunction[_P, _R]]
+):
     if fixture_function is not None:
         _make_asyncio_fixture_function(fixture_function, loop_scope)
         return pytest.fixture(fixture_function, **kwargs)
@@ -165,7 +165,7 @@ def fixture(
     else:
 
         @functools.wraps(fixture)
-        def inner(fixture_function: FixtureFunctionU) -> FixtureFunctionU:
+        def inner(fixture_function: FixtureFunction[_P, _R]) -> FixtureFunction[_P, _R]:
             return fixture(fixture_function, loop_scope=loop_scope, **kwargs)
 
         return inner
