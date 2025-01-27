@@ -1164,10 +1164,14 @@ def _provide_event_loop() -> Iterator[asyncio.AbstractEventLoop]:
     try:
         yield loop
     finally:
-        try:
-            loop.run_until_complete(loop.shutdown_asyncgens())
-        finally:
-            loop.close()
+        # cleanup the event loop if it hasn't been cleaned up already
+        if not loop.is_closed():
+            try:
+                loop.run_until_complete(loop.shutdown_asyncgens())
+            except Exception as e:
+                warnings.warn(f"Error cleaning up asyncio loop: {e}", RuntimeWarning)
+            finally:
+                loop.close()
 
 
 @pytest.fixture(scope="session")
