@@ -9,9 +9,15 @@ Changelog
 - Added ``typing-extensions`` as additional dependency for Python ``<3.10`` `#1045 <https://github.com/pytest-dev/pytest-asyncio/pull/1045>`_
 
 
+0.25.3 (2025-01-28)
+===================
+- Avoid errors in cleanup of async generators when event loop is already closed `#1040 <https://github.com/pytest-dev/pytest-asyncio/issues/1040>`_
+
+
 0.25.2 (2025-01-08)
 ===================
 - Call ``loop.shutdown_asyncgens()`` before closing the event loop to ensure async generators are closed in the same manner as ``asyncio.run`` does `#1034 <https://github.com/pytest-dev/pytest-asyncio/pull/1034>`_
+
 
 0.25.1 (2025-01-02)
 ===================
@@ -26,7 +32,6 @@ Changelog
 - Updates the error message about `pytest.mark.asyncio`'s `scope` keyword argument to say `loop_scope` instead. `#1004 <https://github.com/pytest-dev/pytest-asyncio/pull/1004>`_
 - Verbose log displays correct parameter name: asyncio_default_fixture_loop_scope `#990 <https://github.com/pytest-dev/pytest-asyncio/pull/990>`_
 - Propagates `contextvars` set in async fixtures to other fixtures and tests on Python 3.11 and above. `#1008 <https://github.com/pytest-dev/pytest-asyncio/pull/1008>`_
-
 
 
 0.24.0 (2024-08-22)
