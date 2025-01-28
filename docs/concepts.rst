@@ -47,8 +47,12 @@ Assigning neighboring tests to different event loop scopes is discouraged as it 
 Test discovery modes
 ====================
 
-Pytest-asyncio provides two modes for test discovery, *strict* and *auto*.
+Pytest-asyncio provides two modes for test discovery, *strict* and *auto*. This can be set through Pytest's ``--asyncio-mode`` command line flag, or through the configuration file:
 
+.. code-block:: toml
+
+    [tool.pytest.ini_options]
+    asyncio_mode = "auto" # or "strict"
 
 Strict mode
 -----------
