@@ -2,7 +2,7 @@
 How to test with uvloop
 =======================
 
-Redefinig the *event_loop_policy* fixture will parametrize all async tests. The following example causes all async tests to run multiple times, once for each event loop in the fixture parameters:
+Redefining the *event_loop_policy* fixture will parametrize all async tests. The following example causes all async tests to run multiple times, once for each event loop in the fixture parameters:
 Replace the default event loop policy in your *conftest.py:*
 
 .. code-block:: python
