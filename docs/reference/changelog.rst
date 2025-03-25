@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.26.0 (UNRELEASED)
+0.26.0 (2025-03-25)
 ===================
 - Adds configuration option that sets default event loop scope for all tests `#793 <https://github.com/pytest-dev/pytest-asyncio/issues/793>`_
 - Improved type annotations for ``pytest_asyncio.fixture`` `#1045 <https://github.com/pytest-dev/pytest-asyncio/pull/1045>`_
