@@ -65,7 +65,7 @@ repos:
     - 'SC1004:'
     stages: [manual]
 - repo: https://github.com/sirosen/check-jsonschema
-  rev: 0.31.3
+  rev: 0.32.1
   hooks:
   - id: check-github-actions
 - repo: https://github.com/tox-dev/pyproject-fmt
