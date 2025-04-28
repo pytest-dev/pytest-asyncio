@@ -1,7 +1,7 @@
 attrs==25.3.0
 coverage==7.8.0
 exceptiongroup==1.2.2
-hypothesis==6.131.6
+hypothesis==6.131.9
 iniconfig==2.1.0
 packaging==25.0
 pluggy==1.5.0
