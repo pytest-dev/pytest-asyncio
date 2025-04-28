@@ -128,15 +128,27 @@ jobs:
 
   prepare-release-notes:
     name: Prepare Release Notes
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    needs: [lint]
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Install Python
+      uses: actions/setup-python@v5
+    - name: Install towncrier
+      run: pip install towncrier==24.8.0
     - name: Install pandoc
       run: |
         sudo apt-get install -y pandoc
+    - name: Install pytest-asyncio
+      run: pip install .
+    - name: Compile Release Notes Draft
+      if: ${{ !contains(github.ref, 'refs/tags/') }}
+      run: towncrier build --draft --version "${{ needs.lint.outputs.version }}" > release-notes.rst
     - name: Extract release notes from Git tag
+      if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
       run: |
         set -e
         git for-each-ref github.ref --format='%(contents)' > release-notes.rst
