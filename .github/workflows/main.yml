@@ -147,9 +147,15 @@ jobs:
     - name: Collected dists
       run: |
         tree dist
-    - name: Convert README.rst to Markdown
+    - name: Extract release notes from Git tag
       run: |
-        pandoc -s -o README.md README.rst
+        set -e
+        git for-each-ref github.ref --format='%(contents)' > release-notes.rst
+        # Strip PGP signature from signed tags
+        sed -i "/-----BEGIN PGP SIGNATURE-----/,/-----END PGP SIGNATURE-----\n/d" release-notes.rst
+    - name: Convert Release Notes to Markdown
+      run: |
+        pandoc -s -o release-notes.md release-notes.rst
     - name: PyPI upload
       uses: pypa/gh-action-pypi-publish@v1.12.4
       with:
@@ -161,6 +167,6 @@ jobs:
       with:
         name: pytest-asyncio ${{ needs.lint.outputs.version }}
         artifacts: dist/*
-        bodyFile: README.md
+        bodyFile: release-notes.md
         prerelease: ${{ needs.lint.outputs.prerelease }}
         token: ${{ secrets.GITHUB_TOKEN }}
