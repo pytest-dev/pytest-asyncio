@@ -126,27 +126,16 @@ jobs:
         fail_ci_if_error: true
         token: ${{ secrets.CODECOV_TOKEN }}
 
-  deploy:
-    name: Deploy
-    environment: release
-        # Run only on pushing a tag
+  prepare-release-notes:
+    name: Prepare Release Notes
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
-    needs: [lint, check]
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout
+      uses: actions/checkout@v4
     - name: Install pandoc
       run: |
         sudo apt-get install -y pandoc
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Download distributions
-      uses: actions/download-artifact@v4
-      with:
-        name: dist
-        path: dist
-    - name: Collected dists
-      run: |
-        tree dist
     - name: Extract release notes from Git tag
       run: |
         set -e
@@ -156,12 +145,39 @@ jobs:
     - name: Convert Release Notes to Markdown
       run: |
         pandoc -s -o release-notes.md release-notes.rst
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-notes.md
+        path: release-notes.md
+
+  deploy:
+    name: Deploy
+    environment: release
+        # Run only on pushing a tag
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    needs: [lint, check, prepare-release-notes]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download distributions
+      uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist
+    - name: Collected dists
+      run: |
+        tree dist
     - name: PyPI upload
       uses: pypa/gh-action-pypi-publish@v1.12.4
       with:
         attestations: true
         packages-dir: dist
         password: ${{ secrets.PYPI_API_TOKEN }}
+    - name: Download Release Notes
+      uses: actions/download-artifact@v4
+      with:
+        name: release-notes.md
+        path: release-notes.md
     - name: GitHub Release
       uses: ncipollo/release-action@v1
       with:
