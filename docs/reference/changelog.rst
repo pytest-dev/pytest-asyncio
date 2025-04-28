@@ -2,6 +2,14 @@
 Changelog
 =========
 
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+This project uses [*towncrier*](https://towncrier.readthedocs.io/) for changlog management and the changes for the upcoming release can be found in <https://github.com/pytest-dev/pytest-asyncio/tree/main/changelog.d/>.
+
+.. towncrier release notes start
+
 0.26.0 (2025-03-25)
 ===================
 - Adds configuration option that sets default event loop scope for all tests `#793 <https://github.com/pytest-dev/pytest-asyncio/issues/793>`_
