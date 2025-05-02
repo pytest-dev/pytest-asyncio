@@ -509,15 +509,6 @@ class PytestAsyncioFunction(Function):
         )
         subclass_instance.own_markers = function.own_markers
         assert subclass_instance.own_markers == function.own_markers
-        subclassed_function_signature = inspect.signature(subclass_instance.obj)
-        if "event_loop" in subclassed_function_signature.parameters:
-            subclass_instance.warn(
-                PytestDeprecationWarning(
-                    f"{subclass_instance.name} is asynchronous and explicitly "
-                    f'requests the "event_loop" fixture. Asynchronous fixtures and '
-                    f'test functions should use "asyncio.get_running_loop()" instead.'
-                )
-            )
         return subclass_instance
 
     @staticmethod
