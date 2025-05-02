@@ -803,10 +803,6 @@ def _make_pytest_asyncio_loop(loop: AbstractEventLoop) -> AbstractEventLoop:
     return loop
 
 
-def _is_pytest_asyncio_loop(loop: AbstractEventLoop) -> bool:
-    return getattr(loop, "__pytest_asyncio", False)
-
-
 def _get_event_loop_no_warn(
     policy: AbstractEventLoopPolicy | None = None,
 ) -> asyncio.AbstractEventLoop:
