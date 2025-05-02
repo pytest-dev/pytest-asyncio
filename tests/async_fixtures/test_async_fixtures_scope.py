@@ -9,6 +9,8 @@ import asyncio
 
 import pytest
 
+import pytest_asyncio
+
 
 @pytest.fixture(scope="module")
 def event_loop():
@@ -18,7 +20,7 @@ def event_loop():
     loop.close()
 
 
-@pytest.fixture(scope="module")
+@pytest_asyncio.fixture(scope="module", loop_scope="module")
 async def async_fixture():
     await asyncio.sleep(0.1)
     return 1
