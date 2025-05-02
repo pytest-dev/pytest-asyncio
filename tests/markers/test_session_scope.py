@@ -70,28 +70,6 @@ def test_asyncio_mark_provides_session_scoped_loop_strict_mode(pytester: Pyteste
     result.assert_outcomes(passed=4)
 
 
-def test_raise_when_event_loop_fixture_is_requested_in_addition_to_scoped_loop(
-    pytester: Pytester,
-):
-    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        __init__="",
-        test_raises=dedent(
-            """\
-            import asyncio
-            import pytest
-
-            @pytest.mark.asyncio(loop_scope="session")
-            async def test_remember_loop(event_loop):
-                pass
-            """
-        ),
-    )
-    result = pytester.runpytest("--asyncio-mode=strict")
-    result.assert_outcomes(errors=1)
-    result.stdout.fnmatch_lines("*MultipleEventLoopsRequestedError: *")
-
-
 def test_asyncio_mark_respects_the_loop_policy(
     pytester: Pytester,
 ):
