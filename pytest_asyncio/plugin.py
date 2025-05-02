@@ -11,7 +11,7 @@ import inspect
 import socket
 import sys
 import warnings
-from asyncio import AbstractEventLoop, AbstractEventLoopPolicy
+from asyncio import AbstractEventLoopPolicy
 from collections.abc import (
     AsyncIterator,
     Awaitable,
@@ -798,11 +798,6 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
         )
 
 
-def _make_pytest_asyncio_loop(loop: AbstractEventLoop) -> AbstractEventLoop:
-    loop.__pytest_asyncio = True  # type: ignore[attr-defined]
-    return loop
-
-
 def _get_event_loop_no_warn(
     policy: AbstractEventLoopPolicy | None = None,
 ) -> asyncio.AbstractEventLoop:
@@ -996,12 +991,6 @@ def _function_event_loop(
 @contextlib.contextmanager
 def _provide_event_loop() -> Iterator[asyncio.AbstractEventLoop]:
     loop = asyncio.get_event_loop_policy().new_event_loop()
-    # Add a magic value to the event loop, so pytest-asyncio can determine if the
-    # event_loop fixture was overridden. Other implementations of event_loop don't
-    # set this value.
-    # The magic value must be set as part of the function definition, because pytest
-    # seems to have multiple instances of the same FixtureDef or fixture function
-    loop = _make_pytest_asyncio_loop(loop)
     try:
         yield loop
     finally:
