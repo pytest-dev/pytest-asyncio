@@ -754,19 +754,6 @@ def _temporary_event_loop_policy(policy: AbstractEventLoopPolicy) -> Iterator[No
     try:
         yield
     finally:
-        # Try detecting user-created event loops that were left unclosed
-        # at the end of a test.
-        try:
-            current_loop: AbstractEventLoop | None = _get_event_loop_no_warn()
-        except RuntimeError:
-            current_loop = None
-        if current_loop is not None and not current_loop.is_closed():
-            warnings.warn(
-                _UNCLOSED_EVENT_LOOP_WARNING % current_loop,
-                DeprecationWarning,
-            )
-            current_loop.close()
-
         asyncio.set_event_loop_policy(old_loop_policy)
         # When a test uses both a scoped event loop and the event_loop fixture,
         # the "_provide_clean_event_loop" finalizer of the event_loop fixture
@@ -818,20 +805,6 @@ def _make_pytest_asyncio_loop(loop: AbstractEventLoop) -> AbstractEventLoop:
 
 def _is_pytest_asyncio_loop(loop: AbstractEventLoop) -> bool:
     return getattr(loop, "__pytest_asyncio", False)
-
-
-_UNCLOSED_EVENT_LOOP_WARNING = dedent(
-    """\
-    pytest-asyncio detected an unclosed event loop when tearing down the event_loop
-    fixture: %r
-    pytest-asyncio will close the event loop for you, but future versions of the
-    library will no longer do so. In order to ensure compatibility with future
-    versions, please make sure that:
-        1. Any custom "event_loop" fixture properly closes the loop after yielding it
-        2. The scopes of your custom "event_loop" fixtures do not overlap
-        3. Your code does not modify the event loop in async fixtures or tests
-    """
-)
 
 
 def _get_event_loop_no_warn(
