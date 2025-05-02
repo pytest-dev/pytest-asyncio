@@ -270,16 +270,6 @@ def _preprocess_async_fixtures(
             ):
                 fixturedef.argnames += ("_function_event_loop",)
             _make_asyncio_fixture_function(func, loop_scope)
-            function_signature = inspect.signature(func)
-            if "event_loop" in function_signature.parameters:
-                warnings.warn(
-                    PytestDeprecationWarning(
-                        f"{func.__name__} is asynchronous and explicitly "
-                        f'requests the "event_loop" fixture. Asynchronous fixtures and '
-                        f'test functions should use "asyncio.get_running_loop()" '
-                        f"instead."
-                    )
-                )
             if "request" not in fixturedef.argnames:
                 fixturedef.argnames += ("request",)
             _synchronize_async_fixture(fixturedef)
