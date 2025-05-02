@@ -33,6 +33,7 @@ from typing import (
 
 import pluggy
 import pytest
+from _pytest.scope import Scope
 from pytest import (
     Class,
     Collector,
@@ -657,10 +658,6 @@ _fixture_scope_by_collector_type: Mapping[type[pytest.Collector], _ScopeName] = 
     Session: "session",
 }
 
-# A stack used to push package-scoped loops during collection of a package
-# and pop those loops during collection of a Module
-__package_loop_stack: list[Callable[..., Any]] = []
-
 
 @pytest.hookimpl
 def pytest_collectstart(collector: pytest.Collector) -> None:
@@ -672,75 +669,8 @@ def pytest_collectstart(collector: pytest.Collector) -> None:
         )
     except StopIteration:
         return
-    # Session is not a PyCollector type, so it doesn't have a corresponding
-    # "obj" attribute to attach a dynamic fixture function to.
-    # However, there's only one session per pytest run, so there's no need to
-    # create the fixture dynamically. We can simply define a session-scoped
-    # event loop fixture once in the plugin code.
-    if collector_scope == "session":
-        event_loop_fixture_id = _session_event_loop.__name__
-        collector.stash[_event_loop_fixture_id] = event_loop_fixture_id
-        return
-    # There seem to be issues when a fixture is shadowed by another fixture
-    # and both differ in their params.
-    # https://github.com/pytest-dev/pytest/issues/2043
-    # https://github.com/pytest-dev/pytest/issues/11350
-    # As such, we assign a unique name for each event_loop fixture.
-    # The fixture name is stored in the collector's Stash, so it can
-    # be injected when setting up the test
-    event_loop_fixture_id = f"{collector.nodeid}::<event_loop>"
+    event_loop_fixture_id = f"_{collector_scope}_event_loop"
     collector.stash[_event_loop_fixture_id] = event_loop_fixture_id
-
-    @pytest.fixture(
-        scope=collector_scope,
-        name=event_loop_fixture_id,
-    )
-    def scoped_event_loop(
-        *args,  # Function needs to accept "cls" when collected by pytest.Class
-        event_loop_policy,
-    ) -> Iterator[asyncio.AbstractEventLoop]:
-        new_loop_policy = event_loop_policy
-        with (
-            _temporary_event_loop_policy(new_loop_policy),
-            _provide_event_loop() as loop,
-        ):
-            asyncio.set_event_loop(loop)
-            yield loop
-
-    # @pytest.fixture does not register the fixture anywhere, so pytest doesn't
-    # know it exists. We work around this by attaching the fixture function to the
-    # collected Python object, where it will be picked up by pytest.Class.collect()
-    # or pytest.Module.collect(), respectively
-    if type(collector) is Package:
-        # Packages do not have a corresponding Python object. Therefore, the fixture
-        # for the package-scoped event loop is added to a stack. When a module inside
-        # the package is collected, the module will attach the fixture to its
-        # Python object.
-        __package_loop_stack.append(scoped_event_loop)
-    elif isinstance(collector, Module):
-        # Accessing Module.obj triggers a module import executing module-level
-        # statements. A module-level pytest.skip statement raises the "Skipped"
-        # OutcomeException or a Collector.CollectError, if the "allow_module_level"
-        # kwargs is missing. These cases are handled correctly when they happen inside
-        # Collector.collect(), but this hook runs before the actual collect call.
-        # Therefore, we monkey patch Module.collect to add the scoped fixture to the
-        # module before it runs the actual collection.
-        def _patched_collect():
-            # If the collected module is a DoctestTextfile, collector.obj is None
-            module = collector.obj
-            if module is not None:
-                module.__pytest_asyncio_scoped_event_loop = scoped_event_loop
-                try:
-                    package_loop = __package_loop_stack.pop()
-                    module.__pytest_asyncio_package_scoped_event_loop = package_loop
-                except IndexError:
-                    pass
-            return collector.__original_collect()
-
-        collector.__original_collect = collector.collect  # type: ignore[attr-defined]
-        collector.collect = _patched_collect  # type: ignore[method-assign]
-    elif isinstance(collector, Class):
-        collector.obj.__pytest_asyncio_scoped_event_loop = scoped_event_loop
 
 
 @contextlib.contextmanager
@@ -971,21 +901,30 @@ def _retrieve_scope_root(item: Collector | Item, scope: str) -> Collector:
     raise pytest.UsageError(error_message)
 
 
-@pytest.fixture(
-    scope="function",
-    name="_function_event_loop",
-)
-def _function_event_loop(
-    *args,  # Function needs to accept "cls" when collected by pytest.Class
-    event_loop_policy,
-) -> Iterator[asyncio.AbstractEventLoop]:
-    new_loop_policy = event_loop_policy
-    with (
-        _temporary_event_loop_policy(new_loop_policy),
-        _provide_event_loop() as loop,
-    ):
-        asyncio.set_event_loop(loop)
-        yield loop
+def _create_scoped_event_loop_fixture(scope: _ScopeName) -> Callable:
+    @pytest.fixture(
+        scope=scope,
+        name=f"_{scope}_event_loop",
+    )
+    def _scoped_event_loop(
+        *args,  # Function needs to accept "cls" when collected by pytest.Class
+        event_loop_policy,
+    ) -> Iterator[asyncio.AbstractEventLoop]:
+        new_loop_policy = event_loop_policy
+        with (
+            _temporary_event_loop_policy(new_loop_policy),
+            _provide_event_loop() as loop,
+        ):
+            asyncio.set_event_loop(loop)
+            yield loop
+
+    return _scoped_event_loop
+
+
+for scope in Scope:
+    globals()[f"_{scope.value}_event_loop"] = _create_scoped_event_loop_fixture(
+        scope.value
+    )
 
 
 @contextlib.contextmanager
@@ -1002,16 +941,6 @@ def _provide_event_loop() -> Iterator[asyncio.AbstractEventLoop]:
                 warnings.warn(f"Error cleaning up asyncio loop: {e}", RuntimeWarning)
             finally:
                 loop.close()
-
-
-@pytest.fixture(scope="session")
-def _session_event_loop(
-    request: FixtureRequest, event_loop_policy: AbstractEventLoopPolicy
-) -> Iterator[asyncio.AbstractEventLoop]:
-    new_loop_policy = event_loop_policy
-    with _temporary_event_loop_policy(new_loop_policy), _provide_event_loop() as loop:
-        asyncio.set_event_loop(loop)
-        yield loop
 
 
 @pytest.fixture(scope="session", autouse=True)
