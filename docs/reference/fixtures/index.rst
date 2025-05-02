@@ -2,33 +2,6 @@
 Fixtures
 ========
 
-event_loop
-==========
-*This fixture is deprecated.*
-
-*If you want to request an asyncio event loop with a scope other than function
-scope, use the "loop_scope" argument to* :ref:`reference/markers/asyncio` *when marking the tests.
-If you want to return different types of event loops, use the* :ref:`reference/fixtures/event_loop_policy`
-*fixture.*
-
-Creates a new asyncio event loop based on the current event loop policy. The new loop
-is available as the return value of this fixture for synchronous functions, or via `asyncio.get_running_loop <https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.get_running_loop>`__ for asynchronous functions.
-The event loop is closed when the fixture scope ends.
-The fixture scope defaults to ``function`` scope.
-
-.. include:: event_loop_example.py
-    :code: python
-
-Note that, when using the ``event_loop`` fixture, you need to interact with the event loop using methods like ``event_loop.run_until_complete``. If you want to *await* code inside your test function, you need to write a coroutine and use it as a test function. The :ref:`asyncio <reference/markers/asyncio>` marker
-is used to mark coroutines that should be treated as test functions.
-
-If you need to change the type of the event loop, prefer setting a custom event loop policy over redefining the ``event_loop`` fixture.
-
-If the ``pytest.mark.asyncio`` decorator is applied to a test function, the ``event_loop``
-fixture will be requested automatically by the test function.
-
-.. _reference/fixtures/event_loop_policy:
-
 event_loop_policy
 =================
 Returns the event loop policy used to create asyncio event loops.

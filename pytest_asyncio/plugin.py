@@ -259,14 +259,17 @@ def _preprocess_async_fixtures(
                 # Ignore async fixtures without explicit asyncio mark in strict mode
                 # This applies to pytest_trio fixtures, for example
                 continue
-            scope = (
+            loop_scope = (
                 getattr(func, "_loop_scope", None)
                 or default_loop_scope
                 or fixturedef.scope
             )
-            if scope == "function" and "event_loop" not in fixturedef.argnames:
-                fixturedef.argnames += ("event_loop",)
-            _make_asyncio_fixture_function(func, scope)
+            if (
+                loop_scope == "function"
+                and "_function_event_loop" not in fixturedef.argnames
+            ):
+                fixturedef.argnames += ("_function_event_loop",)
+            _make_asyncio_fixture_function(func, loop_scope)
             function_signature = inspect.signature(func)
             if "event_loop" in function_signature.parameters:
                 warnings.warn(
@@ -415,7 +418,7 @@ def _get_event_loop_fixture_id_for_async_fixture(
         getattr(func, "_loop_scope", None) or default_loop_scope or request.scope
     )
     if loop_scope == "function":
-        event_loop_fixture_id = "event_loop"
+        event_loop_fixture_id = "_function_event_loop"
     else:
         event_loop_node = _retrieve_scope_root(request._pyfuncitem, loop_scope)
         event_loop_fixture_id = event_loop_node.stash.get(
@@ -1101,7 +1104,7 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
         parent_node = _retrieve_scope_root(item, scope)
         event_loop_fixture_id = parent_node.stash[_event_loop_fixture_id]
     else:
-        event_loop_fixture_id = "event_loop"
+        event_loop_fixture_id = "_function_event_loop"
     fixturenames = item.fixturenames  # type: ignore[attr-defined]
     if event_loop_fixture_id not in fixturenames:
         fixturenames.append(event_loop_fixture_id)
@@ -1170,11 +1173,20 @@ def _retrieve_scope_root(item: Collector | Item, scope: str) -> Collector:
     raise pytest.UsageError(error_message)
 
 
-@pytest.fixture
-def event_loop(request: FixtureRequest) -> Iterator[asyncio.AbstractEventLoop]:
-    """Create an instance of the default event loop for each test case."""
-    new_loop_policy = request.getfixturevalue(event_loop_policy.__name__)
-    with _temporary_event_loop_policy(new_loop_policy), _provide_event_loop() as loop:
+@pytest.fixture(
+    scope="function",
+    name="_function_event_loop",
+)
+def _function_event_loop(
+    *args,  # Function needs to accept "cls" when collected by pytest.Class
+    event_loop_policy,
+) -> Iterator[asyncio.AbstractEventLoop]:
+    new_loop_policy = event_loop_policy
+    with (
+        _temporary_event_loop_policy(new_loop_policy),
+        _provide_event_loop() as loop,
+    ):
+        asyncio.set_event_loop(loop)
         yield loop
 
 
