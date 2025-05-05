@@ -20,15 +20,6 @@ async def test_module_with_get_event_loop_finalizer(port_with_get_event_loop_fin
     assert port_with_get_event_loop_finalizer
 
 
-@pytest.fixture(scope="module")
-def event_loop():
-    """Change event_loop fixture to module level."""
-    policy = asyncio.get_event_loop_policy()
-    loop = policy.new_event_loop()
-    yield loop
-    loop.close()
-
-
 @pytest_asyncio.fixture(loop_scope="module", scope="module")
 async def port_with_event_loop_finalizer(request):
     def port_finalizer(finalizer):
