@@ -685,15 +685,6 @@ def _temporary_event_loop_policy(policy: AbstractEventLoopPolicy) -> Iterator[No
         yield
     finally:
         asyncio.set_event_loop_policy(old_loop_policy)
-        # When a test uses both a scoped event loop and the event_loop fixture,
-        # the "_provide_clean_event_loop" finalizer of the event_loop fixture
-        # will already have installed a fresh event loop, in order to shield
-        # subsequent tests from side-effects. We close this loop before restoring
-        # the old loop to avoid ResourceWarnings.
-        try:
-            _get_event_loop_no_warn().close()
-        except RuntimeError:
-            pass
         asyncio.set_event_loop(old_loop)
 
 
