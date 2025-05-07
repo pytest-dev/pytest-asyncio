@@ -121,7 +121,6 @@ asyncio_default_fixture_loop_scope = "function"
 junit_family = "xunit2"
 filterwarnings = [
   "error",
-  "ignore:The event_loop fixture provided by pytest-asyncio has been redefined.*:DeprecationWarning",
 ]
 
 [tool.coverage.run]
