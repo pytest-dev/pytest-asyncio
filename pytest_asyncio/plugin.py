@@ -11,7 +11,7 @@ import inspect
 import socket
 import sys
 import warnings
-from asyncio import AbstractEventLoopPolicy
+from asyncio import AbstractEventLoop, AbstractEventLoopPolicy
 from collections.abc import (
     AsyncIterator,
     Awaitable,
@@ -632,17 +632,17 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
 
 @contextlib.contextmanager
 def _temporary_event_loop_policy(policy: AbstractEventLoopPolicy) -> Iterator[None]:
-    old_loop_policy = asyncio.get_event_loop_policy()
+    old_loop_policy = _get_event_loop_policy()
     try:
         old_loop = _get_event_loop_no_warn()
     except RuntimeError:
         old_loop = None
-    asyncio.set_event_loop_policy(policy)
+    _set_event_loop_policy(policy)
     try:
         yield
     finally:
-        asyncio.set_event_loop_policy(old_loop_policy)
-        asyncio.set_event_loop(old_loop)
+        _set_event_loop_policy(old_loop_policy)
+        _set_event_loop(old_loop)
 
 
 @pytest.hookimpl(tryfirst=True)
@@ -671,6 +671,18 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
     ]
 
 
+def _get_event_loop_policy() -> AbstractEventLoopPolicy:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        return asyncio.get_event_loop_policy()
+
+
+def _set_event_loop_policy(policy: AbstractEventLoopPolicy) -> None:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        asyncio.set_event_loop_policy(policy)
+
+
 def _get_event_loop_no_warn(
     policy: AbstractEventLoopPolicy | None = None,
 ) -> asyncio.AbstractEventLoop:
@@ -680,6 +692,12 @@ def _get_event_loop_no_warn(
             return policy.get_event_loop()
         else:
             return asyncio.get_event_loop()
+
+
+def _set_event_loop(loop: AbstractEventLoop | None) -> None:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        asyncio.set_event_loop(loop)
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
@@ -835,7 +853,7 @@ def _create_scoped_event_loop_fixture(scope: _ScopeName) -> Callable:
             _temporary_event_loop_policy(new_loop_policy),
             _provide_event_loop() as loop,
         ):
-            asyncio.set_event_loop(loop)
+            _set_event_loop(loop)
             yield loop
 
     return _scoped_event_loop
@@ -849,7 +867,8 @@ for scope in Scope:
 
 @contextlib.contextmanager
 def _provide_event_loop() -> Iterator[asyncio.AbstractEventLoop]:
-    loop = asyncio.get_event_loop_policy().new_event_loop()
+    policy = _get_event_loop_policy()
+    loop = policy.new_event_loop()
     try:
         yield loop
     finally:
@@ -866,7 +885,7 @@ def _provide_event_loop() -> Iterator[asyncio.AbstractEventLoop]:
 @pytest.fixture(scope="session", autouse=True)
 def event_loop_policy() -> AbstractEventLoopPolicy:
     """Return an instance of the policy used to create asyncio event loops."""
-    return asyncio.get_event_loop_policy()
+    return _get_event_loop_policy()
 
 
 def is_async_test(item: Item) -> bool:
