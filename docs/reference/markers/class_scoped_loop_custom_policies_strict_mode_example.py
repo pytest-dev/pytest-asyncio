@@ -1,12 +1,16 @@
-import asyncio
+import warnings
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", DeprecationWarning)
+    from asyncio import DefaultEventLoopPolicy
 
 import pytest
 
 
 @pytest.fixture(
     params=[
-        asyncio.DefaultEventLoopPolicy(),
-        asyncio.DefaultEventLoopPolicy(),
+        DefaultEventLoopPolicy(),
+        DefaultEventLoopPolicy(),
     ]
 )
 def event_loop_policy(request):
