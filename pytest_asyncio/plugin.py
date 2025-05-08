@@ -255,11 +255,6 @@ def _preprocess_async_fixtures(
                 or default_loop_scope
                 or fixturedef.scope
             )
-            if (
-                loop_scope == "function"
-                and "_function_event_loop" not in fixturedef.argnames
-            ):
-                fixturedef.argnames += ("_function_event_loop",)
             _make_asyncio_fixture_function(func, loop_scope)
             if "request" not in fixturedef.argnames:
                 fixturedef.argnames += ("request",)
