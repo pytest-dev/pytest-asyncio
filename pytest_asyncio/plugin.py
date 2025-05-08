@@ -28,6 +28,7 @@ from typing import (
     Literal,
     TypeVar,
     Union,
+    cast,
     overload,
 )
 
@@ -396,21 +397,13 @@ def _wrap_async_fixture(fixturedef: FixtureDef) -> None:
 def _get_event_loop_fixture_id_for_async_fixture(
     request: FixtureRequest, func: Any
 ) -> str:
-    default_loop_scope = request.config.getini("asyncio_default_fixture_loop_scope")
+    default_loop_scope = cast(
+        _ScopeName, request.config.getini("asyncio_default_fixture_loop_scope")
+    )
     loop_scope = (
         getattr(func, "_loop_scope", None) or default_loop_scope or request.scope
     )
-    if loop_scope == "function":
-        event_loop_fixture_id = "_function_event_loop"
-    else:
-        event_loop_node = _retrieve_scope_root(request._pyfuncitem, loop_scope)
-        event_loop_fixture_id = event_loop_node.stash.get(
-            # Type ignored because of non-optimal mypy inference.
-            _event_loop_fixture_id,  # type: ignore[arg-type]
-            "",
-        )
-    assert event_loop_fixture_id
-    return event_loop_fixture_id
+    return f"_{loop_scope}_event_loop"
 
 
 def _create_task_in_context(
