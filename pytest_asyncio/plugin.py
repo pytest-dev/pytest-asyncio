@@ -657,8 +657,6 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
         return
     default_loop_scope = _get_default_test_loop_scope(metafunc.config)
     loop_scope = _get_marked_loop_scope(marker, default_loop_scope)
-    if loop_scope == "function":
-        return
     event_loop_fixture_id = f"_{loop_scope}_event_loop"
     # This specific fixture name may already be in metafunc.argnames, if this
     # test indirectly depends on the fixture. For example, this is the case
