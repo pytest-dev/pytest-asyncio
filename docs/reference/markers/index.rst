@@ -21,7 +21,7 @@ The ``pytest.mark.asyncio`` marker can be omitted entirely in |auto mode|_ where
 
 By default, each test runs in it's own asyncio event loop.
 Multiple tests can share the same event loop by providing a *loop_scope* keyword argument to the *asyncio* mark.
-The supported scopes are *class,* and *module,* and *package*.
+The supported scopes are *function,* *class,* and *module,* *package,* and *session*.
 The following code example provides a shared event loop for all tests in `TestClassScopedLoop`:
 
 .. include:: class_scoped_loop_strict_mode_example.py
