@@ -19,7 +19,6 @@ from collections.abc import (
     Generator,
     Iterable,
     Iterator,
-    Mapping,
     Sequence,
 )
 from typing import (
@@ -52,7 +51,6 @@ from pytest import (
     PytestDeprecationWarning,
     PytestPluginManager,
     Session,
-    StashKey,
 )
 
 if sys.version_info >= (3, 10):
@@ -639,31 +637,6 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
                     updated_item = specialized_item_class._from_function(node)
         updated_node_collection.append(updated_item)
     hook_result.force_result(updated_node_collection)
-
-
-_event_loop_fixture_id = StashKey[str]()
-_fixture_scope_by_collector_type: Mapping[type[pytest.Collector], _ScopeName] = {
-    Class: "class",
-    # Package is a subclass of module and the dict is used in isinstance checks
-    # Therefore, the order matters and Package needs to appear before Module
-    Package: "package",
-    Module: "module",
-    Session: "session",
-}
-
-
-@pytest.hookimpl
-def pytest_collectstart(collector: pytest.Collector) -> None:
-    try:
-        collector_scope = next(
-            scope
-            for cls, scope in _fixture_scope_by_collector_type.items()
-            if isinstance(collector, cls)
-        )
-    except StopIteration:
-        return
-    event_loop_fixture_id = f"_{collector_scope}_event_loop"
-    collector.stash[_event_loop_fixture_id] = event_loop_fixture_id
 
 
 @contextlib.contextmanager
