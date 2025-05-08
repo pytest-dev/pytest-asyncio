@@ -82,29 +82,6 @@ def test_asyncio_mark_provides_class_scoped_loop_when_applied_to_class(
     result.assert_outcomes(passed=2)
 
 
-def test_asyncio_mark_raises_when_class_scoped_is_request_without_class(
-    pytester: pytest.Pytester,
-):
-    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
-            import asyncio
-            import pytest
-
-            @pytest.mark.asyncio(loop_scope="class")
-            async def test_has_no_surrounding_class():
-                pass
-            """
-        )
-    )
-    result = pytester.runpytest("--asyncio-mode=strict")
-    result.assert_outcomes(errors=1)
-    result.stdout.fnmatch_lines(
-        "*is marked to be run in an event loop with scope*",
-    )
-
-
 def test_asyncio_mark_is_inherited_to_subclasses(pytester: pytest.Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(

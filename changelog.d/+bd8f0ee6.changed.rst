@@ -1,0 +1,1 @@
+The *loop_scope* argument to ``pytest.mark.asyncio`` no longer forces that a pytest Collector exists at the level of the specified scope. For example, a test function marked with ``pytest.mark.asyncio(loop_scope="class")`` no longer requires a class surrounding the test. This is consistent with the behavior of the *scope* argument to ``pytest_asyncio.fixture``.

@@ -27,15 +27,11 @@ The following code example provides a shared event loop for all tests in `TestCl
 .. include:: class_scoped_loop_strict_mode_example.py
     :code: python
 
-If you request class scope for a test that is not part of a class, it will result in a *UsageError*.
 Similar to class-scoped event loops, a module-scoped loop is provided when setting mark's scope to *module:*
 
 .. include:: module_scoped_loop_strict_mode_example.py
     :code: python
 
-Package-scoped loops only work with `regular Python packages. <https://docs.python.org/3/glossary.html#term-regular-package>`__
-That means they require an *__init__.py* to be present.
-Package-scoped loops do not work in `namespace packages. <https://docs.python.org/3/glossary.html#term-namespace-package>`__
 Subpackages do not share the loop with their parent package.
 
 Tests marked with *session* scope share the same event loop, even if the tests exist in different packages.

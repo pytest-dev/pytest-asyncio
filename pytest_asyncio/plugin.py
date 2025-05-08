@@ -687,29 +687,26 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
     if not marker:
         return
     default_loop_scope = _get_default_test_loop_scope(metafunc.config)
-    scope = _get_marked_loop_scope(marker, default_loop_scope)
-    if scope == "function":
+    loop_scope = _get_marked_loop_scope(marker, default_loop_scope)
+    if loop_scope == "function":
         return
-    event_loop_node = _retrieve_scope_root(metafunc.definition, scope)
-    event_loop_fixture_id = event_loop_node.stash.get(_event_loop_fixture_id, None)
-
-    if event_loop_fixture_id:
-        # This specific fixture name may already be in metafunc.argnames, if this
-        # test indirectly depends on the fixture. For example, this is the case
-        # when the test depends on an async fixture, both of which share the same
-        # event loop fixture mark.
-        if event_loop_fixture_id in metafunc.fixturenames:
-            return
-        fixturemanager = metafunc.config.pluginmanager.get_plugin("funcmanage")
-        assert fixturemanager is not None
-        # Add the scoped event loop fixture to Metafunc's list of fixture names and
-        # fixturedefs and leave the actual parametrization to pytest
-        # The fixture needs to be appended to avoid messing up the fixture evaluation
-        # order
-        metafunc.fixturenames.append(event_loop_fixture_id)
-        metafunc._arg2fixturedefs[event_loop_fixture_id] = (
-            fixturemanager._arg2fixturedefs[event_loop_fixture_id]
-        )
+    event_loop_fixture_id = f"_{loop_scope}_event_loop"
+    # This specific fixture name may already be in metafunc.argnames, if this
+    # test indirectly depends on the fixture. For example, this is the case
+    # when the test depends on an async fixture, both of which share the same
+    # event loop fixture mark.
+    if event_loop_fixture_id in metafunc.fixturenames:
+        return
+    fixturemanager = metafunc.config.pluginmanager.get_plugin("funcmanage")
+    assert fixturemanager is not None
+    # Add the scoped event loop fixture to Metafunc's list of fixture names and
+    # fixturedefs and leave the actual parametrization to pytest
+    # The fixture needs to be appended to avoid messing up the fixture evaluation
+    # order
+    metafunc.fixturenames.append(event_loop_fixture_id)
+    metafunc._arg2fixturedefs[event_loop_fixture_id] = fixturemanager._arg2fixturedefs[
+        event_loop_fixture_id
+    ]
 
 
 def _get_event_loop_no_warn(

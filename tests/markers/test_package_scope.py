@@ -339,23 +339,3 @@ def test_asyncio_mark_handles_missing_event_loop_triggered_by_fixture(
     )
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=2)
-
-
-def test_standalone_test_does_not_trigger_warning_about_no_current_event_loop_being_set(
-    pytester: Pytester,
-):
-    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        __init__="",
-        test_module=dedent(
-            """\
-            import pytest
-
-            @pytest.mark.asyncio(loop_scope="package")
-            async def test_anything():
-                pass
-            """
-        ),
-    )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
-    result.assert_outcomes(warnings=0, passed=1)
