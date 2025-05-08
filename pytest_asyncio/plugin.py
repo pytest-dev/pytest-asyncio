@@ -35,7 +35,6 @@ import pluggy
 import pytest
 from _pytest.scope import Scope
 from pytest import (
-    Class,
     Collector,
     Config,
     FixtureDef,
@@ -44,13 +43,10 @@ from pytest import (
     Item,
     Mark,
     Metafunc,
-    Module,
-    Package,
     Parser,
     PytestCollectionWarning,
     PytestDeprecationWarning,
     PytestPluginManager,
-    Session,
 )
 
 if sys.version_info >= (3, 10):
@@ -830,25 +826,6 @@ def _get_marked_loop_scope(
 
 def _get_default_test_loop_scope(config: Config) -> _ScopeName:
     return config.getini("asyncio_default_test_loop_scope")
-
-
-def _retrieve_scope_root(item: Collector | Item, scope: str) -> Collector:
-    node_type_by_scope = {
-        "class": Class,
-        "module": Module,
-        "package": Package,
-        "session": Session,
-    }
-    scope_root_type = node_type_by_scope[scope]
-    for node in reversed(item.listchain()):
-        if isinstance(node, scope_root_type):
-            assert isinstance(node, pytest.Collector)
-            return node
-    error_message = (
-        f"{item.name} is marked to be run in an event loop with scope {scope}, "
-        f"but is not part of any {scope}."
-    )
-    raise pytest.UsageError(error_message)
 
 
 def _create_scoped_event_loop_fixture(scope: _ScopeName) -> Callable:
