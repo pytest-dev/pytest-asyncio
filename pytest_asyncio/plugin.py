@@ -811,12 +811,8 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
     if marker is None:
         return
     default_loop_scope = _get_default_test_loop_scope(item.config)
-    scope = _get_marked_loop_scope(marker, default_loop_scope)
-    if scope != "function":
-        parent_node = _retrieve_scope_root(item, scope)
-        event_loop_fixture_id = parent_node.stash[_event_loop_fixture_id]
-    else:
-        event_loop_fixture_id = "_function_event_loop"
+    loop_scope = _get_marked_loop_scope(marker, default_loop_scope)
+    event_loop_fixture_id = f"_{loop_scope}_event_loop"
     fixturenames = item.fixturenames  # type: ignore[attr-defined]
     if event_loop_fixture_id not in fixturenames:
         fixturenames.append(event_loop_fixture_id)
