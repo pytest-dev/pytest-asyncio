@@ -10,6 +10,28 @@ This project uses `towncrier <https://towncrier.readthedocs.io/>`__ for changlog
 
 .. towncrier release notes start
 
+`1.0.0a1 <https://github.com/pytest-dev/pytest-asyncio/tree/1.0.0a1>`_ - 2025-05-09
+===================================================================================
+
+Removed
+-------
+
+- The deprecated *event_loop* fixture. (`#1106 <https://github.com/pytest-dev/pytest-asyncio/issues/1106>`_)
+
+
+Added
+-----
+
+- Prelimiary support for Python 3.14 (`#1025 <https://github.com/pytest-dev/pytest-asyncio/issues/1025>`_)
+
+
+Changed
+-------
+
+- Scoped event loops (e.g. module-scoped loops) are created once rather than per scope (e.g. per module). This reduces the number of fixtures and speeds up collection time, especially for large test suites. (`#1107 <https://github.com/pytest-dev/pytest-asyncio/issues/1107>`_)
+- The *loop_scope* argument to ``pytest.mark.asyncio`` no longer forces that a pytest Collector exists at the level of the specified scope. For example, a test function marked with ``pytest.mark.asyncio(loop_scope="class")`` no longer requires a class surrounding the test. This is consistent with the behavior of the *scope* argument to ``pytest_asyncio.fixture``. (`#1112 <https://github.com/pytest-dev/pytest-asyncio/issues/1112>`_)
+
+
 0.26.0 (2025-03-25)
 ===================
 - Adds configuration option that sets default event loop scope for all tests `#793 <https://github.com/pytest-dev/pytest-asyncio/issues/793>`_
