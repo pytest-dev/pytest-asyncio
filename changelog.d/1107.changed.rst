@@ -1,0 +1,1 @@
+Scoped event loops (e.g. module-scoped loops) are created once rather than per scope (e.g. per module). This reduces the number of fixtures and speeds up collection time, especially for large test suites.
