@@ -1,0 +1,1 @@
+A "fixture not found" error in connection with package-scoped loops
