@@ -10,6 +10,8 @@ on:
   merge_group:
   workflow_dispatch:
 
+permissions: {}
+
 env:
   PYTHON_LATEST: 3.13
 
@@ -180,6 +182,8 @@ jobs:
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
     needs: [lint, check, prepare-release-notes]
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     steps:
     - name: Download distributions
       uses: actions/download-artifact@v4
