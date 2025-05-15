@@ -100,6 +100,12 @@ jobs:
         path: coverage/coverage.*
         if-no-files-found: error
 
+  lint-github-actions:
+    name: Lint GitHub Actions
+    permissions:
+      security-events: write
+    uses: zizmorcore/workflow/.github/workflows/reusable-zizmor.yml@1ae473d8672fe7613e809d86d202a35063736e16
+
   check:
     name: Check
     if: always()
