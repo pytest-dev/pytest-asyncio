@@ -102,7 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Decide whether the needed jobs succeeded or failed
-      uses: re-actors/alls-green@release/v1
+      uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe  # v1.2.2
       with:
         jobs: ${{ toJSON(needs) }}
     - uses: actions/checkout@v4
@@ -124,7 +124,7 @@ jobs:
         coverage combine
         coverage xml
     - name: Upload coverage report
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@ad3126e916f78f00edff4ed0317cf185271ccc2d  # v5.4.2
       with:
         files: coverage.xml
         fail_ci_if_error: true
@@ -184,7 +184,7 @@ jobs:
       run: |
         tree dist
     - name: PyPI upload
-      uses: pypa/gh-action-pypi-publish@v1.12.4
+      uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc  # v1.12.4
       with:
         attestations: true
         packages-dir: dist
@@ -195,7 +195,7 @@ jobs:
         name: release-notes.md
         path: release-notes.md
     - name: GitHub Release
-      uses: ncipollo/release-action@v1
+      uses: ncipollo/release-action@440c8c1cb0ed28b9f43e4d1d670870f059653174  # v1.16.0
       with:
         name: pytest-asyncio ${{ needs.lint.outputs.version }}
         artifacts: dist/*
