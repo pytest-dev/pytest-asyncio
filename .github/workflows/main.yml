@@ -158,7 +158,9 @@ jobs:
       run: pip install .
     - name: Compile Release Notes Draft
       if: ${{ !contains(github.ref, 'refs/tags/') }}
-      run: towncrier build --draft --version "${{ needs.lint.outputs.version }}" > release-notes.rst
+      run: towncrier build --draft --version "${version}" > release-notes.rst
+      env:
+        version: ${{ needs.lint.outputs.version }}
     - name: Extract release notes from Git tag
       if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
       run: |
