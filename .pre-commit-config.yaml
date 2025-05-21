@@ -74,6 +74,10 @@ repos:
   - id: pyproject-fmt
       # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
     additional_dependencies: [tox>=4.9]
+- repo: https://github.com/zizmorcore/zizmor-pre-commit
+  rev: v1.7.0
+  hooks:
+  - id: zizmor
 ci:
   skip:
   - actionlint-docker
