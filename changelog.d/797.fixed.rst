@@ -1,0 +1,1 @@
+Unsuppressed import errors with pytest option ``--doctest-ignore-import-errors``
