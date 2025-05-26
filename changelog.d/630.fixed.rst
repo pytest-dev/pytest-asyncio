@@ -1,1 +1,0 @@
-An error caused when using pytest's `--setup-plan` option.
