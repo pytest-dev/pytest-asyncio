@@ -6,7 +6,7 @@ repos:
   - id: check-merge-conflict
     exclude: rst$
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.11.12
+  rev: v0.11.13
   hooks:
   - id: ruff
     args: [--fix]
@@ -15,7 +15,7 @@ repos:
   hooks:
   - id: yesqa
 - repo: https://github.com/Zac-HD/shed
-  rev: 2024.10.1
+  rev: 2025.6.1
   hooks:
   - id: shed
     args:
