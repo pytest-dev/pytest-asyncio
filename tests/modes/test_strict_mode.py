@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from textwrap import dedent
 
-from pytest import Pytester
+from pytest import Pytester, version_tuple as pytest_version
 
 
 def test_strict_mode_cmdline(pytester: Pytester):
@@ -95,7 +95,10 @@ def test_strict_mode_ignores_unmarked_coroutine(pytester: Pytester):
         )
     )
     result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
-    result.assert_outcomes(skipped=1, warnings=1)
+    if pytest_version >= (8, 4, 0):
+        result.assert_outcomes(failed=1, skipped=0, warnings=0)
+    else:
+        result.assert_outcomes(skipped=1, warnings=1)
     result.stdout.fnmatch_lines(["*async def functions are not natively supported*"])
 
 
@@ -117,7 +120,11 @@ def test_strict_mode_ignores_unmarked_fixture(pytester: Pytester):
         )
     )
     result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
-    result.assert_outcomes(skipped=1, warnings=2)
+
+    if pytest_version >= (8, 4, 0):
+        result.assert_outcomes(failed=1, skipped=0, warnings=2)
+    else:
+        result.assert_outcomes(skipped=1, warnings=2)
     result.stdout.fnmatch_lines(
         [
             "*async def functions are not natively supported*",
@@ -149,7 +156,10 @@ def test_strict_mode_marked_test_unmarked_fixture_warning(pytester: Pytester):
         )
     )
     result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
-    result.assert_outcomes(passed=1, failed=0, skipped=0, warnings=1)
+    if pytest_version >= (8, 4, 0):
+        result.assert_outcomes(passed=1, failed=0, skipped=0, warnings=2)
+    else:
+        result.assert_outcomes(passed=1, failed=0, skipped=0, warnings=1)
     result.stdout.fnmatch_lines(
         [
             "*warnings summary*",
@@ -193,7 +203,10 @@ def test_strict_mode_marked_test_unmarked_autouse_fixture_warning(pytester: Pyte
         )
     )
     result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
-    result.assert_outcomes(passed=1, warnings=1)
+    if pytest_version >= (8, 4, 0):
+        result.assert_outcomes(passed=1, warnings=2)
+    else:
+        result.assert_outcomes(passed=1, warnings=1)
     result.stdout.fnmatch_lines(
         [
             "*warnings summary*",
