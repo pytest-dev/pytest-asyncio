@@ -300,21 +300,30 @@ def _perhaps_rebind_fixture_func(func: _T, instance: Any | None) -> _T:
     return func
 
 
+AsyncGenFixtureParams = ParamSpec("AsyncGenFixtureParams")
 AsyncGenFixtureYieldType = TypeVar("AsyncGenFixtureYieldType")
 
 
 def _wrap_asyncgen_fixture(
-    fixture_function: Callable[..., AsyncGeneratorType[AsyncGenFixtureYieldType, Any]],
-) -> Callable[..., AsyncGenFixtureYieldType]:
+    fixture_function: Callable[
+        AsyncGenFixtureParams, AsyncGeneratorType[AsyncGenFixtureYieldType, Any]
+    ],
+) -> Callable[
+    Concatenate[FixtureRequest, AsyncGenFixtureParams], AsyncGenFixtureYieldType
+]:
     @functools.wraps(fixture_function)
-    def _asyncgen_fixture_wrapper(request: FixtureRequest, **kwargs: Any):
+    def _asyncgen_fixture_wrapper(
+        request: FixtureRequest,
+        *args: AsyncGenFixtureParams.args,
+        **kwargs: AsyncGenFixtureParams.kwargs,
+    ):
         func = _perhaps_rebind_fixture_func(fixture_function, request.instance)
         event_loop_fixture_id = _get_event_loop_fixture_id_for_async_fixture(
             request, func
         )
         event_loop = request.getfixturevalue(event_loop_fixture_id)
         kwargs.pop(event_loop_fixture_id, None)
-        gen_obj = func(**_add_kwargs(func, kwargs, request))
+        gen_obj = func(*args, **_add_kwargs(func, kwargs, request))
 
         async def setup():
             res = await gen_obj.__anext__()  # type: ignore[union-attr]
