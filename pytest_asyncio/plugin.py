@@ -266,7 +266,7 @@ def _preprocess_async_fixtures(
 def _synchronize_async_fixture(fixturedef: FixtureDef) -> None:
     """Wraps the fixture function of an async fixture in a synchronous function."""
     if inspect.isasyncgenfunction(fixturedef.func):
-        _wrap_asyncgen_fixture(fixturedef)
+        fixturedef.func = _wrap_asyncgen_fixture(fixturedef)  # type: ignore[misc]
     elif inspect.iscoroutinefunction(fixturedef.func):
         fixturedef.func = _wrap_async_fixture(fixturedef)  # type: ignore[misc]
 
@@ -299,7 +299,7 @@ def _perhaps_rebind_fixture_func(func: _T, instance: Any | None) -> _T:
     return func
 
 
-def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
+def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> Callable:
     fixture = fixturedef.func
 
     @functools.wraps(fixture)
@@ -343,7 +343,7 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
         request.addfinalizer(finalizer)
         return result
 
-    fixturedef.func = _asyncgen_fixture_wrapper  # type: ignore[misc]
+    return _asyncgen_fixture_wrapper
 
 
 def _wrap_async_fixture(fixturedef: FixtureDef) -> Callable:
