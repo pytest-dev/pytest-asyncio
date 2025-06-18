@@ -259,17 +259,19 @@ def _preprocess_async_fixtures(
             _make_asyncio_fixture_function(func, loop_scope)
             if "request" not in fixturedef.argnames:
                 fixturedef.argnames += ("request",)
-            _synchronize_async_fixture(fixturedef)
+            fixturedef.func = _fixture_synchronizer(fixturedef)  # type: ignore[misc]
             assert _is_asyncio_fixture_function(fixturedef.func)
             processed_fixturedefs.add(fixturedef)
 
 
-def _synchronize_async_fixture(fixturedef: FixtureDef) -> None:
-    """Wraps the fixture function of an async fixture in a synchronous function."""
+def _fixture_synchronizer(fixturedef: FixtureDef) -> Callable:
+    """Returns a synchronous function evaluating the specified fixture."""
     if inspect.isasyncgenfunction(fixturedef.func):
-        fixturedef.func = _wrap_asyncgen_fixture(fixturedef.func)  # type: ignore[misc]
+        return _wrap_asyncgen_fixture(fixturedef.func)
     elif inspect.iscoroutinefunction(fixturedef.func):
-        fixturedef.func = _wrap_async_fixture(fixturedef.func)  # type: ignore[misc]
+        return _wrap_async_fixture(fixturedef.func)
+    else:
+        return fixturedef.func
 
 
 def _add_kwargs(
