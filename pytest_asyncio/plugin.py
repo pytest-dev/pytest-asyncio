@@ -51,9 +51,9 @@ from pytest import (
 )
 
 if sys.version_info >= (3, 10):
-    from typing import ParamSpec
+    from typing import Concatenate, ParamSpec
 else:
-    from typing_extensions import ParamSpec
+    from typing_extensions import Concatenate, ParamSpec
 
 
 _ScopeName = Literal["session", "package", "module", "class", "function"]
@@ -347,15 +347,22 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> Callable:
     return _asyncgen_fixture_wrapper
 
 
+AsyncFixtureParams = ParamSpec("AsyncFixtureParams")
 AsyncFixtureReturnType = TypeVar("AsyncFixtureReturnType")
 
 
 def _wrap_async_fixture(
-    fixture_function: Callable[..., CoroutineType[Any, Any, AsyncFixtureReturnType]],
-) -> Callable[..., AsyncFixtureReturnType]:
+    fixture_function: Callable[
+        AsyncFixtureParams, CoroutineType[Any, Any, AsyncFixtureReturnType]
+    ],
+) -> Callable[Concatenate[FixtureRequest, AsyncFixtureParams], AsyncFixtureReturnType]:
 
     @functools.wraps(fixture_function)  # type: ignore[arg-type]
-    def _async_fixture_wrapper(request: FixtureRequest, **kwargs: Any):
+    def _async_fixture_wrapper(
+        request: FixtureRequest,
+        *args: AsyncFixtureParams.args,
+        **kwargs: AsyncFixtureParams.kwargs,
+    ):
         func = _perhaps_rebind_fixture_func(fixture_function, request.instance)
         event_loop_fixture_id = _get_event_loop_fixture_id_for_async_fixture(
             request, func
@@ -364,7 +371,7 @@ def _wrap_async_fixture(
         kwargs.pop(event_loop_fixture_id, None)
 
         async def setup():
-            res = await func(**_add_kwargs(func, kwargs, request))
+            res = await func(*args, **_add_kwargs(func, kwargs, request))
             return res
 
         context = contextvars.copy_context()
