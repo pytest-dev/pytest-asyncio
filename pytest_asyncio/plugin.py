@@ -21,6 +21,7 @@ from collections.abc import (
     Iterator,
     Sequence,
 )
+from types import CoroutineType
 from typing import (
     Any,
     Callable,
@@ -268,7 +269,7 @@ def _synchronize_async_fixture(fixturedef: FixtureDef) -> None:
     if inspect.isasyncgenfunction(fixturedef.func):
         fixturedef.func = _wrap_asyncgen_fixture(fixturedef)  # type: ignore[misc]
     elif inspect.iscoroutinefunction(fixturedef.func):
-        fixturedef.func = _wrap_async_fixture(fixturedef)  # type: ignore[misc]
+        fixturedef.func = _wrap_async_fixture(fixturedef.func)  # type: ignore[misc]
 
 
 def _add_kwargs(
@@ -346,10 +347,14 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> Callable:
     return _asyncgen_fixture_wrapper
 
 
-def _wrap_async_fixture(fixturedef: FixtureDef) -> Callable:
-    fixture_function = fixturedef.func
+AsyncFixtureReturnType = TypeVar("AsyncFixtureReturnType")
 
-    @functools.wraps(fixture_function)
+
+def _wrap_async_fixture(
+    fixture_function: Callable[..., CoroutineType[Any, Any, AsyncFixtureReturnType]],
+) -> Callable[..., AsyncFixtureReturnType]:
+
+    @functools.wraps(fixture_function)  # type: ignore[arg-type]
     def _async_fixture_wrapper(request: FixtureRequest, **kwargs: Any):
         func = _perhaps_rebind_fixture_func(fixture_function, request.instance)
         event_loop_fixture_id = _get_event_loop_fixture_id_for_async_fixture(
