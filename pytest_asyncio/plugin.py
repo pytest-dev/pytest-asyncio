@@ -21,7 +21,7 @@ from collections.abc import (
     Iterator,
     Sequence,
 )
-from types import CoroutineType
+from types import AsyncGeneratorType, CoroutineType
 from typing import (
     Any,
     Callable,
@@ -267,7 +267,7 @@ def _preprocess_async_fixtures(
 def _synchronize_async_fixture(fixturedef: FixtureDef) -> None:
     """Wraps the fixture function of an async fixture in a synchronous function."""
     if inspect.isasyncgenfunction(fixturedef.func):
-        fixturedef.func = _wrap_asyncgen_fixture(fixturedef)  # type: ignore[misc]
+        fixturedef.func = _wrap_asyncgen_fixture(fixturedef.func)  # type: ignore[misc]
     elif inspect.iscoroutinefunction(fixturedef.func):
         fixturedef.func = _wrap_async_fixture(fixturedef.func)  # type: ignore[misc]
 
@@ -300,12 +300,15 @@ def _perhaps_rebind_fixture_func(func: _T, instance: Any | None) -> _T:
     return func
 
 
-def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> Callable:
-    fixture = fixturedef.func
+AsyncGenFixtureYieldType = TypeVar("AsyncGenFixtureYieldType")
 
-    @functools.wraps(fixture)
+
+def _wrap_asyncgen_fixture(
+    fixture_function: Callable[..., AsyncGeneratorType[AsyncGenFixtureYieldType, Any]],
+) -> Callable[..., AsyncGenFixtureYieldType]:
+    @functools.wraps(fixture_function)
     def _asyncgen_fixture_wrapper(request: FixtureRequest, **kwargs: Any):
-        func = _perhaps_rebind_fixture_func(fixture, request.instance)
+        func = _perhaps_rebind_fixture_func(fixture_function, request.instance)
         event_loop_fixture_id = _get_event_loop_fixture_id_for_async_fixture(
             request, func
         )
