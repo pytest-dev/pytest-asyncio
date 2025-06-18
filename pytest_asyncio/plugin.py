@@ -268,7 +268,7 @@ def _synchronize_async_fixture(fixturedef: FixtureDef) -> None:
     if inspect.isasyncgenfunction(fixturedef.func):
         _wrap_asyncgen_fixture(fixturedef)
     elif inspect.iscoroutinefunction(fixturedef.func):
-        _wrap_async_fixture(fixturedef)
+        fixturedef.func = _wrap_async_fixture(fixturedef)  # type: ignore[misc]
 
 
 def _add_kwargs(
@@ -346,12 +346,12 @@ def _wrap_asyncgen_fixture(fixturedef: FixtureDef) -> None:
     fixturedef.func = _asyncgen_fixture_wrapper  # type: ignore[misc]
 
 
-def _wrap_async_fixture(fixturedef: FixtureDef) -> None:
-    fixture = fixturedef.func
+def _wrap_async_fixture(fixturedef: FixtureDef) -> Callable:
+    fixture_function = fixturedef.func
 
-    @functools.wraps(fixture)
+    @functools.wraps(fixture_function)
     def _async_fixture_wrapper(request: FixtureRequest, **kwargs: Any):
-        func = _perhaps_rebind_fixture_func(fixture, request.instance)
+        func = _perhaps_rebind_fixture_func(fixture_function, request.instance)
         event_loop_fixture_id = _get_event_loop_fixture_id_for_async_fixture(
             request, func
         )
@@ -380,7 +380,7 @@ def _wrap_async_fixture(fixturedef: FixtureDef) -> None:
 
         return result
 
-    fixturedef.func = _async_fixture_wrapper  # type: ignore[misc]
+    return _async_fixture_wrapper
 
 
 def _get_event_loop_fixture_id_for_async_fixture(
