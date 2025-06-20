@@ -291,7 +291,6 @@ def _wrap_asyncgen_fixture(
             request, func
         )
         event_loop = request.getfixturevalue(event_loop_fixture_id)
-        kwargs.pop(event_loop_fixture_id, None)
         gen_obj = func(*args, **_add_kwargs(func, kwargs, request))
 
         async def setup():
@@ -349,7 +348,6 @@ def _wrap_async_fixture(
             request, func
         )
         event_loop = request.getfixturevalue(event_loop_fixture_id)
-        kwargs.pop(event_loop_fixture_id, None)
 
         async def setup():
             res = await func(*args, **_add_kwargs(func, kwargs, request))
