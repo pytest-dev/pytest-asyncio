@@ -28,7 +28,6 @@ from typing import (
     Literal,
     TypeVar,
     Union,
-    cast,
     overload,
 )
 
@@ -231,12 +230,14 @@ def pytest_report_header(config: Config) -> list[str]:
     ]
 
 
-def _fixture_synchronizer(fixturedef: FixtureDef) -> Callable:
+def _fixture_synchronizer(
+    fixturedef: FixtureDef, event_loop: AbstractEventLoop
+) -> Callable:
     """Returns a synchronous function evaluating the specified fixture."""
     if inspect.isasyncgenfunction(fixturedef.func):
-        return _wrap_asyncgen_fixture(fixturedef.func)
+        return _wrap_asyncgen_fixture(fixturedef.func, event_loop)
     elif inspect.iscoroutinefunction(fixturedef.func):
-        return _wrap_async_fixture(fixturedef.func)
+        return _wrap_async_fixture(fixturedef.func, event_loop)
     else:
         return fixturedef.func
 
@@ -277,6 +278,7 @@ def _wrap_asyncgen_fixture(
     fixture_function: Callable[
         AsyncGenFixtureParams, AsyncGeneratorType[AsyncGenFixtureYieldType, Any]
     ],
+    event_loop: AbstractEventLoop,
 ) -> Callable[
     Concatenate[FixtureRequest, AsyncGenFixtureParams], AsyncGenFixtureYieldType
 ]:
@@ -287,10 +289,6 @@ def _wrap_asyncgen_fixture(
         **kwargs: AsyncGenFixtureParams.kwargs,
     ):
         func = _perhaps_rebind_fixture_func(fixture_function, request.instance)
-        event_loop_fixture_id = _get_event_loop_fixture_id_for_async_fixture(
-            request, func
-        )
-        event_loop = request.getfixturevalue(event_loop_fixture_id)
         gen_obj = func(*args, **_add_kwargs(func, kwargs, request))
 
         async def setup():
@@ -335,6 +333,7 @@ def _wrap_async_fixture(
     fixture_function: Callable[
         AsyncFixtureParams, CoroutineType[Any, Any, AsyncFixtureReturnType]
     ],
+    event_loop: AbstractEventLoop,
 ) -> Callable[Concatenate[FixtureRequest, AsyncFixtureParams], AsyncFixtureReturnType]:
 
     @functools.wraps(fixture_function)  # type: ignore[arg-type]
@@ -344,10 +343,6 @@ def _wrap_async_fixture(
         **kwargs: AsyncFixtureParams.kwargs,
     ):
         func = _perhaps_rebind_fixture_func(fixture_function, request.instance)
-        event_loop_fixture_id = _get_event_loop_fixture_id_for_async_fixture(
-            request, func
-        )
-        event_loop = request.getfixturevalue(event_loop_fixture_id)
 
         async def setup():
             res = await func(*args, **_add_kwargs(func, kwargs, request))
@@ -372,18 +367,6 @@ def _wrap_async_fixture(
         return result
 
     return _async_fixture_wrapper
-
-
-def _get_event_loop_fixture_id_for_async_fixture(
-    request: FixtureRequest, func: Any
-) -> str:
-    default_loop_scope = cast(
-        _ScopeName, request.config.getini("asyncio_default_fixture_loop_scope")
-    )
-    loop_scope = (
-        getattr(func, "_loop_scope", None) or default_loop_scope or request.scope
-    )
-    return f"_{loop_scope}_event_loop"
 
 
 def _create_task_in_context(
@@ -794,7 +777,9 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
         or default_loop_scope
         or fixturedef.scope
     )
-    synchronizer = _fixture_synchronizer(fixturedef)
+    event_loop_fixture_id = f"_{loop_scope}_event_loop"
+    event_loop = request.getfixturevalue(event_loop_fixture_id)
+    synchronizer = _fixture_synchronizer(fixturedef, event_loop)
     _make_asyncio_fixture_function(synchronizer, loop_scope)
     with MonkeyPatch.context() as c:
         if "request" not in fixturedef.argnames:
