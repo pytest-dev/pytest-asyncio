@@ -36,7 +36,6 @@ import pluggy
 import pytest
 from _pytest.scope import Scope
 from pytest import (
-    Collector,
     Config,
     FixtureDef,
     FixtureRequest,
@@ -44,6 +43,7 @@ from pytest import (
     Item,
     Mark,
     Metafunc,
+    MonkeyPatch,
     Parser,
     PytestCollectionWarning,
     PytestDeprecationWarning,
@@ -229,39 +229,6 @@ def pytest_report_header(config: Config) -> list[str]:
     return [
         "asyncio: " + ", ".join(header),
     ]
-
-
-def _preprocess_async_fixtures(
-    collector: Collector,
-    processed_fixturedefs: set[FixtureDef],
-) -> None:
-    config = collector.config
-    default_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
-    asyncio_mode = _get_asyncio_mode(config)
-    fixturemanager = config.pluginmanager.get_plugin("funcmanage")
-    assert fixturemanager is not None
-    for fixtures in fixturemanager._arg2fixturedefs.values():
-        for fixturedef in fixtures:
-            func = fixturedef.func
-            if fixturedef in processed_fixturedefs or not _is_coroutine_or_asyncgen(
-                func
-            ):
-                continue
-            if asyncio_mode == Mode.STRICT and not _is_asyncio_fixture_function(func):
-                # Ignore async fixtures without explicit asyncio mark in strict mode
-                # This applies to pytest_trio fixtures, for example
-                continue
-            loop_scope = (
-                getattr(func, "_loop_scope", None)
-                or default_loop_scope
-                or fixturedef.scope
-            )
-            _make_asyncio_fixture_function(func, loop_scope)
-            if "request" not in fixturedef.argnames:
-                fixturedef.argnames += ("request",)
-            fixturedef.func = _fixture_synchronizer(fixturedef)  # type: ignore[misc]
-            assert _is_asyncio_fixture_function(fixturedef.func)
-            processed_fixturedefs.add(fixturedef)
 
 
 def _fixture_synchronizer(fixturedef: FixtureDef) -> Callable:
@@ -599,22 +566,6 @@ class AsyncHypothesisTest(PytestAsyncioFunction):
         super().runtest()
 
 
-_HOLDER: set[FixtureDef] = set()
-
-
-# The function name needs to start with "pytest_"
-# see https://github.com/pytest-dev/pytest/issues/11307
-@pytest.hookimpl(specname="pytest_pycollect_makeitem", tryfirst=True)
-def pytest_pycollect_makeitem_preprocess_async_fixtures(
-    collector: pytest.Module | pytest.Class, name: str, obj: object
-) -> pytest.Item | pytest.Collector | list[pytest.Item | pytest.Collector] | None:
-    """A pytest hook to collect asyncio coroutines."""
-    if not collector.funcnamefilter(name):
-        return None
-    _preprocess_async_fixtures(collector, _HOLDER)
-    return None
-
-
 # The function name needs to start with "pytest_"
 # see https://github.com/pytest-dev/pytest/issues/11307
 @pytest.hookimpl(specname="pytest_pycollect_makeitem", hookwrapper=True)
@@ -827,6 +778,32 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
             f"test function `{item!r}` is using Hypothesis, but pytest-asyncio "
             "only works with Hypothesis 3.64.0 or later."
         )
+
+
+@pytest.hookimpl(wrapper=True)
+def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
+    asyncio_mode = _get_asyncio_mode(request.config)
+    if not _is_asyncio_fixture_function(fixturedef.func):
+        if asyncio_mode == Mode.STRICT:
+            # Ignore async fixtures without explicit asyncio mark in strict mode
+            # This applies to pytest_trio fixtures, for example
+            return (yield)
+        if not _is_coroutine_or_asyncgen(fixturedef.func):
+            return (yield)
+    default_loop_scope = request.config.getini("asyncio_default_fixture_loop_scope")
+    loop_scope = (
+        getattr(fixturedef.func, "_loop_scope", None)
+        or default_loop_scope
+        or fixturedef.scope
+    )
+    synchronizer = _fixture_synchronizer(fixturedef)
+    _make_asyncio_fixture_function(synchronizer, loop_scope)
+    with MonkeyPatch.context() as c:
+        if "request" not in fixturedef.argnames:
+            c.setattr(fixturedef, "argnames", (*fixturedef.argnames, "request"))
+        c.setattr(fixturedef, "func", synchronizer)
+        hook_result = yield
+    return hook_result
 
 
 _DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR = """\
