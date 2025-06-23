@@ -6,7 +6,7 @@ repos:
   - id: check-merge-conflict
     exclude: rst$
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.11.13
+  rev: v0.12.0
   hooks:
   - id: ruff
     args: [--fix]
@@ -42,7 +42,7 @@ repos:
   - id: check-yaml
   - id: debug-statements
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.16.0
+  rev: v1.16.1
   hooks:
   - id: mypy
     exclude: ^(docs|tests)/.*
@@ -65,7 +65,7 @@ repos:
     - 'SC1004:'
     stages: [manual]
 - repo: https://github.com/sirosen/check-jsonschema
-  rev: 0.33.0
+  rev: 0.33.1
   hooks:
   - id: check-github-actions
 - repo: https://github.com/tox-dev/pyproject-fmt
