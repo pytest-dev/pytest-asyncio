@@ -33,6 +33,7 @@ from typing import (
 
 import pluggy
 import pytest
+from _pytest.fixtures import resolve_fixture_function
 from _pytest.scope import Scope
 from pytest import (
     Config,
@@ -60,7 +61,6 @@ else:
     from backports.asyncio.runner import Runner
 
 _ScopeName = Literal["session", "package", "module", "class", "function"]
-_T = TypeVar("_T")
 _R = TypeVar("_R", bound=Union[Awaitable[Any], AsyncIterator[Any]])
 _P = ParamSpec("_P")
 FixtureFunction = Callable[_P, _R]
@@ -234,12 +234,15 @@ def pytest_report_header(config: Config) -> list[str]:
     ]
 
 
-def _fixture_synchronizer(fixturedef: FixtureDef, runner: Runner) -> Callable:
+def _fixture_synchronizer(
+    fixturedef: FixtureDef, runner: Runner, request: FixtureRequest
+) -> Callable:
     """Returns a synchronous function evaluating the specified fixture."""
+    fixture_function = resolve_fixture_function(fixturedef, request)
     if inspect.isasyncgenfunction(fixturedef.func):
-        return _wrap_asyncgen_fixture(fixturedef.func, runner)
+        return _wrap_asyncgen_fixture(fixture_function, runner)  # type: ignore[arg-type]
     elif inspect.iscoroutinefunction(fixturedef.func):
-        return _wrap_async_fixture(fixturedef.func, runner)
+        return _wrap_async_fixture(fixture_function, runner)  # type: ignore[arg-type]
     else:
         return fixturedef.func
 
@@ -254,22 +257,6 @@ def _add_kwargs(
     if "request" in sig.parameters:
         ret["request"] = request
     return ret
-
-
-def _perhaps_rebind_fixture_func(func: _T, instance: Any | None) -> _T:
-    if instance is not None:
-        # The fixture needs to be bound to the actual request.instance
-        # so it is bound to the same object as the test method.
-        unbound, cls = func, None
-        try:
-            unbound, cls = func.__func__, type(func.__self__)  # type: ignore
-        except AttributeError:
-            pass
-        # Only if the fixture was bound before to an instance of
-        # the same type.
-        if cls is not None and isinstance(instance, cls):
-            func = unbound.__get__(instance)  # type: ignore
-    return func
 
 
 AsyncGenFixtureParams = ParamSpec("AsyncGenFixtureParams")
@@ -290,8 +277,9 @@ def _wrap_asyncgen_fixture(
         *args: AsyncGenFixtureParams.args,
         **kwargs: AsyncGenFixtureParams.kwargs,
     ):
-        func = _perhaps_rebind_fixture_func(fixture_function, request.instance)
-        gen_obj = func(*args, **_add_kwargs(func, kwargs, request))
+        gen_obj = fixture_function(
+            *args, **_add_kwargs(fixture_function, kwargs, request)
+        )
 
         async def setup():
             res = await gen_obj.__anext__()  # type: ignore[union-attr]
@@ -342,10 +330,10 @@ def _wrap_async_fixture(
         *args: AsyncFixtureParams.args,
         **kwargs: AsyncFixtureParams.kwargs,
     ):
-        func = _perhaps_rebind_fixture_func(fixture_function, request.instance)
-
         async def setup():
-            res = await func(*args, **_add_kwargs(func, kwargs, request))
+            res = await fixture_function(
+                *args, **_add_kwargs(fixture_function, kwargs, request)
+            )
             return res
 
         context = contextvars.copy_context()
@@ -746,7 +734,7 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
     )
     runner_fixture_id = f"_{loop_scope}_scoped_runner"
     runner = request.getfixturevalue(runner_fixture_id)
-    synchronizer = _fixture_synchronizer(fixturedef, runner)
+    synchronizer = _fixture_synchronizer(fixturedef, runner, request)
     _make_asyncio_fixture_function(synchronizer, loop_scope)
     with MonkeyPatch.context() as c:
         if "request" not in fixturedef.argnames:
