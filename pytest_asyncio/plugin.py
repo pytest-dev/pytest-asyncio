@@ -51,9 +51,9 @@ from pytest import (
 )
 
 if sys.version_info >= (3, 10):
-    from typing import Concatenate, ParamSpec
+    from typing import ParamSpec
 else:
-    from typing_extensions import Concatenate, ParamSpec
+    from typing_extensions import ParamSpec
 
 if sys.version_info >= (3, 11):
     from asyncio import Runner
@@ -240,9 +240,9 @@ def _fixture_synchronizer(
     """Returns a synchronous function evaluating the specified fixture."""
     fixture_function = resolve_fixture_function(fixturedef, request)
     if inspect.isasyncgenfunction(fixturedef.func):
-        return _wrap_asyncgen_fixture(fixture_function, runner)  # type: ignore[arg-type]
+        return _wrap_asyncgen_fixture(fixture_function, runner, request)  # type: ignore[arg-type]
     elif inspect.iscoroutinefunction(fixturedef.func):
-        return _wrap_async_fixture(fixture_function, runner)  # type: ignore[arg-type]
+        return _wrap_async_fixture(fixture_function, runner, request)  # type: ignore[arg-type]
     else:
         return fixturedef.func
 
@@ -268,18 +268,14 @@ def _wrap_asyncgen_fixture(
         AsyncGenFixtureParams, AsyncGeneratorType[AsyncGenFixtureYieldType, Any]
     ],
     runner: Runner,
-) -> Callable[
-    Concatenate[FixtureRequest, AsyncGenFixtureParams], AsyncGenFixtureYieldType
-]:
+    request: FixtureRequest,
+) -> Callable[AsyncGenFixtureParams, AsyncGenFixtureYieldType]:
     @functools.wraps(fixture_function)
     def _asyncgen_fixture_wrapper(
-        request: FixtureRequest,
         *args: AsyncGenFixtureParams.args,
         **kwargs: AsyncGenFixtureParams.kwargs,
     ):
-        gen_obj = fixture_function(
-            *args, **_add_kwargs(fixture_function, kwargs, request)
-        )
+        gen_obj = fixture_function(*args, **kwargs)
 
         async def setup():
             res = await gen_obj.__anext__()  # type: ignore[union-attr]
@@ -322,18 +318,16 @@ def _wrap_async_fixture(
         AsyncFixtureParams, CoroutineType[Any, Any, AsyncFixtureReturnType]
     ],
     runner: Runner,
-) -> Callable[Concatenate[FixtureRequest, AsyncFixtureParams], AsyncFixtureReturnType]:
+    request: FixtureRequest,
+) -> Callable[AsyncFixtureParams, AsyncFixtureReturnType]:
 
     @functools.wraps(fixture_function)  # type: ignore[arg-type]
     def _async_fixture_wrapper(
-        request: FixtureRequest,
         *args: AsyncFixtureParams.args,
         **kwargs: AsyncFixtureParams.kwargs,
     ):
         async def setup():
-            res = await fixture_function(
-                *args, **_add_kwargs(fixture_function, kwargs, request)
-            )
+            res = await fixture_function(*args, **kwargs)
             return res
 
         context = contextvars.copy_context()
@@ -737,8 +731,6 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
     synchronizer = _fixture_synchronizer(fixturedef, runner, request)
     _make_asyncio_fixture_function(synchronizer, loop_scope)
     with MonkeyPatch.context() as c:
-        if "request" not in fixturedef.argnames:
-            c.setattr(fixturedef, "argnames", (*fixturedef.argnames, "request"))
         c.setattr(fixturedef, "func", synchronizer)
         hook_result = yield
     return hook_result
