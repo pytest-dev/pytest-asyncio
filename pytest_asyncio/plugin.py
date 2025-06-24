@@ -451,11 +451,10 @@ class Coroutine(PytestAsyncioFunction):
         return inspect.iscoroutinefunction(func)
 
     def runtest(self) -> None:
-        self.obj = wrap_in_sync(
-            # https://github.com/pytest-dev/pytest-asyncio/issues/596
-            self.obj,  # type: ignore[has-type]
-        )
-        super().runtest()
+        synchronized_obj = wrap_in_sync(self.obj)
+        with MonkeyPatch.context() as c:
+            c.setattr(self, "obj", synchronized_obj)
+            super().runtest()
 
 
 class AsyncGenerator(PytestAsyncioFunction):
@@ -494,11 +493,10 @@ class AsyncStaticMethod(PytestAsyncioFunction):
         )
 
     def runtest(self) -> None:
-        self.obj = wrap_in_sync(
-            # https://github.com/pytest-dev/pytest-asyncio/issues/596
-            self.obj,  # type: ignore[has-type]
-        )
-        super().runtest()
+        synchronized_obj = wrap_in_sync(self.obj)
+        with MonkeyPatch.context() as c:
+            c.setattr(self, "obj", synchronized_obj)
+            super().runtest()
 
 
 class AsyncHypothesisTest(PytestAsyncioFunction):
@@ -517,10 +515,10 @@ class AsyncHypothesisTest(PytestAsyncioFunction):
         )
 
     def runtest(self) -> None:
-        self.obj.hypothesis.inner_test = wrap_in_sync(
-            self.obj.hypothesis.inner_test,
-        )
-        super().runtest()
+        synchronized_obj = wrap_in_sync(self.obj.hypothesis.inner_test)
+        with MonkeyPatch.context() as c:
+            c.setattr(self.obj.hypothesis, "inner_test", synchronized_obj)
+            super().runtest()
 
 
 # The function name needs to start with "pytest_"
