@@ -1,0 +1,1 @@
+Warning when the current event loop is closed by a test

@@ -5,10 +5,8 @@ contextvars were not properly maintained among fixtures and tests.
 
 from __future__ import annotations
 
-import sys
 from textwrap import dedent
 
-import pytest
 from pytest import Pytester
 
 _prelude = dedent(
@@ -56,11 +54,6 @@ def test_var_from_sync_generator_propagates_to_async(pytester: Pytester):
     result.assert_outcomes(passed=1)
 
 
-@pytest.mark.xfail(
-    sys.version_info < (3, 11),
-    reason="requires asyncio Task context support",
-    strict=True,
-)
 def test_var_from_async_generator_propagates_to_sync(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
@@ -86,11 +79,6 @@ def test_var_from_async_generator_propagates_to_sync(pytester: Pytester):
     result.assert_outcomes(passed=1)
 
 
-@pytest.mark.xfail(
-    sys.version_info < (3, 11),
-    reason="requires asyncio Task context support",
-    strict=True,
-)
 def test_var_from_async_fixture_propagates_to_sync(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
@@ -115,11 +103,6 @@ def test_var_from_async_fixture_propagates_to_sync(pytester: Pytester):
     result.assert_outcomes(passed=1)
 
 
-@pytest.mark.xfail(
-    sys.version_info < (3, 11),
-    reason="requires asyncio Task context support",
-    strict=True,
-)
 def test_var_from_generator_reset_before_previous_fixture_cleanup(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
@@ -149,11 +132,6 @@ def test_var_from_generator_reset_before_previous_fixture_cleanup(pytester: Pyte
     result.assert_outcomes(passed=1)
 
 
-@pytest.mark.xfail(
-    sys.version_info < (3, 11),
-    reason="requires asyncio Task context support",
-    strict=True,
-)
 def test_var_from_fixture_reset_before_previous_fixture_cleanup(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
@@ -183,11 +161,6 @@ def test_var_from_fixture_reset_before_previous_fixture_cleanup(pytester: Pytest
     result.assert_outcomes(passed=1)
 
 
-@pytest.mark.xfail(
-    sys.version_info < (3, 11),
-    reason="requires asyncio Task context support",
-    strict=True,
-)
 def test_var_previous_value_restored_after_fixture(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
@@ -216,11 +189,6 @@ def test_var_previous_value_restored_after_fixture(pytester: Pytester):
     result.assert_outcomes(passed=1)
 
 
-@pytest.mark.xfail(
-    sys.version_info < (3, 11),
-    reason="requires asyncio Task context support",
-    strict=True,
-)
 def test_var_set_to_existing_value_ok(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
