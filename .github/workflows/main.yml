@@ -104,7 +104,7 @@ jobs:
     name: Lint GitHub Actions
     permissions:
       security-events: write
-    uses: zizmorcore/workflow/.github/workflows/reusable-zizmor.yml@1ae473d8672fe7613e809d86d202a35063736e16
+    uses: zizmorcore/workflow/.github/workflows/reusable-zizmor.yml@3bb5e95068d0f44b6d2f3f7e91379bed1d2f96a8
 
   check:
     name: Check
