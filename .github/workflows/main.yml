@@ -206,7 +206,6 @@ jobs:
       with:
         attestations: true
         packages-dir: dist
-        password: ${{ secrets.PYPI_API_TOKEN }}
     - name: Download Release Notes
       uses: actions/download-artifact@v4
       with:
