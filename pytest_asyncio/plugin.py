@@ -818,7 +818,6 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
         name=f"_{scope}_scoped_runner",
     )
     def _scoped_runner(
-        *args,  # Function needs to accept "cls" when collected by pytest.Class
         event_loop_policy,
     ) -> Iterator[Runner]:
         new_loop_policy = event_loop_policy
