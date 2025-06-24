@@ -1,0 +1,1 @@
+An error that could cause duplicate warnings to be issued

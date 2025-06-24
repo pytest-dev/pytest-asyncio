@@ -42,7 +42,6 @@ from pytest import (
     Function,
     Item,
     Mark,
-    Metafunc,
     MonkeyPatch,
     Parser,
     PytestCollectionWarning,
@@ -545,32 +544,6 @@ def _temporary_event_loop_policy(policy: AbstractEventLoopPolicy) -> Iterator[No
     finally:
         _set_event_loop_policy(old_loop_policy)
         _set_event_loop(old_loop)
-
-
-@pytest.hookimpl(tryfirst=True)
-def pytest_generate_tests(metafunc: Metafunc) -> None:
-    marker = metafunc.definition.get_closest_marker("asyncio")
-    if not marker:
-        return
-    default_loop_scope = _get_default_test_loop_scope(metafunc.config)
-    loop_scope = _get_marked_loop_scope(marker, default_loop_scope)
-    runner_fixture_id = f"_{loop_scope}_scoped_runner"
-    # This specific fixture name may already be in metafunc.argnames, if this
-    # test indirectly depends on the fixture. For example, this is the case
-    # when the test depends on an async fixture, both of which share the same
-    # event loop fixture mark.
-    if runner_fixture_id in metafunc.fixturenames:
-        return
-    fixturemanager = metafunc.config.pluginmanager.get_plugin("funcmanage")
-    assert fixturemanager is not None
-    # Add the scoped event loop fixture to Metafunc's list of fixture names and
-    # fixturedefs and leave the actual parametrization to pytest
-    # The fixture needs to be appended to avoid messing up the fixture evaluation
-    # order
-    metafunc.fixturenames.append(runner_fixture_id)
-    metafunc._arg2fixturedefs[runner_fixture_id] = fixturemanager._arg2fixturedefs[
-        runner_fixture_id
-    ]
 
 
 def _get_event_loop_policy() -> AbstractEventLoopPolicy:
