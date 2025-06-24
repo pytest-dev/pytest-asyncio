@@ -16,7 +16,6 @@ from asyncio import AbstractEventLoop, AbstractEventLoopPolicy
 from collections.abc import (
     AsyncIterator,
     Awaitable,
-    Coroutine as AbstractCoroutine,
     Generator,
     Iterable,
     Iterator,
@@ -367,29 +366,6 @@ def _wrap_async_fixture(
         return result
 
     return _async_fixture_wrapper
-
-
-def _create_task_in_context(
-    loop: asyncio.AbstractEventLoop,
-    coro: AbstractCoroutine[Any, Any, _T],
-    context: contextvars.Context,
-) -> asyncio.Task[_T]:
-    """
-    Return an asyncio task that runs the coro in the specified context,
-    if possible.
-
-    This allows fixture setup and teardown to be run as separate asyncio tasks,
-    while still being able to use context-manager idioms to maintain context
-    variables and make those variables visible to test functions.
-
-    This is only fully supported on Python 3.11 and newer, as it requires
-    the API added for https://github.com/python/cpython/issues/91150.
-    On earlier versions, the returned task will use the default context instead.
-    """
-    try:
-        return loop.create_task(coro, context=context)
-    except TypeError:
-        return loop.create_task(coro)
 
 
 def _apply_contextvar_changes(
