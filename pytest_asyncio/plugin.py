@@ -874,23 +874,6 @@ for scope in Scope:
     )
 
 
-@contextlib.contextmanager
-def _provide_event_loop() -> Iterator[asyncio.AbstractEventLoop]:
-    policy = _get_event_loop_policy()
-    loop = policy.new_event_loop()
-    try:
-        yield loop
-    finally:
-        # cleanup the event loop if it hasn't been cleaned up already
-        if not loop.is_closed():
-            try:
-                loop.run_until_complete(loop.shutdown_asyncgens())
-            except Exception as e:
-                warnings.warn(f"Error cleaning up asyncio loop: {e}", RuntimeWarning)
-            finally:
-                loop.close()
-
-
 @pytest.fixture(scope="session", autouse=True)
 def event_loop_policy() -> AbstractEventLoopPolicy:
     """Return an instance of the policy used to create asyncio event loops."""
