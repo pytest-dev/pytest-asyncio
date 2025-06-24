@@ -247,18 +247,6 @@ def _fixture_synchronizer(
         return fixturedef.func
 
 
-def _add_kwargs(
-    func: Callable[..., Any],
-    kwargs: dict[str, Any],
-    request: FixtureRequest,
-) -> dict[str, Any]:
-    sig = inspect.signature(func)
-    ret = kwargs.copy()
-    if "request" in sig.parameters:
-        ret["request"] = request
-    return ret
-
-
 AsyncGenFixtureParams = ParamSpec("AsyncGenFixtureParams")
 AsyncGenFixtureYieldType = TypeVar("AsyncGenFixtureYieldType")
 
