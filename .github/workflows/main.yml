@@ -143,10 +143,12 @@ jobs:
         fail_ci_if_error: true
         token: ${{ secrets.CODECOV_TOKEN }}
 
-  prepare-release-notes:
-    name: Prepare Release Notes
-    needs: [lint]
+  create-github-release:
+    name: Create GitHub release
+    needs: [lint, check]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -182,6 +184,20 @@ jobs:
       with:
         name: release-notes.md
         path: release-notes.md
+    - name: Download distributions
+      uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist
+    - name: Create GitHub Release
+      if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+      uses: ncipollo/release-action@440c8c1cb0ed28b9f43e4d1d670870f059653174  # v1.16.0
+      with:
+        name: pytest-asyncio ${{ needs.lint.outputs.version }}
+        artifacts: dist/*
+        bodyFile: release-notes.md
+        prerelease: ${{ needs.lint.outputs.prerelease }}
+        token: ${{ secrets.GITHUB_TOKEN }}
 
   publish-test-pypi:
     name: Publish packages to test.pypi.org
@@ -206,10 +222,9 @@ jobs:
     name: Publish packages to pypi.org
     environment: release
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
-    needs: [lint, check, prepare-release-notes]
+    needs: [lint, check]
     runs-on: ubuntu-latest
     permissions:
-      contents: write
       id-token: write
     steps:
     - name: Download distributions
@@ -222,16 +237,3 @@ jobs:
         tree dist
     - name: PyPI upload
       uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc  # v1.12.4
-    - name: Download Release Notes
-      uses: actions/download-artifact@v4
-      with:
-        name: release-notes.md
-        path: release-notes.md
-    - name: GitHub Release
-      uses: ncipollo/release-action@440c8c1cb0ed28b9f43e4d1d670870f059653174  # v1.16.0
-      with:
-        name: pytest-asyncio ${{ needs.lint.outputs.version }}
-        artifacts: dist/*
-        bodyFile: release-notes.md
-        prerelease: ${{ needs.lint.outputs.prerelease }}
-        token: ${{ secrets.GITHUB_TOKEN }}
