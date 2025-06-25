@@ -191,6 +191,7 @@ jobs:
     needs: [lint, check, prepare-release-notes]
     runs-on: ubuntu-latest
     permissions:
+      contents: write
       id-token: write
     steps:
     - name: Download distributions
