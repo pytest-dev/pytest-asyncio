@@ -32,6 +32,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Software Development :: Testing",
   "Typing :: Typed",
 ]
@@ -110,6 +111,9 @@ lint.ignore = [
   "D404", # First word of the docstring should not be "This"
   "D415", # First line should end with a period, question mark, or exclamation point
 ]
+
+[tool.pyproject-fmt]
+max_supported_python = "3.14"
 
 [tool.pytest.ini_options]
 python_files = [
