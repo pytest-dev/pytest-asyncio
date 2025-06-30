@@ -64,6 +64,7 @@ include-package-data = true
 
 [tool.setuptools_scm]
 write_to = "pytest_asyncio/_version.py"
+local_scheme = "no-local-version"
 
 [tool.ruff]
 line-length = 88
