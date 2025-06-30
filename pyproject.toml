@@ -18,7 +18,7 @@ maintainers = [
   { name = "Michael Seifert", email = "m.seifert@digitalernachschub.de" },
 ]
 authors = [
-  { name = "Tin Tvrtković <tinchester@gmail.com>", email = "tinchester@gmail.com" },
+  { name = "Tin Tvrtković", email = "tinchester@gmail.com" },
 ]
 requires-python = ">=3.9"
 classifiers = [
