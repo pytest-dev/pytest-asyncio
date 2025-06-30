@@ -201,7 +201,6 @@ jobs:
 
   publish-test-pypi:
     name: Publish packages to test.pypi.org
-    environment: release
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [lint, check]
     runs-on: ubuntu-latest
