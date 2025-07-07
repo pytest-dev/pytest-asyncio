@@ -8,4 +8,4 @@ pluggy==1.6.0
 pytest==8.4.1
 sortedcontainers==2.4.0
 tomli==2.2.1
-typing_extensions==4.14.0
+typing_extensions==4.14.1
