@@ -417,6 +417,8 @@ def _apply_contextvar_changes(
 class PytestAsyncioFunction(Function):
     """Base class for all test functions managed by pytest-asyncio."""
 
+    loop_factory: Callable[[], AbstractEventLoop] | None
+
     @classmethod
     def item_subclass_for(cls, item: Function, /) -> type[PytestAsyncioFunction] | None:
         """
@@ -431,7 +433,12 @@ class PytestAsyncioFunction(Function):
         return None
 
     @classmethod
-    def _from_function(cls, function: Function, /) -> Function:
+    def _from_function(
+        cls,
+        function: Function,
+        loop_factory: Callable[[], AbstractEventLoop] | None = None,
+        /,
+    ) -> Function:
         """
         Instantiates this specific PytestAsyncioFunction type from the specified
         Function item.
@@ -447,6 +454,7 @@ class PytestAsyncioFunction(Function):
             keywords=function.keywords,
             originalname=function.originalname,
         )
+        subclass_instance.loop_factory = loop_factory
         subclass_instance.own_markers = function.own_markers
         assert subclass_instance.own_markers == function.own_markers
         return subclass_instance
@@ -610,9 +618,27 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
                     node.config
                 ) == Mode.AUTO and not node.get_closest_marker("asyncio"):
                     node.add_marker("asyncio")
-                if node.get_closest_marker("asyncio"):
-                    updated_item = specialized_item_class._from_function(node)
-        updated_node_collection.append(updated_item)
+                if asyncio_marker := node.get_closest_marker("asyncio"):
+                    if loop_factory := asyncio_marker.kwargs.get("loop_factory", None):
+                        # multiply if loop_factory is an iterable object of factories
+                        if hasattr(loop_factory, "__iter__"):
+                            updated_item = [
+                                specialized_item_class._from_function(node, lf)
+                                for lf in loop_factory
+                            ]
+                        else:
+                            updated_item = specialized_item_class._from_function(
+                                node, loop_factory
+                            )
+                    else:
+                        updated_item = specialized_item_class._from_function(node)
+
+        # we could have multiple factroies to test if so,
+        # multiply the number of functions for us...
+        if isinstance(updated_item, list):
+            updated_node_collection.extend(updated_item)
+        else:
+            updated_node_collection.append(updated_item)
     hook_result.force_result(updated_node_collection)
 
 
@@ -629,20 +655,6 @@ def _temporary_event_loop_policy(policy: AbstractEventLoopPolicy) -> Iterator[No
     finally:
         _set_event_loop_policy(old_loop_policy)
         _set_event_loop(old_loop)
-
-
-@contextlib.contextmanager
-def _temporary_event_loop(loop: AbstractEventLoop):
-    try:
-        old_event_loop = asyncio.get_event_loop()
-    except RuntimeError:
-        old_event_loop = None
-
-    asyncio.set_event_loop(old_event_loop)
-    try:
-        yield
-    finally:
-        asyncio.set_event_loop(old_event_loop)
 
 
 def _get_event_loop_policy() -> AbstractEventLoopPolicy:
@@ -753,8 +765,15 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
         or default_loop_scope
         or fixturedef.scope
     )
+    # XXX: Currently Confused as to where to debug and harvest and get the runner to use the loop_factory argument.
+    loop_factory = getattr(fixturedef.func, "loop_factory", None)
+
+    print(f"LOOP FACTORY: {loop_factory} {fixturedef.func}")
+    sys.stdout.flush()
+
     runner_fixture_id = f"_{loop_scope}_scoped_runner"
-    runner = request.getfixturevalue(runner_fixture_id)
+    runner: Runner = request.getfixturevalue(runner_fixture_id)
+
     synchronizer = _fixture_synchronizer(fixturedef, runner, request)
     _make_asyncio_fixture_function(synchronizer, loop_scope)
     with MonkeyPatch.context() as c:
@@ -779,9 +798,12 @@ def _get_marked_loop_scope(
 ) -> _ScopeName:
     assert asyncio_marker.name == "asyncio"
     if asyncio_marker.args or (
-        asyncio_marker.kwargs and set(asyncio_marker.kwargs) - {"loop_scope", "scope"}
+        asyncio_marker.kwargs
+        and set(asyncio_marker.kwargs) - {"loop_scope", "scope", "loop_factory"}
     ):
-        raise ValueError("mark.asyncio accepts only a keyword argument 'loop_scope'.")
+        raise ValueError(
+            "mark.asyncio accepts only keyword arguments 'loop_scope', 'loop_factory'."
+        )
     if "scope" in asyncio_marker.kwargs:
         if "loop_scope" in asyncio_marker.kwargs:
             raise pytest.UsageError(_DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR)
@@ -847,12 +869,6 @@ for scope in Scope:
     globals()[f"_{scope.value}_scoped_runner"] = _create_scoped_runner_fixture(
         scope.value
     )
-
-
-@pytest.fixture(scope="session", autouse=True)
-def new_event_loop() -> AbstractEventLoop:
-    """Creates a new eventloop for different tests being ran"""
-    return asyncio.new_event_loop()
 
 
 @pytest.fixture(scope="session", autouse=True)
