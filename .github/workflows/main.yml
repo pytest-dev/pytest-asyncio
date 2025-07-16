@@ -173,6 +173,7 @@ jobs:
       if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
       run: |
         set -e
+        git fetch --tags --force  # see https://github.com/actions/checkout/issues/290
         git for-each-ref "${GITHUB_REF}" --format='%(contents)' > release-notes.rst
         # Strip PGP signature from signed tags
         sed -i "/-----BEGIN PGP SIGNATURE-----/,/-----END PGP SIGNATURE-----\n/d" release-notes.rst
