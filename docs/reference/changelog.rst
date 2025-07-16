@@ -10,6 +10,30 @@ This project uses `towncrier <https://towncrier.readthedocs.io/>`__ for changlog
 
 .. towncrier release notes start
 
+`1.1.0 <https://github.com/pytest-dev/pytest-asyncio/tree/1.1.0>`_ - 2025-07-16
+===============================================================================
+
+Added
+-----
+
+- Propagation of ContextVars from async fixtures to other fixtures and tests on Python 3.10 and older (`#127 <https://github.com/pytest-dev/pytest-asyncio/issues/127>`_)
+- Cancellation of tasks when the `loop_scope` ends (`#200 <https://github.com/pytest-dev/pytest-asyncio/issues/200>`_)
+- Warning when the current event loop is closed by a test
+
+
+Fixed
+-----
+
+- Error about missing loop when calling functions requiring a loop in the `finally` clause of a task (`#878 <https://github.com/pytest-dev/pytest-asyncio/issues/878>`_)
+- An error that could cause duplicate warnings to be issued
+
+
+Notes for Downstream Packagers
+------------------------------
+
+- Added runtime dependency on `backports.asyncio.runner <https://pypi.org/project/backports.asyncio.runner/>`__ for use with Python 3.10 and older
+
+
 `1.0.0 <https://github.com/pytest-dev/pytest-asyncio/tree/1.0.0>`_ - 2025-05-26
 ===============================================================================
 

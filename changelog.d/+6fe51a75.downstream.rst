@@ -1,1 +1,0 @@
-Added runtime dependency on `backports.asyncio.runner <https://pypi.org/project/backports.asyncio.runner/>`__ for use with Python 3.10 and older

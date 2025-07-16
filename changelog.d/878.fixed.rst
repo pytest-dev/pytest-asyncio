@@ -1,1 +1,0 @@
-Error about missing loop when calling functions requiring a loop in the `finally` clause of a task

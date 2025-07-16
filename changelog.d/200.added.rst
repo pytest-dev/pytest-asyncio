@@ -1,1 +1,0 @@
-Cancellation of tasks when the `loop_scope` ends
