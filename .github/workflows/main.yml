@@ -179,7 +179,7 @@ jobs:
         sed -i "/-----BEGIN PGP SIGNATURE-----/,/-----END PGP SIGNATURE-----\n/d" release-notes.rst
     - name: Convert Release Notes to Markdown
       run: |
-        pandoc -s -o release-notes.md release-notes.rst
+        pandoc --wrap=preserve -o release-notes.md release-notes.rst
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
