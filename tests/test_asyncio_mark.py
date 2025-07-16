@@ -223,3 +223,35 @@ def test_asyncio_marker_uses_marker_loop_scope_even_if_config_is_set(
 
     result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
+
+
+def test_asyncio_marker_event_loop_factories(pytester: Pytester):
+    pytester.makeini(
+        dedent(
+            """\
+            [pytest]
+            asyncio_default_fixture_loop_scope = function
+            asyncio_default_test_loop_scope = module
+            """
+        )
+    )
+
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+            import pytest_asyncio
+            import pytest
+
+            class CustomEventLoop(asyncio.SelectorEventLoop):
+                pass
+
+            @pytest.mark.asyncio(loop_factory=CustomEventLoop)
+            async def test_has_different_event_loop():
+                assert type(asyncio.get_running_loop()).__name__ == "CustomEventLoop"
+            """
+        )
+    )
+
+    result = pytester.runpytest("--asyncio-mode=auto")
+    result.assert_outcomes(passed=1)
