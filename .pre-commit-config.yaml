@@ -78,6 +78,13 @@ repos:
   rev: v1.11.0
   hooks:
   - id: zizmor
+- repo: https://github.com/RobertCraigie/pyright-python
+  rev: v1.1.403
+  hooks:
+  - id: pyright
+    exclude: ^(docs|tests)/.*
+    additional_dependencies:
+    - pytest
 ci:
   skip:
   - actionlint-docker
