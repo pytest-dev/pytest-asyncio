@@ -91,10 +91,23 @@ def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager) -> None
         metavar="MODE",
         help=ASYNCIO_MODE_HELP,
     )
+    group.addoption(
+        "--asyncio-debug",
+        dest="asyncio_debug",
+        action="store_true",
+        default=None,
+        help="enable asyncio debug mode for the default event loop",
+    )
     parser.addini(
         "asyncio_mode",
         help="default value for --asyncio-mode",
         default="strict",
+    )
+    parser.addini(
+        "asyncio_debug",
+        help="enable asyncio debug mode for the default event loop",
+        type="bool",
+        default="false",
     )
     parser.addini(
         "asyncio_default_fixture_loop_scope",
@@ -195,6 +208,17 @@ def _get_asyncio_mode(config: Config) -> Mode:
         ) from e
 
 
+def _get_asyncio_debug(config: Config) -> bool:
+    val = config.getoption("asyncio_debug")
+    if val is None:
+        val = config.getini("asyncio_debug")
+
+    if isinstance(val, bool):
+        return val
+    else:
+        return val == "true"
+
+
 _DEFAULT_FIXTURE_LOOP_SCOPE_UNSET = """\
 The configuration option "asyncio_default_fixture_loop_scope" is unset.
 The event loop scope for asynchronous fixtures will default to the fixture caching \
@@ -221,10 +245,12 @@ def pytest_configure(config: Config) -> None:
 def pytest_report_header(config: Config) -> list[str]:
     """Add asyncio config to pytest header."""
     mode = _get_asyncio_mode(config)
+    debug = _get_asyncio_debug(config)
     default_fixture_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
     default_test_loop_scope = _get_default_test_loop_scope(config)
     header = [
         f"mode={mode}",
+        f"debug={debug}",
         f"asyncio_default_fixture_loop_scope={default_fixture_loop_scope}",
         f"asyncio_default_test_loop_scope={default_test_loop_scope}",
     ]
@@ -751,10 +777,12 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
     )
     def _scoped_runner(
         event_loop_policy,
+        request: FixtureRequest,
     ) -> Iterator[Runner]:
         new_loop_policy = event_loop_policy
+        debug_mode = _get_asyncio_debug(request.config)
         with _temporary_event_loop_policy(new_loop_policy):
-            runner = Runner().__enter__()
+            runner = Runner(debug=debug_mode).__enter__()
             try:
                 yield runner
             except Exception as e:
