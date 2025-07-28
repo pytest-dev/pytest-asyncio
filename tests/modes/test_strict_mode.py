@@ -163,10 +163,7 @@ def test_strict_mode_marked_test_unmarked_fixture_warning(pytester: Pytester):
     result.stdout.fnmatch_lines(
         [
             "*warnings summary*",
-            (
-                "test_strict_mode_marked_test_unmarked_fixture_warning.py::"
-                "test_anything"
-            ),
+            ("test_strict_mode_marked_test_unmarked_fixture_warning.py::test_anything"),
             (
                 "*/pytest_asyncio/plugin.py:*: PytestDeprecationWarning: "
                 "asyncio test 'test_anything' requested async "

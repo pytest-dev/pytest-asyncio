@@ -61,7 +61,8 @@ def test_error_when_wrong_keyword_argument_is_passed(
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
         [
-            "*ValueError: mark.asyncio accepts only keyword arguments 'loop_scope', 'loop_factory'*"
+            "*ValueError: mark.asyncio accepts only a keyword arguments "
+            "'loop_scope' or 'loop_factory'*"
         ]
     )
 
@@ -84,6 +85,7 @@ def test_error_when_additional_keyword_arguments_are_passed(
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
         [
-            "*ValueError: mark.asyncio accepts only keyword arguments 'loop_scope', 'loop_factory'*"
+            "*ValueError: mark.asyncio accepts only a keyword arguments "
+            "'loop_scope' or 'loop_factory'*"
         ]
     )
