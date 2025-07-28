@@ -249,6 +249,16 @@ def test_asyncio_marker_event_loop_factories(pytester: Pytester):
             @pytest.mark.asyncio(loop_factory=CustomEventLoop)
             async def test_has_different_event_loop():
                 assert type(asyncio.get_running_loop()).__name__ == "CustomEventLoop"
+
+            @pytest_asyncio.fixture(loop_factory=CustomEventLoop)
+            async def custom_fixture():
+                yield asyncio.get_running_loop()
+
+            async def test_with_fixture(custom_fixture):
+                # Both of these should be the same...
+                type(asyncio.get_running_loop()).__name__ == "CustomEventLoop"
+                type(custom_fixture).__name__ == "CustomEventLoop"
+
             """
         )
     )
