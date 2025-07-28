@@ -847,8 +847,10 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
         # We need to get the factory now because
         # _temporary_event_loop_policy can override the Runner
         factory = _get_loop_facotry(request)
+        debug_mode = _get_asyncio_debug(request.config)
         with _temporary_event_loop_policy(new_loop_policy, factory):
-            runner = Runner(loop_factory=factory).__enter__()
+            runner = Runner(debug=debug_mode, loop_factory=factory).__enter__()
+
             try:
                 yield runner
             except Exception as e:
