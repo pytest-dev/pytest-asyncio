@@ -1,1 +1,1 @@
-Added ``new_event_loop`` fixture to provide an alternative approch to event loop policies being deprecated
+Added ``loop_factory`` to pytest_asyncio.fixture and asyncio mark
