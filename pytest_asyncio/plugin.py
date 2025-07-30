@@ -392,7 +392,6 @@ class PytestAsyncioFunction(Function):
         Function item.
         """
         assert function.get_closest_marker("asyncio")
-        assert function.parent is not None
         subclass_instance = cls.from_parent(
             function.parent,
             name=function.name,
