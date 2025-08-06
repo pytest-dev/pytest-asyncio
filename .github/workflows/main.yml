@@ -127,7 +127,7 @@ jobs:
         set -xe
         python -m pip install --upgrade coverage[toml]
     - name: Download coverage data for all test runs
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         pattern: coverage-*
         path: coverage
@@ -186,7 +186,7 @@ jobs:
         name: release-notes.md
         path: release-notes.md
     - name: Download distributions
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: dist
         path: dist
@@ -209,7 +209,7 @@ jobs:
       id-token: write
     steps:
     - name: Download distributions
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: dist
         path: dist
@@ -228,7 +228,7 @@ jobs:
       id-token: write
     steps:
     - name: Download distributions
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: dist
         path: dist
