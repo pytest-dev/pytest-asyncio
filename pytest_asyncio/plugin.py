@@ -311,7 +311,7 @@ def _wrap_asyncgen_fixture(
         gen_obj = fixture_function(*args, **kwargs)
 
         async def setup():
-            res = await gen_obj.__anext__()  # type: ignore[union-attr]
+            res = await gen_obj.__anext__()
             return res
 
         context = contextvars.copy_context()
@@ -324,7 +324,7 @@ def _wrap_asyncgen_fixture(
 
             async def async_finalizer() -> None:
                 try:
-                    await gen_obj.__anext__()  # type: ignore[union-attr]
+                    await gen_obj.__anext__()
                 except StopAsyncIteration:
                     pass
                 else:
@@ -353,8 +353,7 @@ def _wrap_async_fixture(
     runner: Runner,
     request: FixtureRequest,
 ) -> Callable[AsyncFixtureParams, AsyncFixtureReturnType]:
-
-    @functools.wraps(fixture_function)  # type: ignore[arg-type]
+    @functools.wraps(fixture_function)
     def _async_fixture_wrapper(
         *args: AsyncFixtureParams.args,
         **kwargs: AsyncFixtureParams.kwargs,
@@ -782,7 +781,7 @@ def _get_marked_loop_scope(
     return scope
 
 
-def _get_default_test_loop_scope(config: Config) -> _ScopeName:
+def _get_default_test_loop_scope(config: Config) -> Any:
     return config.getini("asyncio_default_test_loop_scope")
 
 
