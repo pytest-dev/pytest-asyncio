@@ -71,3 +71,15 @@ In *auto* mode pytest-asyncio automatically adds the *asyncio* marker to all asy
 This mode is intended for projects that use *asyncio* as their only asynchronous programming library. Auto mode makes for the simplest test and fixture configuration and is the recommended default.
 
 If you intend to support multiple asynchronous programming libraries, e.g. *asyncio* and *trio*, strict mode will be the preferred option.
+
+.. _concepts/concurrent_execution:
+
+Test execution and concurrency
+==============================
+
+pytest-asyncio runs async tests sequentially, just like how pytest runs synchronous tests. Each asynchronous test runs within its assigned event loop. For example, consider the following two tests:
+
+.. include:: concepts_concurrent_execution_example.py
+    :code: python
+
+This sequential execution is intentional and important for maintaining test isolation. Running tests concurrently could introduce race conditions and side effects where one test could interfere with another, making test results unreliable and difficult to debug.
