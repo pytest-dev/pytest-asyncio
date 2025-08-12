@@ -3,13 +3,24 @@ repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v6.0.0
   hooks:
+  - id: trailing-whitespace
+  - id: end-of-file-fixer
   - id: check-merge-conflict
     exclude: rst$
+  - id: check-case-conflict
+  - id: check-json
+  - id: check-xml
+  - id: check-yaml
+  - id: debug-statements
 - repo: https://github.com/astral-sh/ruff-pre-commit
   rev: v0.12.8
   hooks:
   - id: ruff
     args: [--fix]
+- repo: https://github.com/asottile/pyupgrade
+  rev: v3.20.0
+  hooks:
+  -   id: pyupgrade
 - repo: https://github.com/asottile/yesqa
   rev: v1.5.0
   hooks:
@@ -29,18 +40,6 @@ repos:
   hooks:
   - id: yamlfmt
     args: [--mapping, '2', --sequence, '2', --offset, '0']
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v6.0.0
-  hooks:
-  - id: trailing-whitespace
-  - id: end-of-file-fixer
-  - id: fix-encoding-pragma
-    args: [--remove]
-  - id: check-case-conflict
-  - id: check-json
-  - id: check-xml
-  - id: check-yaml
-  - id: debug-statements
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v1.17.1
   hooks:
