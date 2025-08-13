@@ -136,3 +136,20 @@ def test_default_package_loop_scope_config_option_changes_fixture_loop_scope(
     )
     result = pytester.runpytest_subprocess("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
+
+
+def test_invalid_default_fixture_loop_scope_raises_error(pytester: Pytester):
+    pytester.makeini(
+        """\
+        [pytest]
+        asyncio_default_fixture_loop_scope = invalid_scope
+        """
+    )
+    result = pytester.runpytest()
+    result.stderr.fnmatch_lines(
+        [
+            "ERROR: 'invalid_scope' is not a valid "
+            "asyncio_default_fixture_loop_scope. Valid scopes are: "
+            "function, class, module, package, session."
+        ]
+    )
