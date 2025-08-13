@@ -146,8 +146,10 @@ def test_invalid_default_fixture_loop_scope_raises_error(pytester: Pytester):
         """
     )
     result = pytester.runpytest()
-    result.stderr.fnmatch_lines([
-        "ERROR: 'invalid_scope' is not a valid "
-        "asyncio_default_fixture_loop_scope. Valid scopes are: "
-        "function, class, module, package, session."
-    ])
+    result.stderr.fnmatch_lines(
+        [
+            "ERROR: 'invalid_scope' is not a valid "
+            "asyncio_default_fixture_loop_scope. Valid scopes are: "
+            "function, class, module, package, session."
+        ]
+    )
