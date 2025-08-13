@@ -90,3 +90,44 @@ def test_sync_not_auto_marked(pytester: Pytester):
     )
     result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
+
+
+def test_hypothesis_concurrent_fixture_teardown(pytester: Pytester):
+    """
+    Tests that Hypothesis-driven tests with concurrent tasks and async fixtures
+    with teardown logic work correctly.
+    """
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(
+        dedent(
+            """\
+            import asyncio
+            import pytest
+            from hypothesis import given, strategies as st, settings, HealthCheck
+
+            teardown_complete = False
+
+            @pytest.fixture
+            async def concurrent_fixture():
+                global teardown_complete
+                teardown_complete = False
+                yield
+                await asyncio.sleep(0.01)
+                teardown_complete = True
+
+            async def background_task():
+                await asyncio.sleep(0.01)
+
+            @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+            @given(st.integers())
+            @pytest.mark.asyncio
+            async def test_concurrent_teardown(concurrent_fixture, n):
+                assert isinstance(n, int)
+                task = asyncio.create_task(background_task())
+                await task
+                assert not teardown_complete
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)
