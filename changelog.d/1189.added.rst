@@ -1,0 +1,1 @@
+A ``pytest.UsageError`` for invalid configuration values of ``asyncio_default_fixture_loop_scope`` and ``asyncio_default_test_loop_scope``.
