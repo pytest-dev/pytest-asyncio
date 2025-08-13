@@ -234,10 +234,25 @@ avoid unexpected behavior in the future. Valid fixture loop scopes are: \
 """
 
 
+def _validate_scope(scope: str | None, option_name: str) -> None:
+    if scope is None:
+        return
+    valid_scopes = [s.value for s in Scope]
+    if scope not in valid_scopes:
+        raise pytest.UsageError(
+            f"{scope!r} is not a valid {option_name}. "
+            f"Valid scopes are: {', '.join(valid_scopes)}."
+        )
+
+
 def pytest_configure(config: Config) -> None:
-    default_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
-    if not default_loop_scope:
+    default_fixture_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
+    _validate_scope(default_fixture_loop_scope, "asyncio_default_fixture_loop_scope")
+    if not default_fixture_loop_scope:
         warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+
+    default_test_loop_scope = config.getini("asyncio_default_test_loop_scope")
+    _validate_scope(default_test_loop_scope, "asyncio_default_test_loop_scope")
     config.addinivalue_line(
         "markers",
         "asyncio: "
