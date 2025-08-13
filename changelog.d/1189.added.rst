@@ -1,0 +1,1 @@
+Raise a ``pytest.UsageError`` on invalid ``asyncio_default_fixture_loop_scope`` and ``asyncio_default_test_loop_scope`` configuration values. (`#1189 <https://github.com/pytest-dev/pytest-asyncio/pull/1189>`_)
