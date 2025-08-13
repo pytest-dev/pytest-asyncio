@@ -5,11 +5,10 @@ sync shim for Hypothesis.
 
 from __future__ import annotations
 
-import asyncio
 from textwrap import dedent
 
 import pytest
-from hypothesis import HealthCheck, given, settings, strategies as st
+from hypothesis import given, strategies as st
 from pytest import Pytester
 
 
