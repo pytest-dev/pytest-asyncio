@@ -1,0 +1,1 @@
+``RuntimeError: There is no current event loop in thread 'MainThread'`` when using shared event loops after any test unsets the event loop (such as when using ``asyncio.run`` and ``asyncio.Runner``).

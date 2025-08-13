@@ -10,6 +10,7 @@ import functools
 import inspect
 import socket
 import sys
+import threading
 import traceback
 import warnings
 from asyncio import AbstractEventLoop, AbstractEventLoopPolicy
@@ -602,6 +603,12 @@ def _set_event_loop(loop: AbstractEventLoop | None) -> None:
         asyncio.set_event_loop(loop)
 
 
+def _reinstate_event_loop_on_main_thread() -> None:
+    if threading.current_thread() is threading.main_thread():
+        policy = _get_event_loop_policy()
+        policy.set_event_loop(policy.new_event_loop())
+
+
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
     """
@@ -663,7 +670,12 @@ def wrap_in_sync(
     @functools.wraps(func)
     def inner(*args, **kwargs):
         coro = func(*args, **kwargs)
-        _loop = _get_event_loop_no_warn()
+        try:
+            _loop = _get_event_loop_no_warn()
+        except RuntimeError:
+            # Handle situation where asyncio.set_event_loop(None) removes shared loops.
+            _reinstate_event_loop_on_main_thread()
+            _loop = _get_event_loop_no_warn()
         task = asyncio.ensure_future(coro, loop=_loop)
         try:
             _loop.run_until_complete(task)
