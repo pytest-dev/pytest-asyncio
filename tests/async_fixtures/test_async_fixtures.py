@@ -37,3 +37,14 @@ class TestAsyncFixtureMethod:
     @pytest.mark.asyncio
     async def test_async_fixture_method(self):
         assert self.is_same_instance
+
+
+@pytest.fixture()
+async def setup_and_teardown_tasks():
+    task = asyncio.current_task()
+    yield
+    assert task is asyncio.current_task()
+
+
+async def test_setup_and_teardown_tasks(setup_and_teardown_tasks):
+    pass
