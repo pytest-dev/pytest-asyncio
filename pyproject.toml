@@ -67,7 +67,6 @@ packages = [
 include-package-data = true
 
 [tool.setuptools_scm]
-write_to = "pytest_asyncio/_version.py"
 local_scheme = "no-local-version"
 
 [tool.ruff]
@@ -138,9 +137,6 @@ source = [
 ]
 branch = true
 data_file = "coverage/coverage"
-omit = [
-  "*/_version.py",
-]
 parallel = true
 
 [tool.coverage.report]
