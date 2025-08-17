@@ -277,21 +277,6 @@ AsyncGenFixtureParams = ParamSpec("AsyncGenFixtureParams")
 AsyncGenFixtureYieldType = TypeVar("AsyncGenFixtureYieldType")
 
 
-async def _fixture_runner(
-    coro_queue: asyncio.Queue[tuple[Awaitable[Any], asyncio.Future[Any]] | None],
-) -> None:
-    while True:
-        item = await coro_queue.get()
-        if item is None:
-            break
-        coro, future = item
-        try:
-            retval = await coro
-            future.set_result(retval)
-        except Exception as exc:
-            future.set_exception(exc)
-
-
 def _create_task_in_context(
     coro: CoroutineT[Any, Any, Any],
     loop: AbstractEventLoop,
@@ -308,6 +293,51 @@ def _create_task_in_context(
         _patch_object(contextvars, contextvars.copy_context.__name__, lambda: context),
     ):
         return loop.create_task(coro)
+
+
+class _FixtureRunner:
+    def __init__(self, loop: AbstractEventLoop, context: contextvars.Context) -> None:
+        self.loop = loop
+        self.queue: asyncio.Queue[tuple[Awaitable[Any], asyncio.Future[Any]] | None] = (
+            asyncio.Queue()
+        )
+        self._context = context
+        self._task = None
+
+    async def _worker(self) -> None:
+        while True:
+            item = await self.queue.get()
+            if item is None:
+                break
+            coro, future = item
+            try:
+                retval = await coro
+                future.set_result(retval)
+            except Exception as exc:
+                future.set_exception(exc)
+
+    def run(self, func):
+        return self.loop.run_until_complete(self._run(func))
+
+    async def _run(self, func):
+        if self._task is None:
+            self._task = _create_task_in_context(
+                self._worker(), loop=self.loop, context=self._context
+            )
+
+        coro = func()
+        future = self.loop.create_future()
+        self.queue.put_nowait((coro, future))
+        return await future
+
+    async def _stop(self):
+        self.queue.put_nowait(None)
+        if self._task is not None:
+            await self._task
+            self._task = None
+
+    def stop(self) -> None:
+        self.loop.run_until_complete(self._stop())
 
 
 def _wrap_asyncgen_fixture(
@@ -328,28 +358,11 @@ def _wrap_asyncgen_fixture(
             res = await gen_obj.__anext__()  # type: ignore[union-attr]
             return res
 
-        async def call_in_runner_task(func):
-            coro = func()
-            future = runner.get_loop().create_future()
-            coro_queue.put_nowait((coro, future))
-            return await future
-
         context = contextvars.copy_context()
-        coro_queue: asyncio.Queue[tuple[Awaitable[Any], asyncio.Future[Any]] | None] = (
-            asyncio.Queue()
-        )
-
-        runner_task = _create_task_in_context(
-            _fixture_runner(coro_queue), loop=runner.get_loop(), context=context
-        )
-
-        result = runner.get_loop().run_until_complete(call_in_runner_task(setup))
+        fixture_runner = _FixtureRunner(loop=runner.get_loop(), context=context)
+        result = fixture_runner.run(setup)
 
         reset_contextvars = _apply_contextvar_changes(context)
-
-        async def stop_runner_task():
-            coro_queue.put_nowait(None)
-            await runner_task
 
         def finalizer() -> None:
             """Yield again, to finalize."""
@@ -364,8 +377,8 @@ def _wrap_asyncgen_fixture(
                     msg += "Yield only once."
                     raise ValueError(msg)
 
-            runner.get_loop().run_until_complete(call_in_runner_task(async_finalizer))
-            runner.get_loop().run_until_complete(stop_runner_task())
+            fixture_runner.run(async_finalizer)
+            fixture_runner.stop()
             if reset_contextvars is not None:
                 reset_contextvars()
 
