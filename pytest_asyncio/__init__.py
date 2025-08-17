@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from ._version import version as __version__  # noqa: F401
+from importlib.metadata import version
+
 from .plugin import fixture, is_async_test
+
+__version__ = version(__name__)
 
 __all__ = ("fixture", "is_async_test")
