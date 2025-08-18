@@ -13,7 +13,7 @@ repos:
   - id: check-yaml
   - id: debug-statements
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.12.8
+  rev: v0.12.9
   hooks:
   - id: ruff
     args: [--fix]
@@ -64,7 +64,7 @@ repos:
     - 'SC1004:'
     stages: [manual]
 - repo: https://github.com/sirosen/check-jsonschema
-  rev: 0.33.2
+  rev: 0.33.3
   hooks:
   - id: check-github-actions
 - repo: https://github.com/tox-dev/pyproject-fmt
@@ -74,7 +74,7 @@ repos:
       # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
     additional_dependencies: [tox>=4.9]
 - repo: https://github.com/zizmorcore/zizmor-pre-commit
-  rev: v1.11.0
+  rev: v1.12.1
   hooks:
   - id: zizmor
 ci:
