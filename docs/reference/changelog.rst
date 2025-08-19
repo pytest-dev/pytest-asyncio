@@ -96,7 +96,7 @@ Notes for Downstream Packagers
 
 0.25.0 (2024-12-13)
 ===================
-- Deprecated: Added warning when asyncio test requests async ``@pytest.fixture`` in strict mode. This will become an error in a future version of flake8-asyncio. `#979 <https://github.com/pytest-dev/pytest-asyncio/pull/979>`_
+- Deprecated: Added warning when asyncio test requests async ``@pytest.fixture`` in strict mode. This will become an error in a future version of pytest-asyncio. `#979 <https://github.com/pytest-dev/pytest-asyncio/pull/979>`_
 - Updates the error message about `pytest.mark.asyncio`'s `scope` keyword argument to say `loop_scope` instead. `#1004 <https://github.com/pytest-dev/pytest-asyncio/pull/1004>`_
 - Verbose log displays correct parameter name: asyncio_default_fixture_loop_scope `#990 <https://github.com/pytest-dev/pytest-asyncio/pull/990>`_
 - Propagates `contextvars` set in async fixtures to other fixtures and tests on Python 3.11 and above. `#1008 <https://github.com/pytest-dev/pytest-asyncio/pull/1008>`_
