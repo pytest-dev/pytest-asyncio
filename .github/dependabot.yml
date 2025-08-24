@@ -2,7 +2,7 @@
 version: 2
 updates:
 - package-ecosystem: pip
-  directory: /dependencies/default
+  directory: /
   schedule:
     interval: weekly
   open-pull-requests-limit: 10
