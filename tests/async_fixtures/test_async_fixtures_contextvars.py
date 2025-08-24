@@ -6,7 +6,9 @@ contextvars were not properly maintained among fixtures and tests.
 from __future__ import annotations
 
 from textwrap import dedent
+from typing import Literal
 
+import pytest
 from pytest import Pytester
 
 _prelude = dedent(
@@ -213,3 +215,56 @@ def test_var_set_to_existing_value_ok(pytester: Pytester):
     )
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
+
+
+def test_no_isolation_against_context_changes_in_sync_tests(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(
+        dedent(
+            """
+            import pytest
+            import pytest_asyncio
+            from contextvars import ContextVar
+
+            _context_var = ContextVar("my_var")
+
+            def test_sync():
+                _context_var.set("new_value")
+
+            @pytest.mark.asyncio
+            async def test_async():
+                assert _context_var.get() == "new_value"
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=2)
+
+
+@pytest.mark.parametrize("loop_scope", ("function", "module"))
+def test_isolation_against_context_changes_in_async_tests(
+    pytester: Pytester, loop_scope: Literal["function", "module"]
+):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(
+        dedent(
+            f"""
+            import pytest
+            import pytest_asyncio
+            from contextvars import ContextVar
+
+            _context_var = ContextVar("my_var")
+
+            @pytest.mark.asyncio(loop_scope="{loop_scope}")
+            async def test_async_first():
+                _context_var.set("new_value")
+
+            @pytest.mark.asyncio(loop_scope="{loop_scope}")
+            async def test_async_second():
+                with pytest.raises(LookupError):
+                    _context_var.get()
+            """
+        )
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=2)
