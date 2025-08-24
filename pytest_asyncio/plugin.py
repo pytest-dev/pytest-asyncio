@@ -445,7 +445,7 @@ class PytestAsyncioFunction(Function):
         runner_fixture_id = f"_{loop_scope}_scoped_runner"
         runner = self._request.getfixturevalue(runner_fixture_id)
         context = contextvars.copy_context()
-        synchronized_obj = wrap_in_sync(
+        synchronized_obj = _synchronize_coroutine(
             getattr(*self._synchronization_target_attr), runner, context
         )
         with MonkeyPatch.context() as c:
@@ -664,7 +664,7 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
     return None
 
 
-def wrap_in_sync(
+def _synchronize_coroutine(
     func: Callable[..., CoroutineType],
     runner: asyncio.Runner,
     context: contextvars.Context,
