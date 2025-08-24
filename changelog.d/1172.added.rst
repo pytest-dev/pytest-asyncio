@@ -1,0 +1,1 @@
+Pyright type checking support in tox configuration to improve type safety and compatibility.
