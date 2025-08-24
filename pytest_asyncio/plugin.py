@@ -437,6 +437,32 @@ class PytestAsyncioFunction(Function):
         """Returns whether the specified function can be replaced by this class"""
         raise NotImplementedError()
 
+    def runtest(self) -> None:
+        marker = self.get_closest_marker("asyncio")
+        assert marker is not None
+        default_loop_scope = _get_default_test_loop_scope(self.config)
+        loop_scope = _get_marked_loop_scope(marker, default_loop_scope)
+        runner_fixture_id = f"_{loop_scope}_scoped_runner"
+        runner = self._request.getfixturevalue(runner_fixture_id)
+        context = contextvars.copy_context()
+        synchronized_obj = _synchronize_coroutine(
+            getattr(*self._synchronization_target_attr), runner, context
+        )
+        with MonkeyPatch.context() as c:
+            c.setattr(*self._synchronization_target_attr, synchronized_obj)
+            super().runtest()
+
+    @property
+    def _synchronization_target_attr(self) -> tuple[object, str]:
+        """
+        Return the coroutine that needs to be synchronized during the test run.
+
+        This method is inteded to be overwritten by subclasses when they need to apply
+        the coroutine synchronizer to a value that's different from self.obj
+        e.g. the AsyncHypothesisTest subclass.
+        """
+        return self, "obj"
+
 
 class Coroutine(PytestAsyncioFunction):
     """Pytest item created by a coroutine"""
@@ -445,12 +471,6 @@ class Coroutine(PytestAsyncioFunction):
     def _can_substitute(item: Function) -> bool:
         func = item.obj
         return inspect.iscoroutinefunction(func)
-
-    def runtest(self) -> None:
-        synchronized_obj = wrap_in_sync(self.obj)
-        with MonkeyPatch.context() as c:
-            c.setattr(self, "obj", synchronized_obj)
-            super().runtest()
 
 
 class AsyncGenerator(PytestAsyncioFunction):
@@ -488,12 +508,6 @@ class AsyncStaticMethod(PytestAsyncioFunction):
             func.__func__
         )
 
-    def runtest(self) -> None:
-        synchronized_obj = wrap_in_sync(self.obj)
-        with MonkeyPatch.context() as c:
-            c.setattr(self, "obj", synchronized_obj)
-            super().runtest()
-
 
 class AsyncHypothesisTest(PytestAsyncioFunction):
     """
@@ -510,11 +524,9 @@ class AsyncHypothesisTest(PytestAsyncioFunction):
             and inspect.iscoroutinefunction(func.hypothesis.inner_test)
         )
 
-    def runtest(self) -> None:
-        synchronized_obj = wrap_in_sync(self.obj.hypothesis.inner_test)
-        with MonkeyPatch.context() as c:
-            c.setattr(self.obj.hypothesis, "inner_test", synchronized_obj)
-            super().runtest()
+    @property
+    def _synchronization_target_attr(self) -> tuple[object, str]:
+        return self.obj.hypothesis, "inner_test"
 
 
 # The function name needs to start with "pytest_"
@@ -652,28 +664,20 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
     return None
 
 
-def wrap_in_sync(
-    func: Callable[..., Awaitable[Any]],
+def _synchronize_coroutine(
+    func: Callable[..., CoroutineType],
+    runner: asyncio.Runner,
+    context: contextvars.Context,
 ):
     """
-    Return a sync wrapper around an async function executing it in the
-    current event loop.
+    Return a sync wrapper around a coroutine executing it in the
+    specified runner and context.
     """
 
     @functools.wraps(func)
     def inner(*args, **kwargs):
         coro = func(*args, **kwargs)
-        _loop = _get_event_loop_no_warn()
-        task = asyncio.ensure_future(coro, loop=_loop)
-        try:
-            _loop.run_until_complete(task)
-        except BaseException:
-            # run_until_complete doesn't get the result from exceptions
-            # that are not subclasses of `Exception`. Consume all
-            # exceptions to prevent asyncio's warning from logging.
-            if task.done() and not task.cancelled():
-                task.exception()
-            raise
+        runner.run(coro, context=context)
 
     return inner
 
