@@ -173,7 +173,7 @@ def test_strict_mode_marked_test_unmarked_fixture_warning(pytester: Pytester):
                 "@pytest.fixture 'any_fixture' in strict mode. "
                 "You might want to use @pytest_asyncio.fixture or switch to "
                 "auto mode. "
-                "This will become an error in future versions of flake8-asyncio."
+                "This will become an error in future versions of pytest-asyncio."
             ),
         ],
     )
@@ -220,7 +220,7 @@ def test_strict_mode_marked_test_unmarked_autouse_fixture_warning(pytester: Pyte
                 "@pytest.fixture 'any_fixture' in strict mode. "
                 "You might want to use @pytest_asyncio.fixture or switch to "
                 "auto mode. "
-                "This will become an error in future versions of flake8-asyncio."
+                "This will become an error in future versions of pytest-asyncio."
             ),
         ],
     )
