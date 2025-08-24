@@ -37,16 +37,12 @@ jobs:
       run: python -m pip install pre-commit
     - name: Run pre-commit checks
       run: pre-commit run --all-files --show-diff-on-failure
-    - name: Install check-wheel-content, and twine
-      run: python -m pip install build check-wheel-contents twine
-    - name: Build package
-      run: python -m build
+    - name: Install tox
+      run: python -m pip install tox
+    - name: Build package and check distributions
+      run: tox run -e build
     - name: List result
       run: ls -l dist
-    - name: Check wheel contents
-      run: check-wheel-contents dist/*.whl
-    - name: Check long_description
-      run: python -m twine check dist/*
     - name: Install pytest-asyncio
       run: pip install .
     - name: Get version info
