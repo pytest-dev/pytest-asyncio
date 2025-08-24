@@ -7,12 +7,6 @@ updates:
     interval: weekly
   open-pull-requests-limit: 10
   target-branch: main
-- package-ecosystem: pip
-  directory: /dependencies/docs
-  schedule:
-    interval: weekly
-  open-pull-requests-limit: 10
-  target-branch: main
 - package-ecosystem: github-actions
   directory: /
   schedule:
