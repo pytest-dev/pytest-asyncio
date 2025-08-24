@@ -16,8 +16,8 @@ env:
   PYTHON_LATEST: 3.13
 
 jobs:
-  lint:
-    name: Run linters
+  build:
+    name: Build package
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -30,13 +30,6 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_LATEST }}
-    - name: Install GitHub matcher for ActionLint checker
-      run: |
-        echo "::add-matcher::.github/actionlint-matcher.json"
-    - name: Install pre-commit
-      run: python -m pip install pre-commit
-    - name: Run pre-commit checks
-      run: pre-commit run --all-files --show-diff-on-failure
     - name: Install tox
       run: python -m pip install tox
     - name: Build package and check distributions
@@ -53,6 +46,25 @@ jobs:
       with:
         name: dist
         path: dist
+
+  lint:
+    name: Run linters
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_LATEST }}
+    - name: Install GitHub matcher for ActionLint checker
+      run: |
+        echo "::add-matcher::.github/actionlint-matcher.json"
+    - name: Install pre-commit
+      run: python -m pip install pre-commit
+    - name: Run pre-commit checks
+      run: pre-commit run --all-files --show-diff-on-failure
 
   test:
     name: ${{ matrix.os }} - Python ${{ matrix.python-version }}
@@ -105,7 +117,7 @@ jobs:
   check:
     name: Check
     if: always()
-    needs: [lint, test]
+    needs: [build, lint, test]
     runs-on: ubuntu-latest
     steps:
     - name: Decide whether the needed jobs succeeded or failed
@@ -141,7 +153,7 @@ jobs:
 
   create-github-release:
     name: Create GitHub release
-    needs: [lint, check]
+    needs: [build, lint, check]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -164,7 +176,7 @@ jobs:
       if: ${{ !contains(github.ref, 'refs/tags/') }}
       run: towncrier build --draft --version "${version}" > release-notes.rst
       env:
-        version: ${{ needs.lint.outputs.version }}
+        version: ${{ needs.build.outputs.version }}
     - name: Extract release notes from Git tag
       if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
       run: |
@@ -190,16 +202,16 @@ jobs:
       if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
       uses: ncipollo/release-action@1c89adf39833729d8f85a31ccbc451b078733c80  # v1.19.1
       with:
-        name: pytest-asyncio ${{ needs.lint.outputs.version }}
+        name: pytest-asyncio ${{ needs.build.outputs.version }}
         artifacts: dist/*
         bodyFile: release-notes.md
-        prerelease: ${{ needs.lint.outputs.prerelease }}
+        prerelease: ${{ needs.build.outputs.prerelease }}
         token: ${{ secrets.GITHUB_TOKEN }}
 
   publish-test-pypi:
     name: Publish packages to test.pypi.org
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [lint, check]
+    needs: [build, lint, check]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -218,7 +230,7 @@ jobs:
     name: Publish packages to pypi.org
     environment: release
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
-    needs: [lint, check]
+    needs: [build, lint, check]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
