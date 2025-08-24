@@ -630,7 +630,7 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
                             "You might want to use @pytest_asyncio.fixture or switch "
                             "to auto mode. "
                             "This will become an error in future versions of "
-                            "flake8-asyncio."
+                            "pytest-asyncio."
                         ),
                         stacklevel=1,
                     )
