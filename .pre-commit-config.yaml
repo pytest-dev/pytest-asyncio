@@ -72,7 +72,7 @@ repos:
   hooks:
   - id: pyproject-fmt
       # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
-    additional_dependencies: [tox>=4.9]
+    additional_dependencies: [tox>=4.28]
 - repo: https://github.com/zizmorcore/zizmor-pre-commit
   rev: v1.12.1
   hooks:
