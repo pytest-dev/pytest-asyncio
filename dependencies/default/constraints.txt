@@ -20,6 +20,8 @@ pluggy==1.6.0
 Pygments==2.19.2
 pytest==8.4.1
 requests==2.32.4
+setuptools==80.9.0
+setuptools-scm==8.3.0
 snowballstemmer==3.0.1
 sortedcontainers==2.4.0
 Sphinx==8.0.2
