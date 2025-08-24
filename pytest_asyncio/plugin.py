@@ -447,7 +447,14 @@ class Coroutine(PytestAsyncioFunction):
         return inspect.iscoroutinefunction(func)
 
     def runtest(self) -> None:
-        synchronized_obj = wrap_in_sync(self.obj)
+        marker = self.get_closest_marker("asyncio")
+        assert marker is not None
+        default_loop_scope = _get_default_test_loop_scope(self.config)
+        loop_scope = _get_marked_loop_scope(marker, default_loop_scope)
+        runner_fixture_id = f"_{loop_scope}_scoped_runner"
+        runner = self._request.getfixturevalue(runner_fixture_id)
+        context = contextvars.copy_context()
+        synchronized_obj = wrap_in_sync(self.obj, runner, context)
         with MonkeyPatch.context() as c:
             c.setattr(self, "obj", synchronized_obj)
             super().runtest()
@@ -489,7 +496,14 @@ class AsyncStaticMethod(PytestAsyncioFunction):
         )
 
     def runtest(self) -> None:
-        synchronized_obj = wrap_in_sync(self.obj)
+        marker = self.get_closest_marker("asyncio")
+        assert marker is not None
+        default_loop_scope = _get_default_test_loop_scope(self.config)
+        loop_scope = _get_marked_loop_scope(marker, default_loop_scope)
+        runner_fixture_id = f"_{loop_scope}_scoped_runner"
+        runner = self._request.getfixturevalue(runner_fixture_id)
+        context = contextvars.copy_context()
+        synchronized_obj = wrap_in_sync(self.obj, runner, context=context)
         with MonkeyPatch.context() as c:
             c.setattr(self, "obj", synchronized_obj)
             super().runtest()
@@ -511,7 +525,14 @@ class AsyncHypothesisTest(PytestAsyncioFunction):
         )
 
     def runtest(self) -> None:
-        synchronized_obj = wrap_in_sync(self.obj.hypothesis.inner_test)
+        marker = self.get_closest_marker("asyncio")
+        assert marker is not None
+        default_loop_scope = _get_default_test_loop_scope(self.config)
+        loop_scope = _get_marked_loop_scope(marker, default_loop_scope)
+        runner_fixture_id = f"_{loop_scope}_scoped_runner"
+        runner = self._request.getfixturevalue(runner_fixture_id)
+        context = contextvars.copy_context()
+        synchronized_obj = wrap_in_sync(self.obj.hypothesis.inner_test, runner, context)
         with MonkeyPatch.context() as c:
             c.setattr(self.obj.hypothesis, "inner_test", synchronized_obj)
             super().runtest()
@@ -653,27 +674,19 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
 
 
 def wrap_in_sync(
-    func: Callable[..., Awaitable[Any]],
+    func: Callable[..., CoroutineType],
+    runner: asyncio.Runner,
+    context: contextvars.Context,
 ):
     """
-    Return a sync wrapper around an async function executing it in the
-    current event loop.
+    Return a sync wrapper around a coroutine executing it in the
+    specified runner and context.
     """
 
     @functools.wraps(func)
     def inner(*args, **kwargs):
         coro = func(*args, **kwargs)
-        _loop = _get_event_loop_no_warn()
-        task = asyncio.ensure_future(coro, loop=_loop)
-        try:
-            _loop.run_until_complete(task)
-        except BaseException:
-            # run_until_complete doesn't get the result from exceptions
-            # that are not subclasses of `Exception`. Consume all
-            # exceptions to prevent asyncio's warning from logging.
-            if task.done() and not task.cancelled():
-                task.exception()
-            raise
+        runner.run(coro, context=context)
 
     return inner
 
