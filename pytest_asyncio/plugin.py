@@ -60,6 +60,11 @@ if sys.version_info >= (3, 11):
 else:
     from backports.asyncio.runner import Runner
 
+if sys.version_info >= (3, 13):
+    from typing import TypeIs
+else:
+    from typing_extensions import TypeIs
+
 _ScopeName = Literal["session", "package", "module", "class", "function"]
 _R = TypeVar("_R", bound=Union[Awaitable[Any], AsyncIterator[Any]])
 _P = ParamSpec("_P")
@@ -831,7 +836,7 @@ def event_loop_policy() -> AbstractEventLoopPolicy:
     return _get_event_loop_policy()
 
 
-def is_async_test(item: Item) -> bool:
+def is_async_test(item: Item) -> TypeIs[PytestAsyncioFunction]:
     """Returns whether a test item is a pytest-asyncio test"""
     return isinstance(item, PytestAsyncioFunction)
 
