@@ -443,10 +443,9 @@ class PytestAsyncioFunction(Function):
         raise NotImplementedError()
 
     def setup(self) -> None:
-        fixturenames = self.fixturenames
         runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
-        if runner_fixture_id not in fixturenames:
-            fixturenames.append(runner_fixture_id)
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
         return super().setup()
 
     def runtest(self) -> None:
