@@ -632,12 +632,7 @@ def _set_event_loop(loop: AbstractEventLoop | None) -> None:
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
-    """
-    Pytest hook called before a test case is run.
-
-    Wraps marked tests in a synchronous function
-    where the wrapped test coroutine is executed in an event loop.
-    """
+    """Pytest hook called before a test case is run."""
     if pyfuncitem.get_closest_marker("asyncio") is not None:
         if is_async_test(pyfuncitem):
             asyncio_mode = _get_asyncio_mode(pyfuncitem.config)
