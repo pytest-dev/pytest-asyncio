@@ -28,6 +28,7 @@ from typing import (
     Literal,
     TypeVar,
     Union,
+    cast,
     overload,
 )
 
@@ -437,12 +438,23 @@ class PytestAsyncioFunction(Function):
         """Returns whether the specified function can be replaced by this class"""
         raise NotImplementedError()
 
-    def runtest(self) -> None:
+    @functools.cached_property
+    def loop_scope(self) -> _ScopeName:
+        """
+        Return the scope of the asyncio event loop this item is run in.
+
+        The effective scope is determined lazily. It is identical to to the
+        `loop_scope` value of the closest `asyncio` pytest marker. If no such
+        marker is present, the the loop scope is determined by the configuration
+        value of `asyncio_default_test_loop_scope`, instead.
+        """
         marker = self.get_closest_marker("asyncio")
         assert marker is not None
         default_loop_scope = _get_default_test_loop_scope(self.config)
-        loop_scope = _get_marked_loop_scope(marker, default_loop_scope)
-        runner_fixture_id = f"_{loop_scope}_scoped_runner"
+        return _get_marked_loop_scope(marker, default_loop_scope)
+
+    def runtest(self) -> None:
+        runner_fixture_id = f"_{self.loop_scope}_scoped_runner"
         runner = self._request.getfixturevalue(runner_fixture_id)
         context = contextvars.copy_context()
         synchronized_obj = _synchronize_coroutine(
@@ -684,11 +696,10 @@ def _synchronize_coroutine(
 
 def pytest_runtest_setup(item: pytest.Item) -> None:
     marker = item.get_closest_marker("asyncio")
-    if marker is None:
+    if marker is None or not is_async_test(item):
         return
-    default_loop_scope = _get_default_test_loop_scope(item.config)
-    loop_scope = _get_marked_loop_scope(marker, default_loop_scope)
-    runner_fixture_id = f"_{loop_scope}_scoped_runner"
+    item = cast(PytestAsyncioFunction, item)
+    runner_fixture_id = f"_{item.loop_scope}_scoped_runner"
     fixturenames = item.fixturenames  # type: ignore[attr-defined]
     if runner_fixture_id not in fixturenames:
         fixturenames.append(runner_fixture_id)
