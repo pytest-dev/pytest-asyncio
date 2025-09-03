@@ -457,6 +457,20 @@ class PytestAsyncioFunction(Function):
         default_loop_scope = _get_default_test_loop_scope(self.config)
         return _get_marked_loop_scope(marker, default_loop_scope)
 
+    def setup(self) -> None:
+        fixturenames = self.fixturenames
+        runner_fixture_id = f"_{self.loop_scope}_scoped_runner"
+        if runner_fixture_id not in fixturenames:
+            fixturenames.append(runner_fixture_id)
+        if not getattr(self.obj, "hypothesis", False) and getattr(
+            self.obj, "is_hypothesis_test", False
+        ):
+            pytest.fail(
+                f"test function `{self!r}` is using Hypothesis, but pytest-asyncio "
+                "only works with Hypothesis 3.64.0 or later."
+            )
+        return super().setup()
+
     def runtest(self) -> None:
         runner_fixture_id = f"_{self.loop_scope}_scoped_runner"
         runner = self._request.getfixturevalue(runner_fixture_id)
@@ -691,24 +705,6 @@ def _synchronize_coroutine(
         runner.run(coro, context=context)
 
     return inner
-
-
-def pytest_runtest_setup(item: pytest.Item) -> None:
-    marker = item.get_closest_marker("asyncio")
-    if marker is None or not is_async_test(item):
-        return
-    runner_fixture_id = f"_{item.loop_scope}_scoped_runner"
-    fixturenames = item.fixturenames  # type: ignore[attr-defined]
-    if runner_fixture_id not in fixturenames:
-        fixturenames.append(runner_fixture_id)
-    obj = getattr(item, "obj", None)
-    if not getattr(obj, "hypothesis", False) and getattr(
-        obj, "is_hypothesis_test", False
-    ):
-        pytest.fail(
-            f"test function `{item!r}` is using Hypothesis, but pytest-asyncio "
-            "only works with Hypothesis 3.64.0 or later."
-        )
 
 
 @pytest.hookimpl(wrapper=True)
