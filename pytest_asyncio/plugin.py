@@ -462,13 +462,6 @@ class PytestAsyncioFunction(Function):
         runner_fixture_id = f"_{self.loop_scope}_scoped_runner"
         if runner_fixture_id not in fixturenames:
             fixturenames.append(runner_fixture_id)
-        if not getattr(self.obj, "hypothesis", False) and getattr(
-            self.obj, "is_hypothesis_test", False
-        ):
-            pytest.fail(
-                f"test function `{self!r}` is using Hypothesis, but pytest-asyncio "
-                "only works with Hypothesis 3.64.0 or later."
-            )
         return super().setup()
 
     def runtest(self) -> None:
@@ -544,6 +537,16 @@ class AsyncHypothesisTest(PytestAsyncioFunction):
     Pytest item that is coroutine or an asynchronous generator decorated by
     @hypothesis.given.
     """
+
+    def setup(self) -> None:
+        if not getattr(self.obj, "hypothesis", False) and getattr(
+            self.obj, "is_hypothesis_test", False
+        ):
+            pytest.fail(
+                f"test function `{self!r}` is using Hypothesis, but pytest-asyncio "
+                "only works with Hypothesis 3.64.0 or later."
+            )
+        return super().setup()
 
     @staticmethod
     def _can_substitute(item: Function) -> bool:
