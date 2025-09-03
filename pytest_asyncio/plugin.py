@@ -442,8 +442,26 @@ class PytestAsyncioFunction(Function):
         """Returns whether the specified function can be replaced by this class"""
         raise NotImplementedError()
 
+    def setup(self) -> None:
+        fixturenames = self.fixturenames
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in fixturenames:
+            fixturenames.append(runner_fixture_id)
+        return super().setup()
+
+    def runtest(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        runner = self._request.getfixturevalue(runner_fixture_id)
+        context = contextvars.copy_context()
+        synchronized_obj = _synchronize_coroutine(
+            getattr(*self._synchronization_target_attr), runner, context
+        )
+        with MonkeyPatch.context() as c:
+            c.setattr(*self._synchronization_target_attr, synchronized_obj)
+            super().runtest()
+
     @functools.cached_property
-    def loop_scope(self) -> _ScopeName:
+    def _loop_scope(self) -> _ScopeName:
         """
         Return the scope of the asyncio event loop this item is run in.
 
@@ -456,24 +474,6 @@ class PytestAsyncioFunction(Function):
         assert marker is not None
         default_loop_scope = _get_default_test_loop_scope(self.config)
         return _get_marked_loop_scope(marker, default_loop_scope)
-
-    def setup(self) -> None:
-        fixturenames = self.fixturenames
-        runner_fixture_id = f"_{self.loop_scope}_scoped_runner"
-        if runner_fixture_id not in fixturenames:
-            fixturenames.append(runner_fixture_id)
-        return super().setup()
-
-    def runtest(self) -> None:
-        runner_fixture_id = f"_{self.loop_scope}_scoped_runner"
-        runner = self._request.getfixturevalue(runner_fixture_id)
-        context = contextvars.copy_context()
-        synchronized_obj = _synchronize_coroutine(
-            getattr(*self._synchronization_target_attr), runner, context
-        )
-        with MonkeyPatch.context() as c:
-            c.setattr(*self._synchronization_target_attr, synchronized_obj)
-            super().runtest()
 
     @property
     def _synchronization_target_attr(self) -> tuple[object, str]:
