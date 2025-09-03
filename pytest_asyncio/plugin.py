@@ -639,7 +639,7 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
     where the wrapped test coroutine is executed in an event loop.
     """
     if pyfuncitem.get_closest_marker("asyncio") is not None:
-        if isinstance(pyfuncitem, PytestAsyncioFunction):
+        if is_async_test(pyfuncitem):
             asyncio_mode = _get_asyncio_mode(pyfuncitem.config)
             for fixname, fixtures in pyfuncitem._fixtureinfo.name2fixturedefs.items():
                 # name2fixturedefs is a dict between fixture name and a list of matching
