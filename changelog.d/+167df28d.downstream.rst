@@ -1,0 +1,1 @@
+Extend dependency on typing-extensions>=4.12 from Python<3.10 to Python<3.13.
