@@ -28,7 +28,6 @@ from typing import (
     Literal,
     TypeVar,
     Union,
-    cast,
     overload,
 )
 
@@ -703,7 +702,6 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
     marker = item.get_closest_marker("asyncio")
     if marker is None or not is_async_test(item):
         return
-    item = cast(PytestAsyncioFunction, item)
     runner_fixture_id = f"_{item.loop_scope}_scoped_runner"
     fixturenames = item.fixturenames  # type: ignore[attr-defined]
     if runner_fixture_id not in fixturenames:
