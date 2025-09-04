@@ -29,7 +29,7 @@ keyring==25.6.0
 markdown-it-py==3.0.0
 MarkupSafe==3.0.2
 mdurl==0.1.2
-more-itertools==10.7.0
+more-itertools==10.8.0
 nh3==0.3.0
 packaging==25.0
 pluggy==1.6.0
