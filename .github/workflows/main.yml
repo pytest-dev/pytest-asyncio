@@ -208,11 +208,14 @@ jobs:
         bodyFile: release-notes.md
         prerelease: ${{ needs.build.outputs.prerelease }}
         token: ${{ secrets.GITHUB_TOKEN }}
+        allowUpdates: true
+        draft: true
+        skipIfReleaseExists: true
 
   publish-test-pypi:
     name: Publish packages to test.pypi.org
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [build, lint, check]
+    needs: [build, lint, check, create-github-release]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -231,7 +234,7 @@ jobs:
     name: Publish packages to pypi.org
     environment: release
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
-    needs: [build, lint, check]
+    needs: [build, lint, check, create-github-release]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
