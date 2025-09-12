@@ -18,6 +18,7 @@ Added
 
 - ``--asyncio-debug`` CLI option and ``asyncio_debug`` configuration option to enable asyncio debug mode for the default event loop. (`#980 <https://github.com/pytest-dev/pytest-asyncio/issues/980>`_)
 - A ``pytest.UsageError`` for invalid configuration values of ``asyncio_default_fixture_loop_scope`` and ``asyncio_default_test_loop_scope``. (`#1189 <https://github.com/pytest-dev/pytest-asyncio/issues/1189>`_)
+- Compatibility with the `Pyright` type checker (`#731 <https://github.com/pytest-dev/pytest-asyncio/issues/731>`_)
 
 
 Fixed

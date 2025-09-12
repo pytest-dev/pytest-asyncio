@@ -1,1 +1,0 @@
-Compatibility with the `Pyright` type checker
