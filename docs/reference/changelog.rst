@@ -10,6 +10,30 @@ This project uses `towncrier <https://towncrier.readthedocs.io/>`__ for changlog
 
 .. towncrier release notes start
 
+`1.2.0 <https://github.com/pytest-dev/pytest-asyncio/tree/1.2.0>`_ - 2025-09-12
+===============================================================================
+
+Added
+-----
+
+- ``--asyncio-debug`` CLI option and ``asyncio_debug`` configuration option to enable asyncio debug mode for the default event loop. (`#980 <https://github.com/pytest-dev/pytest-asyncio/issues/980>`_)
+- A ``pytest.UsageError`` for invalid configuration values of ``asyncio_default_fixture_loop_scope`` and ``asyncio_default_test_loop_scope``. (`#1189 <https://github.com/pytest-dev/pytest-asyncio/issues/1189>`_)
+
+
+Fixed
+-----
+
+- ``RuntimeError: There is no current event loop in thread 'MainThread'`` when any test unsets the event loop (such as when using ``asyncio.run`` and ``asyncio.Runner``). (`#1177 <https://github.com/pytest-dev/pytest-asyncio/issues/1177>`_)
+- Deprecation warning when decorating an asynchronous fixture with ``@pytest.fixture`` in `strict` mode. The warning message now refers to the correct package. (`#1198 <https://github.com/pytest-dev/pytest-asyncio/issues/1198>`_)
+
+
+Notes for Downstream Packagers
+------------------------------
+
+- Bump the minimum required version of tox to v4.28. This change is only relevant if you use the ``tox.ini`` file provided by pytest-asyncio to run tests.
+- Extend dependency on typing-extensions>=4.12 from Python<3.10 to Python<3.13.
+
+
 `1.1.0 <https://github.com/pytest-dev/pytest-asyncio/tree/1.1.0>`_ - 2025-07-16
 ===============================================================================
 

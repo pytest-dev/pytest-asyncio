@@ -1,1 +1,0 @@
-Deprecation warning when decorating an asynchronous fixture with ``@pytest.fixture`` in `strict` mode. The warning message now refers to the correct package.
