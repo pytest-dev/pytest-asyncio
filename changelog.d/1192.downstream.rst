@@ -1,0 +1,1 @@
+Addresses a build problem with setuptoos-scm >= 9 caused by invalid setuptools-scm configuration in pytest-asyncio.
