@@ -10,6 +10,15 @@ This project uses `towncrier <https://towncrier.readthedocs.io/>`__ for changlog
 
 .. towncrier release notes start
 
+`v1.1.1 <https://github.com/pytest-dev/pytest-asyncio/tree/v1.1.1>`_ - 2025-09-12
+=================================================================================
+
+Notes for Downstream Packagers
+------------------------------
+
+- Addresses a build problem with setuptoos-scm >= 9 caused by invalid setuptools-scm configuration in pytest-asyncio. (`#1192 <https://github.com/pytest-dev/pytest-asyncio/issues/1192>`_)
+
+
 `1.1.0 <https://github.com/pytest-dev/pytest-asyncio/tree/1.1.0>`_ - 2025-07-16
 ===============================================================================
 
