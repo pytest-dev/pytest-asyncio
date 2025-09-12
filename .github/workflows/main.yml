@@ -183,8 +183,9 @@ jobs:
         set -e
         git fetch --tags --force  # see https://github.com/actions/checkout/issues/290
         git for-each-ref "${GITHUB_REF}" --format='%(contents)' > release-notes.rst
-        # Strip PGP signature from signed tags
-        sed -i "/-----BEGIN PGP SIGNATURE-----/,/-----END PGP SIGNATURE-----\n/d" release-notes.rst
+        # Strip signature from signed tags
+        sed -i -e "/-----BEGIN PGP SIGNATURE-----/,/-----END PGP SIGNATURE-----\n/d" \
+          -e "/-----BEGIN SSH SIGNATURE-----/,/-----END SSH SIGNATURE-----\n/d" release-notes.rst
     - name: Convert Release Notes to Markdown
       run: |
         pandoc --wrap=preserve -o release-notes.md release-notes.rst
