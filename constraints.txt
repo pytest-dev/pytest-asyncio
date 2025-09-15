@@ -7,7 +7,7 @@ backports.tarfile==1.2.0
 certifi==2025.8.3
 charset-normalizer==3.4.3
 check-wheel-contents==0.6.1
-cffi==1.17.1
+cffi==2.0.0
 click==8.1.8
 coverage==7.10.6
 cryptography==45.0.7
