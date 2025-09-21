@@ -264,4 +264,4 @@ def test_asyncio_marker_event_loop_factories(pytester: Pytester):
     )
 
     result = pytester.runpytest("--asyncio-mode=auto")
-    result.assert_outcomes(passed=1)
+    result.assert_outcomes(passed=2)

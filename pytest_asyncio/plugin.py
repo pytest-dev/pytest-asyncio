@@ -49,7 +49,6 @@ from pytest import (
     PytestPluginManager,
 )
 
-from typing import Callable
 if sys.version_info >= (3, 10):
     from typing import ParamSpec
 else:
@@ -182,7 +181,12 @@ def fixture(
 
         @functools.wraps(fixture)
         def inner(fixture_function: FixtureFunction[_P, _R]) -> FixtureFunction[_P, _R]:
-            return fixture(fixture_function, loop_factory=loop_factory, loop_scope=loop_scope, **kwargs)
+            return fixture(
+                fixture_function,
+                loop_factory=loop_factory,
+                loop_scope=loop_scope,
+                **kwargs,
+            )
 
         return inner
 
@@ -741,10 +745,12 @@ def _synchronize_coroutine(
     Return a sync wrapper around a coroutine executing it in the
     specified runner and context.
     """
+
     @functools.wraps(func)
     def inner(*args, **kwargs):
         coro = func(*args, **kwargs)
         runner.run(coro, context=context)
+
     return inner
 
 
@@ -792,9 +798,13 @@ def _get_marked_loop_scope(
 ) -> _ScopeName:
     assert asyncio_marker.name == "asyncio"
     if asyncio_marker.args or (
-        asyncio_marker.kwargs and set(asyncio_marker.kwargs) - {"loop_scope", "scope", "loop_factory"}
+        asyncio_marker.kwargs
+        and set(asyncio_marker.kwargs) - {"loop_scope", "scope", "loop_factory"}
     ):
-        raise ValueError("mark.asyncio accepts only a keyword arguments 'loop_scope' or 'loop_factory'")
+        raise ValueError(
+            "mark.asyncio accepts only a keyword arguments 'loop_scope' "
+            "or 'loop_factory'"
+        )
     if "scope" in asyncio_marker.kwargs:
         if "loop_scope" in asyncio_marker.kwargs:
             raise pytest.UsageError(_DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR)
@@ -827,11 +837,13 @@ def _get_loop_facotry(
     request: FixtureRequest,
 ) -> Callable[[], AbstractEventLoop] | None:
     if asyncio_mark := request._pyfuncitem.get_closest_marker("asyncio"):
+        # The loop_factory is defined on an asyncio marker
         factory = asyncio_mark.kwargs.get("loop_factory", None)
-        print(f"FACTORY {factory}")
         return factory
     else:
-        return request.obj.__dict__.get("_loop_factory", None)  # type: ignore[attr-defined]
+        # The loop_factory is pulled in via a fixture
+        top_request = list(request._iter_chain())[-1]._parent_request
+        return top_request._pyfuncitem.__dict__.get("_loop_factory", None)  # type: ignore[attr-defined]
 
 
 def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
