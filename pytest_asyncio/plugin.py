@@ -836,14 +836,28 @@ Here is the traceback of the exception triggered during teardown:
 def _get_loop_facotry(
     request: FixtureRequest,
 ) -> Callable[[], AbstractEventLoop] | None:
-    if asyncio_mark := request._pyfuncitem.get_closest_marker("asyncio"):
+    loop_factories = []
+    asyncio_mark = request._pyfuncitem.get_closest_marker("asyncio")
+    if asyncio_mark is not None:
         # The loop_factory is defined on an asyncio marker
         factory = asyncio_mark.kwargs.get("loop_factory", None)
-        return factory
-    else:
-        # The loop_factory is pulled in via a fixture
-        top_request = list(request._iter_chain())[-1]._parent_request
-        return top_request._pyfuncitem.__dict__.get("_loop_factory", None)  # type: ignore[attr-defined]
+        loop_factories.append(factory)
+    # The loop_factory is defined in a transitive fixture
+    current_request = request
+    for r in request._iter_chain():
+        current_request = r
+        loop_factory = getattr(current_request._fixturedef.func, "_loop_factory", None)
+        loop_factories.append(loop_factory)
+    defined_loop_factories = [factory for factory in loop_factories if factory] or [
+        None
+    ]
+    print(defined_loop_factories)
+    if len(defined_loop_factories) > 1:
+        print(defined_loop_factories)
+        raise pytest.UsageError(
+            "Multiple loop factories defined for {request.scope}-scoped loop."
+        )
+    return defined_loop_factories[0]
 
 
 def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
