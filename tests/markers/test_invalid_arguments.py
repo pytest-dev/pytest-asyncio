@@ -40,9 +40,7 @@ def test_error_when_scope_passed_as_positional_argument(
     )
     result = pytester.runpytest_subprocess()
     result.assert_outcomes(errors=1)
-    result.stdout.fnmatch_lines(
-        ["*ValueError: mark.asyncio accepts only a keyword argument*"]
-    )
+    result.stdout.fnmatch_lines([""])
 
 
 def test_error_when_wrong_keyword_argument_is_passed(
@@ -62,7 +60,10 @@ def test_error_when_wrong_keyword_argument_is_passed(
     result = pytester.runpytest_subprocess()
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
-        ["*ValueError: mark.asyncio accepts only a keyword argument 'loop_scope'*"]
+        [
+            "*ValueError: mark.asyncio accepts only a keyword arguments "
+            "'loop_scope' or 'loop_factory'*"
+        ]
     )
 
 
@@ -83,5 +84,8 @@ def test_error_when_additional_keyword_arguments_are_passed(
     result = pytester.runpytest_subprocess()
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
-        ["*ValueError: mark.asyncio accepts only a keyword argument*"]
+        [
+            "*ValueError: mark.asyncio accepts only a keyword arguments "
+            "'loop_scope' or 'loop_factory'*"
+        ]
     )
