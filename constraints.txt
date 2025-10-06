@@ -1,6 +1,6 @@
 alabaster==0.7.16
 annotated-types-0.7.0
-attrs==25.3.0
+attrs==25.4.0
 babel==2.17.0
 backports.asyncio.runner==1.2.0
 backports.tarfile==1.2.0
