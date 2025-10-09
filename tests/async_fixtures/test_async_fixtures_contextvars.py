@@ -101,7 +101,7 @@ def test_var_from_async_fixture_propagates_to_sync(pytester: Pytester):
         """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict", "-s")
     result.assert_outcomes(passed=1)
 
 
