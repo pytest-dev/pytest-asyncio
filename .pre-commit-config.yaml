@@ -13,12 +13,12 @@ repos:
   - id: check-yaml
   - id: debug-statements
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.13.3
+  rev: v0.14.0
   hooks:
   - id: ruff
     args: [--fix]
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.20.0
+  rev: v3.21.0
   hooks:
   - id: pyupgrade
 - repo: https://github.com/asottile/yesqa
@@ -52,7 +52,7 @@ repos:
   hooks:
   - id: python-use-type-annotations
 - repo: https://github.com/rhysd/actionlint
-  rev: v1.7.7
+  rev: v1.7.8
   hooks:
   - id: actionlint-docker
     args:
@@ -64,11 +64,11 @@ repos:
     - 'SC1004:'
     stages: [manual]
 - repo: https://github.com/sirosen/check-jsonschema
-  rev: 0.34.0
+  rev: 0.34.1
   hooks:
   - id: check-github-actions
 - repo: https://github.com/tox-dev/pyproject-fmt
-  rev: v2.7.0
+  rev: v2.10.0
   hooks:
   - id: pyproject-fmt
       # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
