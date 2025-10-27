@@ -42,7 +42,7 @@ jobs:
       id: version
       run: python ./tools/get-version.py >> $GITHUB_OUTPUT
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: dist
         path: dist
@@ -101,7 +101,7 @@ jobs:
       run: python -m tox
 
     - name: Store coverage data
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       if: "!endsWith(matrix.os, 'windows')"
       with:
         name: coverage-python-${{ matrix.python-version }}
@@ -190,7 +190,7 @@ jobs:
       run: |
         pandoc --wrap=preserve -o release-notes.md release-notes.rst
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: release-notes.md
         path: release-notes.md
