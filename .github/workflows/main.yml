@@ -73,16 +73,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu, windows]
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14', 3.14t]
         required: [true]
-        include:
-        - os: ubuntu
-          python-version: 3.14-dev
-          required: false
-        - os: windows
-          python-version: 3.14-dev
-          required: false
-
 
     steps:
     - uses: actions/checkout@v5
