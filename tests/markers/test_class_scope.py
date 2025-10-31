@@ -175,7 +175,7 @@ def test_asyncio_mark_respects_parametrized_loop_policies(
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=2)
 
 
@@ -205,7 +205,7 @@ def test_asyncio_mark_provides_class_scoped_loop_to_fixtures(
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
 
 
@@ -293,5 +293,5 @@ def test_standalone_test_does_not_trigger_warning_about_no_current_event_loop_be
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(warnings=0, passed=1)

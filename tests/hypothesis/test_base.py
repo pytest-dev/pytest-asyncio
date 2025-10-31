@@ -27,7 +27,7 @@ def test_hypothesis_given_decorator_before_asyncio_mark(pytester: Pytester):
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W default")
     result.assert_outcomes(passed=1)
 
 
