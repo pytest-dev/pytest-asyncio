@@ -1,0 +1,1 @@
+Tests are run in the same pytest process, instead of spawning a subprocess with `pytest.Pytester.runpytest_subprocess`. This prevents the test suite from accidentally using a system installation of pytest-asyncio, which could result in test errors.

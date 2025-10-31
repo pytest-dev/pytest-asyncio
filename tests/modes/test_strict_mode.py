@@ -94,7 +94,7 @@ def test_strict_mode_ignores_unmarked_coroutine(pytester: Pytester):
         """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W default", "--assert=plain")
     if pytest_version >= (8, 4, 0):
         result.assert_outcomes(failed=1, skipped=0, warnings=0)
     else:
@@ -119,7 +119,7 @@ def test_strict_mode_ignores_unmarked_fixture(pytester: Pytester):
         """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W default", "--assert=plain")
 
     if pytest_version >= (8, 4, 0):
         result.assert_outcomes(failed=1, skipped=0, warnings=2)
@@ -155,7 +155,7 @@ def test_strict_mode_marked_test_unmarked_fixture_warning(pytester: Pytester):
         """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W default", "--assert=plain")
     if pytest_version >= (8, 4, 0):
         result.assert_outcomes(passed=1, failed=0, skipped=0, warnings=2)
     else:
@@ -202,7 +202,7 @@ def test_strict_mode_marked_test_unmarked_autouse_fixture_warning(pytester: Pyte
         """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W default", "--assert=plain")
     if pytest_version >= (8, 4, 0):
         result.assert_outcomes(passed=1, warnings=2)
     else:

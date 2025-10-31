@@ -34,7 +34,7 @@ def test_loop_scope_session_is_independent_of_fixture_scope(
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
 
 
@@ -68,7 +68,7 @@ def test_default_loop_scope_config_option_changes_fixture_loop_scope(
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
 
 
@@ -101,7 +101,7 @@ def test_default_class_loop_scope_config_option_changes_fixture_loop_scope(
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
 
 
@@ -134,7 +134,7 @@ def test_default_package_loop_scope_config_option_changes_fixture_loop_scope(
             """
         ),
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
 
 
@@ -145,7 +145,7 @@ def test_invalid_default_fixture_loop_scope_raises_error(pytester: Pytester):
         asyncio_default_fixture_loop_scope = invalid_scope
         """
     )
-    result = pytester.runpytest()
+    result = pytester.runpytest("--assert=plain")
     result.stderr.fnmatch_lines(
         [
             "ERROR: 'invalid_scope' is not a valid "
