@@ -51,7 +51,7 @@ def test_event_loop_fixture_respects_event_loop_policy(pytester: Pytester):
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=2)
 
 
@@ -78,7 +78,7 @@ def test_event_loop_fixture_handles_unclosed_async_gen(
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W", "default")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1, warnings=0)
 
 
@@ -110,7 +110,7 @@ def test_closing_event_loop_in_sync_fixture_teardown_raises_warning(
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "--assert=plain")
     result.assert_outcomes(passed=1, warnings=1)
     result.stdout.fnmatch_lines(
         ["*An exception occurred during teardown of an asyncio.Runner*"]
@@ -139,5 +139,5 @@ def test_event_loop_fixture_asyncgen_error(
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W", "default")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1, warnings=1)

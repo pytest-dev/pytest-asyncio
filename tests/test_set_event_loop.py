@@ -173,7 +173,7 @@ def test_original_shared_loop_is_reinstated_not_fresh_loop(
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=3)
 
 
@@ -252,7 +252,7 @@ def test_shared_loop_with_fixture_preservation(
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=3)
 
 
@@ -367,5 +367,5 @@ def test_shared_loop_with_multiple_fixtures_preservation(
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=5)

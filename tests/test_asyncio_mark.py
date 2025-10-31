@@ -17,7 +17,7 @@ def test_asyncio_mark_on_sync_function_emits_warning(pytester: Pytester):
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W default", "--assert=plain")
     result.assert_outcomes(passed=1)
     result.stdout.fnmatch_lines(
         ["*is marked with '@pytest.mark.asyncio' but it is not an async function.*"]
@@ -38,7 +38,7 @@ def test_asyncio_mark_on_async_generator_function_emits_warning_in_strict_mode(
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W default", "--assert=plain")
     result.assert_outcomes(xfailed=1, warnings=1)
     result.stdout.fnmatch_lines(
         ["*Tests based on asynchronous generators are not supported*"]
@@ -56,7 +56,7 @@ def test_asyncio_mark_on_async_generator_function_emits_warning_in_auto_mode(
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=auto", "-W default")
+    result = pytester.runpytest("--asyncio-mode=auto", "-W default", "--assert=plain")
     result.assert_outcomes(xfailed=1, warnings=1)
     result.stdout.fnmatch_lines(
         ["*Tests based on asynchronous generators are not supported*"]
@@ -78,7 +78,7 @@ def test_asyncio_mark_on_async_generator_method_emits_warning_in_strict_mode(
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W default", "--assert=plain")
     result.assert_outcomes(xfailed=1, warnings=1)
     result.stdout.fnmatch_lines(
         ["*Tests based on asynchronous generators are not supported*"]
@@ -98,7 +98,7 @@ def test_asyncio_mark_on_async_generator_method_emits_warning_in_auto_mode(
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=auto", "-W default")
+    result = pytester.runpytest("--asyncio-mode=auto", "-W default", "--assert=plain")
     result.assert_outcomes(xfailed=1, warnings=1)
     result.stdout.fnmatch_lines(
         ["*Tests based on asynchronous generators are not supported*"]
@@ -121,7 +121,7 @@ def test_asyncio_mark_on_async_generator_staticmethod_emits_warning_in_strict_mo
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W default")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W default", "--assert=plain")
     result.assert_outcomes(xfailed=1, warnings=1)
     result.stdout.fnmatch_lines(
         ["*Tests based on asynchronous generators are not supported*"]
@@ -141,7 +141,7 @@ def test_asyncio_mark_on_async_generator_staticmethod_emits_warning_in_auto_mode
             """
         )
     )
-    result = pytester.runpytest_subprocess("--asyncio-mode=auto", "-W default")
+    result = pytester.runpytest("--asyncio-mode=auto", "-W default", "--assert=plain")
     result.assert_outcomes(xfailed=1, warnings=1)
     result.stdout.fnmatch_lines(
         ["*Tests based on asynchronous generators are not supported*"]
