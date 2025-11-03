@@ -30,7 +30,7 @@ markdown-it-py==3.0.0
 MarkupSafe==3.0.3
 mdurl==0.1.2
 more-itertools==10.8.0
-nh3==0.3.1
+nh3==0.3.2
 packaging==25.0
 pluggy==1.6.0
 Pygments==2.19.2
