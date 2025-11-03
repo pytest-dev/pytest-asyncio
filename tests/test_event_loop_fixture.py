@@ -6,6 +6,7 @@ from pytest import Pytester
 
 
 def test_event_loop_fixture_respects_event_loop_policy(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makeconftest(
         dedent(
             """\

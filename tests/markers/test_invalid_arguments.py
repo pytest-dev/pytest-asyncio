@@ -8,6 +8,7 @@ import pytest
 def test_no_error_when_scope_passed_as_sole_keyword_argument(
     pytester: pytest.Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -27,6 +28,7 @@ def test_no_error_when_scope_passed_as_sole_keyword_argument(
 def test_error_when_scope_passed_as_positional_argument(
     pytester: pytest.Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -48,6 +50,7 @@ def test_error_when_scope_passed_as_positional_argument(
 def test_error_when_wrong_keyword_argument_is_passed(
     pytester: pytest.Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -69,6 +72,7 @@ def test_error_when_wrong_keyword_argument_is_passed(
 def test_error_when_additional_keyword_arguments_are_passed(
     pytester: pytest.Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\

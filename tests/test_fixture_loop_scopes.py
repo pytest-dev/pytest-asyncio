@@ -13,6 +13,7 @@ def test_loop_scope_session_is_independent_of_fixture_scope(
     pytester: Pytester,
     fixture_scope: str,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             f"""\
