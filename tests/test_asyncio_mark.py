@@ -6,6 +6,7 @@ from pytest import Pytester
 
 
 def test_asyncio_mark_on_sync_function_emits_warning(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -27,6 +28,7 @@ def test_asyncio_mark_on_sync_function_emits_warning(pytester: Pytester):
 def test_asyncio_mark_on_async_generator_function_emits_warning_in_strict_mode(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -48,6 +50,7 @@ def test_asyncio_mark_on_async_generator_function_emits_warning_in_strict_mode(
 def test_asyncio_mark_on_async_generator_function_emits_warning_in_auto_mode(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -66,6 +69,7 @@ def test_asyncio_mark_on_async_generator_function_emits_warning_in_auto_mode(
 def test_asyncio_mark_on_async_generator_method_emits_warning_in_strict_mode(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -88,6 +92,7 @@ def test_asyncio_mark_on_async_generator_method_emits_warning_in_strict_mode(
 def test_asyncio_mark_on_async_generator_method_emits_warning_in_auto_mode(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -108,6 +113,7 @@ def test_asyncio_mark_on_async_generator_method_emits_warning_in_auto_mode(
 def test_asyncio_mark_on_async_generator_staticmethod_emits_warning_in_strict_mode(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
@@ -131,6 +137,7 @@ def test_asyncio_mark_on_async_generator_staticmethod_emits_warning_in_strict_mo
 def test_asyncio_mark_on_async_generator_staticmethod_emits_warning_in_auto_mode(
     pytester: Pytester,
 ):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         dedent(
             """\
