@@ -87,7 +87,7 @@ def test_warns_when_scope_argument_is_present(pytester: Pytester):
             """
         )
     )
-    result = pytester.runpytest("--asyncio-mode=strict", "--assert=plain")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1, warnings=1)
     result.stdout.fnmatch_lines("*DeprecationWarning*")
 
