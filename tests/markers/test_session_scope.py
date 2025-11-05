@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from textwrap import dedent
 
 from pytest import Pytester
@@ -128,8 +129,15 @@ def test_asyncio_mark_respects_the_loop_policy(
             """
         ),
     )
-    result = pytester.runpytest("--asyncio-mode=strict")
-    result.assert_outcomes(passed=2)
+    pytest_args = ["--asyncio-mode=strict"]
+    if sys.version_info >= (3, 14):
+        pytest_args.extend(["-W", "default"])
+    result = pytester.runpytest(*pytest_args)
+    if sys.version_info >= (3, 14):
+        result.assert_outcomes(passed=2, warnings=3)
+        result.stdout.fnmatch_lines("*DefaultEventLoopPolicy*")
+    else:
+        result.assert_outcomes(passed=2)
 
 
 def test_asyncio_mark_respects_parametrized_loop_policies(
@@ -161,8 +169,15 @@ def test_asyncio_mark_respects_parametrized_loop_policies(
             """
         ),
     )
-    result = pytester.runpytest("--asyncio-mode=strict")
-    result.assert_outcomes(passed=2)
+    pytest_args = ["--asyncio-mode=strict"]
+    if sys.version_info >= (3, 14):
+        pytest_args.extend(["-W", "default"])
+    result = pytester.runpytest(*pytest_args)
+    if sys.version_info >= (3, 14):
+        result.assert_outcomes(passed=2, warnings=2)
+        result.stdout.fnmatch_lines("*DefaultEventLoopPolicy*")
+    else:
+        result.assert_outcomes(passed=2)
 
 
 def test_asyncio_mark_provides_session_scoped_loop_to_fixtures(
