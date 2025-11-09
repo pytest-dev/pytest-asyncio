@@ -16,6 +16,7 @@ from asyncio import AbstractEventLoop, AbstractEventLoopPolicy
 from collections.abc import (
     AsyncIterator,
     Awaitable,
+    Callable,
     Generator,
     Iterable,
     Iterator,
@@ -24,10 +25,9 @@ from collections.abc import (
 from types import AsyncGeneratorType, CoroutineType
 from typing import (
     Any,
-    Callable,
     Literal,
+    ParamSpec,
     TypeVar,
-    Union,
     overload,
 )
 
@@ -49,11 +49,6 @@ from pytest import (
     PytestPluginManager,
 )
 
-if sys.version_info >= (3, 10):
-    from typing import ParamSpec
-else:
-    from typing_extensions import ParamSpec
-
 if sys.version_info >= (3, 11):
     from asyncio import Runner
 else:
@@ -65,7 +60,7 @@ else:
     from typing_extensions import TypeIs
 
 _ScopeName = Literal["session", "package", "module", "class", "function"]
-_R = TypeVar("_R", bound=Union[Awaitable[Any], AsyncIterator[Any]])
+_R = TypeVar("_R", bound=Awaitable[Any] | AsyncIterator[Any])
 _P = ParamSpec("_P")
 FixtureFunction = Callable[_P, _R]
 
