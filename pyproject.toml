@@ -20,14 +20,13 @@ maintainers = [
 authors = [
   { name = "Tin Tvrtković", email = "tinchester@gmail.com" },
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Framework :: AsyncIO",
   "Framework :: Pytest",
   "Intended Audience :: Developers",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -42,7 +41,7 @@ dynamic = [
 
 dependencies = [
   "backports-asyncio-runner>=1.1,<2; python_version<'3.11'",
-  "pytest>=8.2,<9",
+  "pytest>=8.2,<10",
   "typing-extensions>=4.12; python_version<'3.13'",
 ]
 optional-dependencies.docs = [
