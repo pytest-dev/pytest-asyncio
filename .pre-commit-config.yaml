@@ -13,12 +13,12 @@ repos:
   - id: check-yaml
   - id: debug-statements
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.14.3
+  rev: v0.14.4
   hooks:
   - id: ruff
     args: [--fix]
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.21.0
+  rev: v3.21.1
   hooks:
   - id: pyupgrade
 - repo: https://github.com/asottile/yesqa
@@ -68,13 +68,13 @@ repos:
   hooks:
   - id: check-github-actions
 - repo: https://github.com/tox-dev/pyproject-fmt
-  rev: v2.11.0
+  rev: v2.11.1
   hooks:
   - id: pyproject-fmt
       # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
     additional_dependencies: [tox>=4.28]
 - repo: https://github.com/zizmorcore/zizmor-pre-commit
-  rev: v1.16.2
+  rev: v1.16.3
   hooks:
   - id: zizmor
 ci:
