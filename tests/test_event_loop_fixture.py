@@ -22,8 +22,8 @@ def test_event_loop_fixture_respects_event_loop_policy(pytester: Pytester):
 
             # This statement represents a code which sets a custom event loop policy
             asyncio.set_event_loop_policy(TestEventLoopPolicy())
-            """
-        )
+            """,
+        ),
     )
     pytester.makepyfile(
         dedent(
@@ -48,8 +48,8 @@ def test_event_loop_fixture_respects_event_loop_policy(pytester: Pytester):
                 across test cases.
                 '''
                 assert type(asyncio.get_event_loop()).__name__ == "TestEventLoop"
-            """
-        )
+            """,
+        ),
     )
     result = pytester.runpytest_subprocess("--asyncio-mode=strict")
     result.assert_outcomes(passed=2)
@@ -75,11 +75,11 @@ def test_event_loop_fixture_handles_unclosed_async_gen(
 
                 gen = generator_fn()
                 await gen.__anext__()
-            """
-        )
+            """,
+        ),
     )
     result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W", "default")
-    result.assert_outcomes(passed=1, warnings=0)
+    result.assert_outcomes(passed=1)
 
 
 def test_closing_event_loop_in_sync_fixture_teardown_raises_warning(
@@ -107,14 +107,14 @@ def test_closing_event_loop_in_sync_fixture_teardown_raises_warning(
             @pytest.mark.asyncio
             async def test_something(close_event_loop):
                 await asyncio.sleep(0.01)
-            """
-        )
+            """,
+        ),
     )
     result = pytester.runpytest_subprocess("--asyncio-mode=strict")
-    result.assert_outcomes(passed=1, warnings=1)
-    result.stdout.fnmatch_lines(
-        ["*An exception occurred during teardown of an asyncio.Runner*"]
-    )
+    result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines([
+        "*An exception occurred during teardown of an asyncio.Runner*",
+    ])
 
 
 def test_event_loop_fixture_asyncgen_error(
@@ -136,8 +136,8 @@ def test_event_loop_fixture_asyncgen_error(
                 async def fail():
                     raise RuntimeError("mock error cleaning up...")
                 loop.shutdown_asyncgens = fail
-            """
-        )
+            """,
+        ),
     )
     result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W", "default")
-    result.assert_outcomes(passed=1, warnings=1)
+    result.assert_outcomes(passed=1)

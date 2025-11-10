@@ -16,6 +16,7 @@ from asyncio import AbstractEventLoop, AbstractEventLoopPolicy
 from collections.abc import (
     AsyncIterator,
     Awaitable,
+    Callable,
     Generator,
     Iterable,
     Iterator,
@@ -24,10 +25,9 @@ from collections.abc import (
 from types import AsyncGeneratorType, CoroutineType
 from typing import (
     Any,
-    Callable,
     Literal,
+    ParamSpec,
     TypeVar,
-    Union,
     overload,
 )
 
@@ -49,11 +49,6 @@ from pytest import (
     PytestPluginManager,
 )
 
-if sys.version_info >= (3, 10):
-    from typing import ParamSpec
-else:
-    from typing_extensions import ParamSpec
-
 if sys.version_info >= (3, 11):
     from asyncio import Runner
 else:
@@ -65,7 +60,7 @@ else:
     from typing_extensions import TypeIs
 
 _ScopeName = Literal["session", "package", "module", "class", "function"]
-_R = TypeVar("_R", bound=Union[Awaitable[Any], AsyncIterator[Any]])
+_R = TypeVar("_R", bound=Awaitable[Any] | AsyncIterator[Any])
 _P = ParamSpec("_P")
 FixtureFunction = Callable[_P, _R]
 
@@ -209,7 +204,7 @@ def _get_asyncio_mode(config: Config) -> Mode:
     except ValueError as e:
         modes = ", ".join(m.value for m in Mode)
         raise pytest.UsageError(
-            f"{val!r} is not a valid asyncio_mode. Valid modes: {modes}."
+            f"{val!r} is not a valid asyncio_mode. Valid modes: {modes}.",
         ) from e
 
 
@@ -241,7 +236,7 @@ def _validate_scope(scope: str | None, option_name: str) -> None:
     if scope not in valid_scopes:
         raise pytest.UsageError(
             f"{scope!r} is not a valid {option_name}. "
-            f"Valid scopes are: {', '.join(valid_scopes)}."
+            f"Valid scopes are: {', '.join(valid_scopes)}.",
         )
 
 
@@ -280,7 +275,7 @@ def pytest_report_header(config: Config) -> list[str]:
 
 
 def _fixture_synchronizer(
-    fixturedef: FixtureDef, runner: Runner, request: FixtureRequest
+    fixturedef: FixtureDef, runner: Runner, request: FixtureRequest,
 ) -> Callable:
     """Returns a synchronous function evaluating the specified fixture."""
     fixture_function = resolve_fixture_function(fixturedef, request)
@@ -298,7 +293,7 @@ AsyncGenFixtureYieldType = TypeVar("AsyncGenFixtureYieldType")
 
 def _wrap_asyncgen_fixture(
     fixture_function: Callable[
-        AsyncGenFixtureParams, AsyncGeneratorType[AsyncGenFixtureYieldType, Any]
+        AsyncGenFixtureParams, AsyncGeneratorType[AsyncGenFixtureYieldType, Any],
     ],
     runner: Runner,
     request: FixtureRequest,
@@ -348,7 +343,7 @@ AsyncFixtureReturnType = TypeVar("AsyncFixtureReturnType")
 
 def _wrap_async_fixture(
     fixture_function: Callable[
-        AsyncFixtureParams, CoroutineType[Any, Any, AsyncFixtureReturnType]
+        AsyncFixtureParams, CoroutineType[Any, Any, AsyncFixtureReturnType],
     ],
     runner: Runner,
     request: FixtureRequest,
@@ -454,7 +449,7 @@ class PytestAsyncioFunction(Function):
     @staticmethod
     def _can_substitute(item: Function) -> bool:
         """Returns whether the specified function can be replaced by this class"""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def setup(self) -> None:
         runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
@@ -467,7 +462,7 @@ class PytestAsyncioFunction(Function):
         runner = self._request.getfixturevalue(runner_fixture_id)
         context = contextvars.copy_context()
         synchronized_obj = _synchronize_coroutine(
-            getattr(*self._synchronization_target_attr), runner, context
+            getattr(*self._synchronization_target_attr), runner, context,
         )
         with MonkeyPatch.context() as c:
             c.setattr(*self._synchronization_target_attr, synchronized_obj)
@@ -478,9 +473,9 @@ class PytestAsyncioFunction(Function):
         """
         Return the scope of the asyncio event loop this item is run in.
 
-        The effective scope is determined lazily. It is identical to to the
+        The effective scope is determined lazily. It is identical to the
         `loop_scope` value of the closest `asyncio` pytest marker. If no such
-        marker is present, the the loop scope is determined by the configuration
+        marker is present, the loop scope is determined by the configuration
         value of `asyncio_default_test_loop_scope`, instead.
         """
         marker = self.get_closest_marker("asyncio")
@@ -526,7 +521,7 @@ class AsyncGenerator(PytestAsyncioFunction):
         )
         async_gen_item.warn(PytestCollectionWarning(unsupported_item_type_message))
         async_gen_item.add_marker(
-            pytest.mark.xfail(run=False, reason=unsupported_item_type_message)
+            pytest.mark.xfail(run=False, reason=unsupported_item_type_message),
         )
         return async_gen_item
 
@@ -541,7 +536,7 @@ class AsyncStaticMethod(PytestAsyncioFunction):
     def _can_substitute(item: Function) -> bool:
         func = item.obj
         return isinstance(func, staticmethod) and _is_coroutine_or_asyncgen(
-            func.__func__
+            func.__func__,
         )
 
 
@@ -553,11 +548,11 @@ class AsyncHypothesisTest(PytestAsyncioFunction):
 
     def setup(self) -> None:
         if not getattr(self.obj, "hypothesis", False) and getattr(
-            self.obj, "is_hypothesis_test", False
+            self.obj, "is_hypothesis_test", False,
         ):
             pytest.fail(
                 f"test function `{self!r}` is using Hypothesis, but pytest-asyncio "
-                "only works with Hypothesis 3.64.0 or later."
+                "only works with Hypothesis 3.64.0 or later.",
             )
         return super().setup()
 
@@ -579,7 +574,7 @@ class AsyncHypothesisTest(PytestAsyncioFunction):
 # see https://github.com/pytest-dev/pytest/issues/11307
 @pytest.hookimpl(specname="pytest_pycollect_makeitem", hookwrapper=True)
 def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
-    collector: pytest.Module | pytest.Class, name: str, obj: object
+    collector: pytest.Module | pytest.Class, name: str, obj: object,
 ) -> Generator[None, pluggy.Result, None]:
     """
     Converts coroutines and async generators collected as pytest.Functions
@@ -607,7 +602,7 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
             specialized_item_class = PytestAsyncioFunction.item_subclass_for(node)
             if specialized_item_class:
                 if _get_asyncio_mode(
-                    node.config
+                    node.config,
                 ) == Mode.AUTO and not node.get_closest_marker("asyncio"):
                     node.add_marker("asyncio")
                 if node.get_closest_marker("asyncio"):
@@ -683,7 +678,7 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
                             "You might want to use @pytest_asyncio.fixture or switch "
                             "to auto mode. "
                             "This will become an error in future versions of "
-                            "pytest-asyncio."
+                            "pytest-asyncio.",
                         ),
                         stacklevel=1,
                     )
@@ -698,8 +693,8 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
                     "but it is not an async function. "
                     "Please remove the asyncio mark. "
                     "If the test is not marked explicitly, "
-                    "check for global marks applied via 'pytestmark'."
-                )
+                    "check for global marks applied via 'pytestmark'.",
+                ),
             )
     yield
     return None
@@ -761,7 +756,7 @@ Please use the "loop_scope" argument instead.
 
 
 def _get_marked_loop_scope(
-    asyncio_marker: Mark, default_loop_scope: _ScopeName
+    asyncio_marker: Mark, default_loop_scope: _ScopeName,
 ) -> _ScopeName:
     assert asyncio_marker.name == "asyncio"
     if asyncio_marker.args or (
@@ -773,7 +768,7 @@ def _get_marked_loop_scope(
             raise pytest.UsageError(_DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR)
         warnings.warn(PytestDeprecationWarning(_MARKER_SCOPE_KWARG_DEPRECATION_WARNING))
     scope = asyncio_marker.kwargs.get("loop_scope") or asyncio_marker.kwargs.get(
-        "scope"
+        "scope",
     )
     if scope is None:
         scope = default_loop_scope
@@ -816,7 +811,7 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
             else:
                 with warnings.catch_warnings():
                     warnings.filterwarnings(
-                        "ignore", ".*BaseEventLoop.shutdown_asyncgens.*", RuntimeWarning
+                        "ignore", ".*BaseEventLoop.shutdown_asyncgens.*", RuntimeWarning,
                     )
                     try:
                         runner.__exit__(None, None, None)
@@ -831,7 +826,7 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
 
 for scope in Scope:
     globals()[f"_{scope.value}_scoped_runner"] = _create_scoped_runner_fixture(
-        scope.value
+        scope.value,
     )
 
 
