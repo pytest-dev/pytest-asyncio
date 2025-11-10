@@ -62,6 +62,10 @@ Notes for Downstream Packagers
 `1.0.0 <https://github.com/pytest-dev/pytest-asyncio/tree/1.0.0>`_ - 2025-05-26
 ===============================================================================
 
+.. seealso::
+
+   :ref:`How to migrate from pytest-asyncio v0.23 <how_to_guides/migrate_from_0_23>`
+
 Removed
 -------
 
@@ -210,6 +214,10 @@ As of v0.23, pytest-asyncio attaches an asyncio event loop to each item of the t
 ===================
 This release is backwards-compatible with v0.21.
 Changes are non-breaking, unless you upgrade from v0.22.
+
+.. seealso::
+
+   :ref:`How to migrate from pytest-asyncio v0.21 <how_to_guides/migrate_from_0_21>`
 
 - BREAKING: The *asyncio_event_loop* mark has been removed. Event loops with class, module, package, and session scopes can be requested via the *scope* keyword argument to the _asyncio_ mark.
 - Introduces the *event_loop_policy* fixture which allows testing with non-default or multiple event loops  `#662 <https://github.com/pytest-dev/pytest-asyncio/pull/662>`_

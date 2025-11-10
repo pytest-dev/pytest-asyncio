@@ -1,3 +1,5 @@
+.. _how_to_guides/migrate_from_0_23:
+
 ========================================
 How to migrate from pytest-asyncio v0.23
 ========================================
