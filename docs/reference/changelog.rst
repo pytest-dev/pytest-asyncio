@@ -10,6 +10,28 @@ This project uses `towncrier <https://towncrier.readthedocs.io/>`__ for changlog
 
 .. towncrier release notes start
 
+`1.3.0 <https://github.com/pytest-dev/pytest-asyncio/tree/1.3.0>`_ - 2025-11-10
+===============================================================================
+
+Removed
+-------
+
+- Support for Python 3.9 (`#1278 <https://github.com/pytest-dev/pytest-asyncio/issues/1278>`_)
+
+
+Added
+-----
+
+- Support for pytest 9 (`#1279 <https://github.com/pytest-dev/pytest-asyncio/issues/1279>`_)
+
+
+Notes for Downstream Packagers
+------------------------------
+
+- Tested Python versions include free threaded Python 3.14t (`#1274 <https://github.com/pytest-dev/pytest-asyncio/issues/1274>`_)
+- Tests are run in the same pytest process, instead of spawning a subprocess with `pytest.Pytester.runpytest_subprocess`. This prevents the test suite from accidentally using a system installation of pytest-asyncio, which could result in test errors. (`#1275 <https://github.com/pytest-dev/pytest-asyncio/issues/1275>`_)
+
+
 `1.2.0 <https://github.com/pytest-dev/pytest-asyncio/tree/1.2.0>`_ - 2025-09-12
 ===============================================================================
 
