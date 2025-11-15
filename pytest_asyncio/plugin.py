@@ -488,7 +488,7 @@ class PytestAsyncioFunction(Function):
         """
         Return the coroutine that needs to be synchronized during the test run.
 
-        This method is inteded to be overwritten by subclasses when they need to apply
+        This method is intended to be overwritten by subclasses when they need to apply
         the coroutine synchronizer to a value that's different from self.obj
         e.g. the AsyncHypothesisTest subclass.
         """
