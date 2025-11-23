@@ -1,0 +1,1 @@
+Improved the readability of the warning message that is displayed when ``asyncio_default_fixture_loop_scope`` is unset
