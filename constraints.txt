@@ -61,6 +61,6 @@ tomli==2.3.0
 twine==6.2.0
 typing_extensions==4.15.0
 typing-inspection==0.4.2
-urllib3==2.5.0
+urllib3==2.6.1
 wheel-filename==1.4.2
 zipp==3.23.0
