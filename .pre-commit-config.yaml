@@ -13,7 +13,7 @@ repos:
   - id: check-yaml
   - id: debug-statements
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.14.8
+  rev: v0.14.9
   hooks:
   - id: ruff
     args: [--fix]
@@ -41,7 +41,7 @@ repos:
   - id: yamlfmt
     args: [--mapping, '2', --sequence, '2', --offset, '0']
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.19.0
+  rev: v1.19.1
   hooks:
   - id: mypy
     exclude: ^(docs|tests)/.*
@@ -64,7 +64,7 @@ repos:
     - 'SC1004:'
     stages: [manual]
 - repo: https://github.com/sirosen/check-jsonschema
-  rev: 0.35.0
+  rev: 0.36.0
   hooks:
   - id: check-github-actions
 - repo: https://github.com/tox-dev/pyproject-fmt
