@@ -22,7 +22,7 @@ importlib_metadata==8.7.0
 iniconfig==2.3.0
 jaraco.classes==3.4.0
 jaraco.context==6.0.1
-jaraco.functools==4.3.0
+jaraco.functools==4.4.0
 jeepney==0.9.0
 Jinja2==3.1.6
 keyring==25.6.0
