@@ -23,11 +23,11 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       prerelease: ${{ steps.version.outputs.prerelease }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
       with:
         fetch-depth: 0
         persist-credentials: false
-    - uses: actions/setup-python@v6
+    - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
       with:
         python-version: ${{ env.PYTHON_LATEST }}
     - name: Install tox
@@ -42,7 +42,7 @@ jobs:
       id: version
       run: python ./tools/get-version.py >> $GITHUB_OUTPUT
     - name: Upload artifacts
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: dist
         path: dist
@@ -51,11 +51,11 @@ jobs:
     name: Run linters
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
       with:
         fetch-depth: 0
         persist-credentials: false
-    - uses: actions/setup-python@v6
+    - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
       with:
         python-version: ${{ env.PYTHON_LATEST }}
     - name: Install GitHub matcher for ActionLint checker
@@ -77,10 +77,10 @@ jobs:
         required: [true]
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
       with:
         persist-credentials: false
-    - uses: actions/setup-python@v6
+    - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -93,7 +93,7 @@ jobs:
       run: python -m tox
 
     - name: Store coverage data
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       if: "!endsWith(matrix.os, 'windows')"
       with:
         name: coverage-python-${{ matrix.python-version }}
@@ -116,10 +116,10 @@ jobs:
       uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe  # v1.2.2
       with:
         jobs: ${{ toJSON(needs) }}
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
       with:
         persist-credentials: false
-    - uses: actions/setup-python@v6
+    - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
       with:
         python-version: ${{ env.PYTHON_LATEST }}
     - name: Install Coverage.py
@@ -127,7 +127,7 @@ jobs:
         set -xe
         python -m pip install --upgrade coverage[toml]
     - name: Download coverage data for all test runs
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
         pattern: coverage-*
         path: coverage
@@ -151,12 +151,12 @@ jobs:
       contents: write
     steps:
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
       with:
         fetch-depth: 0
         persist-credentials: false
     - name: Install Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
     - name: Install towncrier
       run: pip install towncrier==24.8.0
     - name: Install pandoc
@@ -182,12 +182,12 @@ jobs:
       run: |
         pandoc --wrap=preserve -o release-notes.md release-notes.rst
     - name: Upload artifacts
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: release-notes.md
         path: release-notes.md
     - name: Download distributions
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
         name: dist
         path: dist
@@ -213,7 +213,7 @@ jobs:
       id-token: write
     steps:
     - name: Download distributions
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
         name: dist
         path: dist
@@ -232,7 +232,7 @@ jobs:
       id-token: write
     steps:
     - name: Download distributions
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
         name: dist
         path: dist
