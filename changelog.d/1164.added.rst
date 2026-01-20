@@ -1,0 +1,1 @@
+Added ``loop_factory`` to pytest_asyncio.fixture and asyncio mark
