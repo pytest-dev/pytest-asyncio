@@ -403,7 +403,7 @@ def _apply_contextvar_changes(
 
     def restore_contextvars():
         while context_tokens:
-            (var, token) = context_tokens.pop()
+            var, token = context_tokens.pop()
             var.reset(token)
 
     return restore_contextvars

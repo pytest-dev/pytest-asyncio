@@ -7,17 +7,13 @@ from pytest import Pytester
 
 def test_asyncio_mark_on_sync_function_emits_warning(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import pytest
 
             @pytest.mark.asyncio
             def test_a():
                 pass
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict", "-W default", "--assert=plain")
     result.assert_outcomes(passed=1)
     result.stdout.fnmatch_lines(
@@ -29,17 +25,13 @@ def test_asyncio_mark_on_async_generator_function_emits_warning_in_strict_mode(
     pytester: Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import pytest
 
             @pytest.mark.asyncio
             async def test_a():
                 yield
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict", "-W default", "--assert=plain")
     result.assert_outcomes(xfailed=1, warnings=1)
     result.stdout.fnmatch_lines(
@@ -51,14 +43,10 @@ def test_asyncio_mark_on_async_generator_function_emits_warning_in_auto_mode(
     pytester: Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             async def test_a():
                 yield
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=auto", "-W default", "--assert=plain")
     result.assert_outcomes(xfailed=1, warnings=1)
     result.stdout.fnmatch_lines(
@@ -70,18 +58,14 @@ def test_asyncio_mark_on_async_generator_method_emits_warning_in_strict_mode(
     pytester: Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import pytest
 
             class TestAsyncGenerator:
                 @pytest.mark.asyncio
                 async def test_a(self):
                     yield
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict", "-W default", "--assert=plain")
     result.assert_outcomes(xfailed=1, warnings=1)
     result.stdout.fnmatch_lines(
@@ -93,16 +77,12 @@ def test_asyncio_mark_on_async_generator_method_emits_warning_in_auto_mode(
     pytester: Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             class TestAsyncGenerator:
                 @staticmethod
                 async def test_a():
                     yield
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=auto", "-W default", "--assert=plain")
     result.assert_outcomes(xfailed=1, warnings=1)
     result.stdout.fnmatch_lines(
@@ -114,9 +94,7 @@ def test_asyncio_mark_on_async_generator_staticmethod_emits_warning_in_strict_mo
     pytester: Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import pytest
 
             class TestAsyncGenerator:
@@ -124,9 +102,7 @@ def test_asyncio_mark_on_async_generator_staticmethod_emits_warning_in_strict_mo
                 @pytest.mark.asyncio
                 async def test_a():
                     yield
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict", "-W default", "--assert=plain")
     result.assert_outcomes(xfailed=1, warnings=1)
     result.stdout.fnmatch_lines(
@@ -138,16 +114,12 @@ def test_asyncio_mark_on_async_generator_staticmethod_emits_warning_in_auto_mode
     pytester: Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             class TestAsyncGenerator:
                 @staticmethod
                 async def test_a():
                     yield
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=auto", "-W default", "--assert=plain")
     result.assert_outcomes(xfailed=1, warnings=1)
     result.stdout.fnmatch_lines(
@@ -158,19 +130,13 @@ def test_asyncio_mark_on_async_generator_staticmethod_emits_warning_in_auto_mode
 def test_asyncio_marker_fallbacks_to_configured_default_loop_scope_if_not_set(
     pytester: Pytester,
 ):
-    pytester.makeini(
-        dedent(
-            """\
+    pytester.makeini(dedent("""\
             [pytest]
             asyncio_default_fixture_loop_scope = function
             asyncio_default_test_loop_scope = session
-            """
-        )
-    )
+            """))
 
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import asyncio
             import pytest_asyncio
             import pytest
@@ -185,9 +151,7 @@ def test_asyncio_marker_fallbacks_to_configured_default_loop_scope_if_not_set(
             async def test_a(session_loop_fixture):
                 global loop
                 assert asyncio.get_running_loop() is loop
-            """
-        )
-    )
+            """))
 
     result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
@@ -196,19 +160,13 @@ def test_asyncio_marker_fallbacks_to_configured_default_loop_scope_if_not_set(
 def test_asyncio_marker_uses_marker_loop_scope_even_if_config_is_set(
     pytester: Pytester,
 ):
-    pytester.makeini(
-        dedent(
-            """\
+    pytester.makeini(dedent("""\
             [pytest]
             asyncio_default_fixture_loop_scope = function
             asyncio_default_test_loop_scope = module
-            """
-        )
-    )
+            """))
 
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import asyncio
             import pytest_asyncio
             import pytest
@@ -224,9 +182,7 @@ def test_asyncio_marker_uses_marker_loop_scope_even_if_config_is_set(
             async def test_a(session_loop_fixture):
                 global loop
                 assert asyncio.get_running_loop() is loop
-            """
-        )
-    )
+            """))
 
     result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)

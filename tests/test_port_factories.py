@@ -8,9 +8,7 @@ import pytest_asyncio.plugin
 
 
 def test_unused_tcp_port_selects_unused_port(pytester: Pytester):
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import asyncio
 
             import pytest
@@ -31,15 +29,11 @@ def test_unused_tcp_port_selects_unused_port(pytester: Pytester):
 
                 server1.close()
                 await server1.wait_closed()
-            """
-        )
-    )
+            """))
 
 
 def test_unused_udp_port_selects_unused_port(pytester: Pytester):
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             @pytest.mark.asyncio
             async def test_unused_udp_port_fixture(unused_udp_port):
                 class Closer:
@@ -64,15 +58,11 @@ def test_unused_udp_port_selects_unused_port(pytester: Pytester):
                     )
 
                 transport1.abort()
-            """
-        )
-    )
+            """))
 
 
 def test_unused_tcp_port_factory_selects_unused_port(pytester: Pytester):
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             @pytest.mark.asyncio
             async def test_unused_port_factory_fixture(unused_tcp_port_factory):
                 async def closer(_, writer):
@@ -104,15 +94,11 @@ def test_unused_tcp_port_factory_selects_unused_port(pytester: Pytester):
                 await server2.wait_closed()
                 server3.close()
                 await server3.wait_closed()
-            """
-        )
-    )
+            """))
 
 
 def test_unused_udp_port_factory_selects_unused_port(pytester: Pytester):
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             @pytest.mark.asyncio
             async def test_unused_udp_port_factory_fixture(unused_udp_port_factory):
                 class Closer:
@@ -156,9 +142,7 @@ def test_unused_udp_port_factory_selects_unused_port(pytester: Pytester):
                 transport1.abort()
                 transport2.abort()
                 transport3.abort()
-            """
-        )
-    )
+            """))
 
 
 def test_unused_port_factory_duplicate(unused_tcp_port_factory, monkeypatch):

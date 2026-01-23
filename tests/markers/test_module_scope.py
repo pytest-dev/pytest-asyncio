@@ -8,9 +8,7 @@ from pytest import Pytester
 
 def test_asyncio_mark_provides_module_scoped_loop_strict_mode(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import asyncio
             import pytest
 
@@ -30,9 +28,7 @@ def test_asyncio_mark_provides_module_scoped_loop_strict_mode(pytester: Pytester
                 async def test_this_runs_in_same_loop(self):
                     global loop
                     assert asyncio.get_running_loop() is loop
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=3)
 
@@ -43,16 +39,13 @@ def test_asyncio_mark_respects_the_loop_policy(
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         __init__="",
-        custom_policy=dedent(
-            """\
+        custom_policy=dedent("""\
             import asyncio
 
             class CustomEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
                 pass
-            """
-        ),
-        test_uses_custom_policy=dedent(
-            """\
+            """),
+        test_uses_custom_policy=dedent("""\
             import asyncio
             import pytest
 
@@ -69,10 +62,8 @@ def test_asyncio_mark_respects_the_loop_policy(
                     asyncio.get_event_loop_policy(),
                     CustomEventLoopPolicy,
                 )
-            """
-        ),
-        test_does_not_use_custom_policy=dedent(
-            """\
+            """),
+        test_does_not_use_custom_policy=dedent("""\
             import asyncio
             import pytest
 
@@ -85,8 +76,7 @@ def test_asyncio_mark_respects_the_loop_policy(
                     asyncio.get_event_loop_policy(),
                     CustomEventLoopPolicy,
                 )
-            """
-        ),
+            """),
     )
     pytest_args = ["--asyncio-mode=strict"]
     if sys.version_info >= (3, 14):
@@ -103,9 +93,7 @@ def test_asyncio_mark_respects_parametrized_loop_policies(
     pytester: Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import asyncio
 
             import pytest
@@ -124,9 +112,7 @@ def test_asyncio_mark_respects_parametrized_loop_policies(
 
             async def test_parametrized_loop():
                 pass
-            """
-        )
-    )
+            """))
     pytest_args = ["--asyncio-mode=strict"]
     if sys.version_info >= (3, 14):
         pytest_args.extend(["-W", "default"])
@@ -142,9 +128,7 @@ def test_asyncio_mark_provides_module_scoped_loop_to_fixtures(
     pytester: Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import asyncio
 
             import pytest
@@ -162,9 +146,7 @@ def test_asyncio_mark_provides_module_scoped_loop_to_fixtures(
             async def test_runs_is_same_loop_as_fixture(my_fixture):
                 global loop
                 assert asyncio.get_running_loop() is loop
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
 
@@ -174,8 +156,7 @@ def test_asyncio_mark_allows_combining_module_scoped_fixture_with_class_scoped_t
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
-        dedent(
-            """\
+        dedent("""\
             import asyncio
 
             import pytest
@@ -194,8 +175,7 @@ def test_asyncio_mark_allows_combining_module_scoped_fixture_with_class_scoped_t
                     global loop
                     assert asyncio.get_running_loop() is not loop
 
-            """
-        ),
+            """),
     )
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
@@ -207,8 +187,7 @@ def test_asyncio_mark_allows_combining_module_scoped_fixture_with_function_scope
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
         __init__="",
-        test_mixed_scopes=dedent(
-            """\
+        test_mixed_scopes=dedent("""\
             import asyncio
 
             import pytest
@@ -225,8 +204,7 @@ def test_asyncio_mark_allows_combining_module_scoped_fixture_with_function_scope
             async def test_runs_in_different_loop_as_fixture(async_fixture):
                 global loop
                 assert asyncio.get_running_loop() is not loop
-            """
-        ),
+            """),
     )
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
@@ -237,8 +215,7 @@ def test_allows_combining_module_scoped_asyncgen_fixture_with_function_scoped_te
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
-        dedent(
-            """\
+        dedent("""\
             import asyncio
 
             import pytest
@@ -256,8 +233,7 @@ def test_allows_combining_module_scoped_asyncgen_fixture_with_function_scoped_te
             async def test_runs_in_different_loop_as_fixture(async_fixture):
                 global loop
                 assert asyncio.get_running_loop() is not loop
-            """
-        ),
+            """),
     )
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
@@ -267,9 +243,7 @@ def test_asyncio_mark_handles_missing_event_loop_triggered_by_fixture(
     pytester: Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import pytest
             import asyncio
 
@@ -291,9 +265,7 @@ def test_asyncio_mark_handles_missing_event_loop_triggered_by_fixture(
             @pytest.mark.parametrize("n", (0, 1))
             async def test_does_not_fail(sets_event_loop_to_none, n):
                 pass
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=2)
 
@@ -302,16 +274,12 @@ def test_standalone_test_does_not_trigger_warning_about_no_current_event_loop_be
     pytester: Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import pytest
 
             @pytest.mark.asyncio(loop_scope="module")
             async def test_anything():
                 pass
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(warnings=0, passed=1)

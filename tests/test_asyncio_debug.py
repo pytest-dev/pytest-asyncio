@@ -8,9 +8,7 @@ from pytest import Pytester
 
 def test_asyncio_debug_disabled_by_default(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import asyncio
             import pytest
 
@@ -20,18 +18,14 @@ def test_asyncio_debug_disabled_by_default(pytester: Pytester):
             async def test_debug_mode_disabled():
                 loop = asyncio.get_running_loop()
                 assert not loop.get_debug()
-            """
-        )
-    )
+            """))
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
 
 def test_asyncio_debug_enabled_via_cli_option(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import asyncio
             import pytest
 
@@ -41,27 +35,19 @@ def test_asyncio_debug_enabled_via_cli_option(pytester: Pytester):
             async def test_debug_mode_enabled():
                 loop = asyncio.get_running_loop()
                 assert loop.get_debug()
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-debug")
     result.assert_outcomes(passed=1)
 
 
 @pytest.mark.parametrize("config_value", ("true", "1"))
 def test_asyncio_debug_enabled_via_config_option(pytester: Pytester, config_value: str):
-    pytester.makeini(
-        dedent(
-            f"""\
+    pytester.makeini(dedent(f"""\
             [pytest]
             asyncio_default_fixture_loop_scope = function
             asyncio_debug = {config_value}
-            """
-        )
-    )
-    pytester.makepyfile(
-        dedent(
-            """\
+            """))
+    pytester.makepyfile(dedent("""\
             import asyncio
             import pytest
 
@@ -71,9 +57,7 @@ def test_asyncio_debug_enabled_via_config_option(pytester: Pytester, config_valu
             async def test_debug_mode_enabled():
                 loop = asyncio.get_running_loop()
                 assert loop.get_debug()
-            """
-        )
-    )
+            """))
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
@@ -83,18 +67,12 @@ def test_asyncio_debug_disabled_via_config_option(
     pytester: Pytester,
     config_value: str,
 ):
-    pytester.makeini(
-        dedent(
-            f"""\
+    pytester.makeini(dedent(f"""\
             [pytest]
             asyncio_default_fixture_loop_scope = function
             asyncio_debug = {config_value}
-            """
-        )
-    )
-    pytester.makepyfile(
-        dedent(
-            """\
+            """))
+    pytester.makepyfile(dedent("""\
             import asyncio
             import pytest
 
@@ -104,9 +82,7 @@ def test_asyncio_debug_disabled_via_config_option(
             async def test_debug_mode_disabled():
                 loop = asyncio.get_running_loop()
                 assert not loop.get_debug()
-            """
-        )
-    )
+            """))
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
@@ -115,9 +91,7 @@ def test_asyncio_debug_cli_option_overrides_config(pytester: Pytester):
     pytester.makeini(
         "[pytest]\nasyncio_default_fixture_loop_scope = function\nasyncio_debug = false"
     )
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import asyncio
             import pytest
 
@@ -127,9 +101,7 @@ def test_asyncio_debug_cli_option_overrides_config(pytester: Pytester):
             async def test_debug_mode_enabled():
                 loop = asyncio.get_running_loop()
                 assert loop.get_debug()
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-debug")
     result.assert_outcomes(passed=1)
 
@@ -137,9 +109,7 @@ def test_asyncio_debug_cli_option_overrides_config(pytester: Pytester):
 @pytest.mark.parametrize("loop_scope", ("function", "module", "session"))
 def test_asyncio_debug_with_different_loop_scopes(pytester: Pytester, loop_scope: str):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            f"""\
+    pytester.makepyfile(dedent(f"""\
             import asyncio
             import pytest
 
@@ -149,18 +119,14 @@ def test_asyncio_debug_with_different_loop_scopes(pytester: Pytester, loop_scope
             async def test_debug_mode_with_scope():
                 loop = asyncio.get_running_loop()
                 assert loop.get_debug()
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-debug")
     result.assert_outcomes(passed=1)
 
 
 def test_asyncio_debug_with_async_fixtures(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import asyncio
             import pytest
             import pytest_asyncio
@@ -178,18 +144,14 @@ def test_asyncio_debug_with_async_fixtures(pytester: Pytester):
                 loop = asyncio.get_running_loop()
                 assert loop.get_debug()
                 assert async_fixture == "fixture_value"
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-debug")
     result.assert_outcomes(passed=1)
 
 
 def test_asyncio_debug_multiple_test_functions(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import asyncio
             import pytest
 
@@ -209,8 +171,6 @@ def test_asyncio_debug_multiple_test_functions(pytester: Pytester):
             async def test_debug_third():
                 loop = asyncio.get_running_loop()
                 assert loop.get_debug()
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-debug")
     result.assert_outcomes(passed=3)
