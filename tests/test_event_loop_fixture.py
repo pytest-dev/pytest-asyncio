@@ -9,9 +9,7 @@ def test_event_loop_fixture_handles_unclosed_async_gen(
     pytester: Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import asyncio
             import pytest
 
@@ -25,9 +23,7 @@ def test_event_loop_fixture_handles_unclosed_async_gen(
 
                 gen = generator_fn()
                 await gen.__anext__()
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1, warnings=0)
 
@@ -36,9 +32,7 @@ def test_closing_event_loop_in_sync_fixture_teardown_raises_warning(
     pytester: Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import asyncio
             import pytest
             import pytest_asyncio
@@ -57,9 +51,7 @@ def test_closing_event_loop_in_sync_fixture_teardown_raises_warning(
             @pytest.mark.asyncio
             async def test_something(close_event_loop):
                 await asyncio.sleep(0.01)
-            """
-        )
-    )
+            """))
     result = pytester.runpytest_subprocess("--asyncio-mode=strict", "--assert=plain")
     result.assert_outcomes(passed=1, warnings=1)
     result.stdout.fnmatch_lines(
@@ -71,9 +63,7 @@ def test_event_loop_fixture_asyncgen_error(
     pytester: Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import asyncio
             import pytest
 
@@ -86,8 +76,6 @@ def test_event_loop_fixture_asyncgen_error(
                 async def fail():
                     raise RuntimeError("mock error cleaning up...")
                 loop.shutdown_asyncgens = fail
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1, warnings=1)

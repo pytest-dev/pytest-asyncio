@@ -34,9 +34,7 @@ def test_asyncio_mark_provides_class_scoped_loop_when_applied_to_functions(
     pytester: pytest.Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import asyncio
             import pytest
 
@@ -50,9 +48,7 @@ def test_asyncio_mark_provides_class_scoped_loop_when_applied_to_functions(
                 @pytest.mark.asyncio(loop_scope="class")
                 async def test_this_runs_in_same_loop(self):
                     assert asyncio.get_running_loop() is TestClassScopedLoop.loop
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=2)
 
@@ -61,9 +57,7 @@ def test_asyncio_mark_provides_class_scoped_loop_when_applied_to_class(
     pytester: pytest.Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import asyncio
             import pytest
 
@@ -76,18 +70,14 @@ def test_asyncio_mark_provides_class_scoped_loop_when_applied_to_class(
 
                 async def test_this_runs_in_same_loop(self):
                     assert asyncio.get_running_loop() is TestClassScopedLoop.loop
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=2)
 
 
 def test_asyncio_mark_is_inherited_to_subclasses(pytester: pytest.Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import asyncio
             import pytest
 
@@ -103,9 +93,7 @@ def test_asyncio_mark_is_inherited_to_subclasses(pytester: pytest.Pytester):
 
                 async def test_this_runs_in_same_loop(self):
                     assert asyncio.get_running_loop() is TestWithoutMark.loop
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=2)
 
@@ -114,9 +102,7 @@ def test_asyncio_mark_respects_the_loop_policy(
     pytester: pytest.Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import asyncio
             import pytest
 
@@ -141,9 +127,7 @@ def test_asyncio_mark_respects_the_loop_policy(
                     asyncio.get_event_loop_policy(),
                     CustomEventLoopPolicy,
                 )
-            """
-        )
-    )
+            """))
     pytest_args = ["--asyncio-mode=strict"]
     if sys.version_info >= (3, 14):
         pytest_args.extend(["-W", "default"])
@@ -159,9 +143,7 @@ def test_asyncio_mark_respects_parametrized_loop_policies(
     pytester: pytest.Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import asyncio
 
             import pytest
@@ -180,9 +162,7 @@ def test_asyncio_mark_respects_parametrized_loop_policies(
             class TestWithDifferentLoopPolicies:
                 async def test_parametrized_loop(self, request):
                     pass
-            """
-        )
-    )
+            """))
     pytest_args = ["--asyncio-mode=strict"]
     if sys.version_info >= (3, 14):
         pytest_args.extend(["-W", "default"])
@@ -198,9 +178,7 @@ def test_asyncio_mark_provides_class_scoped_loop_to_fixtures(
     pytester: pytest.Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import asyncio
 
             import pytest
@@ -217,9 +195,7 @@ def test_asyncio_mark_provides_class_scoped_loop_to_fixtures(
                 @pytest.mark.asyncio
                 async def test_runs_is_same_loop_as_fixture(self, my_fixture):
                     assert asyncio.get_running_loop() is TestClassScopedLoop.loop
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
 
@@ -229,8 +205,7 @@ def test_asyncio_mark_allows_combining_class_scoped_fixture_with_function_scoped
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
-        dedent(
-            """\
+        dedent("""\
             import asyncio
 
             import pytest
@@ -249,8 +224,7 @@ def test_asyncio_mark_allows_combining_class_scoped_fixture_with_function_scoped
                     global loop
                     assert asyncio.get_running_loop() is not loop
 
-            """
-        ),
+            """),
     )
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
@@ -260,9 +234,7 @@ def test_asyncio_mark_handles_missing_event_loop_triggered_by_fixture(
     pytester: pytest.Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import pytest
             import asyncio
 
@@ -285,9 +257,7 @@ def test_asyncio_mark_handles_missing_event_loop_triggered_by_fixture(
                 @pytest.mark.parametrize("n", (0, 1))
                 async def test_does_not_fail(self, sets_event_loop_to_none, n):
                     pass
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=2)
 
@@ -296,17 +266,13 @@ def test_standalone_test_does_not_trigger_warning_about_no_current_event_loop_be
     pytester: pytest.Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
             import pytest
 
             @pytest.mark.asyncio(loop_scope="class")
             class TestClass:
                 async def test_anything(self):
                     pass
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(warnings=0, passed=1)

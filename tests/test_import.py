@@ -7,16 +7,12 @@ from pytest import Pytester
 
 def test_import_warning_does_not_cause_internal_error(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent(
-            """\
+    pytester.makepyfile(dedent("""\
                 raise ImportWarning()
 
                 async def test_errors_out():
                     pass
-            """
-        )
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(errors=1)
 
@@ -24,17 +20,13 @@ def test_import_warning_does_not_cause_internal_error(pytester: Pytester):
 def test_import_warning_in_package_does_not_cause_internal_error(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(
-        __init__=dedent(
-            """\
+        __init__=dedent("""\
                 raise ImportWarning()
-            """
-        ),
-        test_a=dedent(
-            """\
+            """),
+        test_a=dedent("""\
                 async def test_errors_out():
                     pass
-            """
-        ),
+            """),
     )
     result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(errors=1)
@@ -44,20 +36,16 @@ def test_does_not_import_unrelated_packages(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pkg_dir = pytester.mkpydir("mypkg")
     pkg_dir.joinpath("__init__.py").write_text(
-        dedent(
-            """\
+        dedent("""\
                 raise ImportError()
-            """
-        ),
+            """),
     )
     test_dir = pytester.mkdir("tests")
     test_dir.joinpath("test_a.py").write_text(
-        dedent(
-            """\
+        dedent("""\
                 async def test_passes():
                     pass
-            """
-        ),
+            """),
     )
     result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
