@@ -670,22 +670,13 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
                     and _is_coroutine_or_asyncgen(func)
                     and not _is_asyncio_fixture_function(func)
                 ):
-                    warnings.warn(
-                        PytestDeprecationWarning(
-                            f"asyncio test {pyfuncitem.name!r} requested async "
-                            "@pytest.fixture "
-                            f"{fixname!r} in strict mode. "
-                            "You might want to use @pytest_asyncio.fixture or switch "
-                            "to auto mode. "
-                            "This will become an error in future versions of "
-                            "pytest-asyncio."
-                        ),
-                        stacklevel=1,
+                    raise pytest.UsageError(
+                        f"asyncio test {pyfuncitem.name!r} requested async "
+                        "@pytest.fixture "
+                        f"{fixname!r} in strict mode. "
+                        "You might want to use @pytest_asyncio.fixture or switch "
+                        "to auto mode. "
                     )
-                    # no stacklevel points at the users code, so we set stacklevel=1
-                    # so it at least indicates that it's the plugin complaining.
-                    # Pytest gives the test file & name in the warnings summary at least
-
         else:
             pyfuncitem.warn(
                 pytest.PytestWarning(
