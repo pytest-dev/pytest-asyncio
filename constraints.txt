@@ -34,7 +34,7 @@ nh3==0.3.2
 packaging==26.0
 pluggy==1.6.0
 Pygments==2.19.2
-pycparser==2.23
+pycparser==3.0
 pydantic==2.12.5
 pydantic-core==2.41.5
 pytest==9.0.2
