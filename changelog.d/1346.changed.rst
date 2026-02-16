@@ -1,0 +1,1 @@
+Updated the uvloop how-to guide to avoid using the deprecated ``uvloop.EventLoopPolicy`` by wrapping ``uvloop.new_event_loop`` in a minimal custom policy
