@@ -42,7 +42,7 @@ readme-renderer==44.0
 requests==2.32.5
 requests-toolbelt==1.0.0
 rfc3986==2.0.0
-rich==14.3.1
+rich==14.3.2
 SecretStorage==3.5.0
 setuptools==82.0.0
 setuptools-scm==9.2.2
