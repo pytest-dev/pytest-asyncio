@@ -7,12 +7,15 @@ Replace the default event loop policy in your *conftest.py:*
 
 .. code-block:: python
 
+    import asyncio
     import pytest
     import uvloop
 
 
     @pytest.fixture(scope="session")
     def event_loop_policy():
-        return uvloop.EventLoopPolicy()
+        policy = asyncio.get_event_loop_policy()
+        policy.set_event_loop_class(uvloop.EventLoop)
+        return policy
 
 You may choose to limit the scope of the fixture to *package,* *module,* or *class,* if you only want a subset of your tests to run with uvloop.
