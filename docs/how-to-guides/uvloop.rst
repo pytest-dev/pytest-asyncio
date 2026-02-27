@@ -8,6 +8,7 @@ Replace the default event loop policy in your *conftest.py:*
 .. code-block:: python
 
     import asyncio
+
     import pytest
     import uvloop
 
