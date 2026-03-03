@@ -1,0 +1,1 @@
+**Breaking change**: using ``@pytest.fixture`` on async fixtures in strict mode raises ``pytest.UsageError`` instead of ``PytestDeprecationWarning``
