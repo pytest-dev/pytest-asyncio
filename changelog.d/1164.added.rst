@@ -1,0 +1,1 @@
+Added the ``pytest_asyncio_loop_factories`` hook to parametrize asyncio tests with custom event loop factories.

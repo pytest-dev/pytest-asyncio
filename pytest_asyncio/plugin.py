@@ -27,6 +27,7 @@ from typing import (
     Any,
     Literal,
     ParamSpec,
+    TypeAlias,
     TypeVar,
     overload,
 )
@@ -63,6 +64,7 @@ _ScopeName = Literal["session", "package", "module", "class", "function"]
 _R = TypeVar("_R", bound=Awaitable[Any] | AsyncIterator[Any])
 _P = ParamSpec("_P")
 FixtureFunction = Callable[_P, _R]
+LoopFactory: TypeAlias = Callable[[], AbstractEventLoop]
 
 
 class PytestAsyncioError(Exception):
@@ -74,6 +76,19 @@ class Mode(str, enum.Enum):
     STRICT = "strict"
 
 
+hookspec = pluggy.HookspecMarker("pytest")
+
+
+class PytestAsyncioSpecs:
+    @hookspec
+    def pytest_asyncio_loop_factories(
+        self,
+        config: Config,
+        item: Item,
+    ) -> Iterable[LoopFactory]:
+        raise NotImplementedError  # pragma: no cover
+
+
 ASYNCIO_MODE_HELP = """\
 'auto' - for automatically handling all async functions by the plugin
 'strict' - for autoprocessing disabling (useful if different async frameworks \
@@ -83,6 +98,7 @@ both pytest-asyncio and pytest-trio are used in the same project)
 
 
 def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager) -> None:
+    pluginmanager.add_hookspecs(PytestAsyncioSpecs)
     group = parser.getgroup("asyncio")
     group.addoption(
         "--asyncio-mode",
@@ -217,6 +233,45 @@ def _get_asyncio_debug(config: Config) -> bool:
         return val
     else:
         return val == "true"
+
+
+def _collect_hook_loop_factories(
+    config: Config,
+    item: Item,
+) -> tuple[LoopFactory, ...] | None:
+    hook_caller = config.hook.pytest_asyncio_loop_factories
+    hook_impls = hook_caller.get_hookimpls()
+    if not hook_impls:
+        return None
+    if len(hook_impls) > 1:
+        msg = (
+            "Multiple pytest_asyncio_loop_factories implementations found; please"
+            " provide a single hook implementation."
+        )
+        raise pytest.UsageError(msg)
+
+    results: list[Iterable[LoopFactory] | None] = hook_caller(config=config, item=item)
+    msg = "pytest_asyncio_loop_factories must return a non-empty sequence of callables."
+    if not results:
+        raise pytest.UsageError(msg)
+    result = results[0]
+    if result is None or not isinstance(result, Sequence):
+        raise pytest.UsageError(msg)
+    # Copy into an immutable snapshot so later mutations of the hook's
+    # original container do not affect stash state or parametrization.
+    factories = tuple(result)
+    if not factories or any(not callable(factory) for factory in factories):
+        raise pytest.UsageError(msg)
+    return factories
+
+
+def _get_item_loop_scope(item: Item, config: Config) -> _ScopeName:
+    marker = item.get_closest_marker("asyncio")
+    default_loop_scope = _get_default_test_loop_scope(config)
+    if marker is None:
+        return default_loop_scope
+    else:
+        return _get_marked_loop_scope(marker, default_loop_scope)
 
 
 _DEFAULT_FIXTURE_LOOP_SCOPE_UNSET = """\
@@ -611,6 +666,27 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
     hook_result.force_result(updated_node_collection)
 
 
+@pytest.hookimpl(tryfirst=True)
+def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
+    if _get_asyncio_mode(
+        metafunc.config
+    ) == Mode.STRICT and not metafunc.definition.get_closest_marker("asyncio"):
+        return
+    if PytestAsyncioFunction.item_subclass_for(metafunc.definition) is None:
+        return
+    hook_factories = _collect_hook_loop_factories(metafunc.config, metafunc.definition)
+    if hook_factories is None:
+        return
+    metafunc.fixturenames.append("asyncio_loop_factory")
+    loop_scope = _get_item_loop_scope(metafunc.definition, metafunc.config)
+    metafunc.parametrize(
+        "asyncio_loop_factory",
+        hook_factories,
+        indirect=True,
+        scope=loop_scope,
+    )
+
+
 @contextlib.contextmanager
 def _temporary_event_loop_policy(policy: AbstractEventLoopPolicy) -> Iterator[None]:
     old_loop_policy = _get_event_loop_policy()
@@ -798,12 +874,16 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
     )
     def _scoped_runner(
         event_loop_policy,
+        asyncio_loop_factory,
         request: FixtureRequest,
     ) -> Iterator[Runner]:
         new_loop_policy = event_loop_policy
         debug_mode = _get_asyncio_debug(request.config)
         with _temporary_event_loop_policy(new_loop_policy):
-            runner = Runner(debug=debug_mode).__enter__()
+            runner = Runner(
+                debug=debug_mode,
+                loop_factory=asyncio_loop_factory,
+            ).__enter__()
             try:
                 yield runner
             except Exception as e:
@@ -828,6 +908,11 @@ for scope in Scope:
     globals()[f"_{scope.value}_scoped_runner"] = _create_scoped_runner_fixture(
         scope.value
     )
+
+
+@pytest.fixture(scope="session")
+def asyncio_loop_factory(request: FixtureRequest) -> LoopFactory | None:
+    return getattr(request, "param", None)
 
 
 @pytest.fixture(scope="session", autouse=True)

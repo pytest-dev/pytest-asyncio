@@ -2,8 +2,29 @@
 How to test with uvloop
 =======================
 
-Redefining the *event_loop_policy* fixture will parametrize all async tests. The following example causes all async tests to run multiple times, once for each event loop in the fixture parameters:
-Replace the default event loop policy in your *conftest.py:*
+Define a ``pytest_asyncio_loop_factories`` hook in your *conftest.py* that returns ``uvloop.new_event_loop`` as a loop factory:
+
+.. code-block:: python
+
+    import uvloop
+
+
+    def pytest_asyncio_loop_factories(config, item):
+        return [uvloop.new_event_loop]
+
+.. seealso::
+
+   :doc:`custom_loop_factory`
+      More details on the ``pytest_asyncio_loop_factories`` hook, including per-test factory selection and multiple factory parametrization.
+
+Using the event_loop_policy fixture
+------------------------------------
+
+.. note::
+
+   ``asyncio.AbstractEventLoopPolicy`` is deprecated as of Python 3.14 (removal planned for 3.16), and ``uvloop.EventLoopPolicy`` will be removed alongside it. Prefer the hook approach above.
+
+For older versions of Python and uvloop, you can override the *event_loop_policy* fixture in your *conftest.py:*
 
 .. code-block:: python
 
