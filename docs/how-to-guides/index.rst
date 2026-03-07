@@ -10,6 +10,8 @@ How-To Guides
   change_fixture_loop
   change_default_fixture_loop
   change_default_test_loop
+  custom_loop_factory
+  run_test_with_specific_loop_factories
   run_class_tests_in_same_loop
   run_module_tests_in_same_loop
   run_package_tests_in_same_loop
