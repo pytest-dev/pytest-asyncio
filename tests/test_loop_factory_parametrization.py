@@ -163,44 +163,59 @@ def test_hook_requires_non_empty_sequence_of_callables(
     )
 
 
-def test_hook_rejects_multiple_hook_implementations(pytester: Pytester) -> None:
+def test_nested_conftest_multiple_hook_implementations_are_allowed(
+    pytester: Pytester,
+) -> None:
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makeconftest(dedent("""\
         import asyncio
 
-        pytest_plugins = ("extra_loop_factory_plugin",)
-
-        class CustomEventLoopA(asyncio.SelectorEventLoop):
+        class RootCustomEventLoop(asyncio.SelectorEventLoop):
             pass
 
         def pytest_asyncio_loop_factories(config, item):
-            return [CustomEventLoopA]
+            return [RootCustomEventLoop]
         """))
+    subdir = pytester.mkdir("subtests")
+    subdir.joinpath("conftest.py").write_text(
+        dedent("""\
+        import asyncio
+
+        class SubCustomEventLoop(asyncio.SelectorEventLoop):
+            pass
+
+        def pytest_asyncio_loop_factories(config, item):
+            return [SubCustomEventLoop]
+        """),
+    )
     pytester.makepyfile(
-        extra_loop_factory_plugin=dedent("""\
+        test_root=dedent("""\
             import asyncio
-
-            class CustomEventLoopB(asyncio.SelectorEventLoop):
-                pass
-
-            def pytest_asyncio_loop_factories(config, item):
-                return [CustomEventLoopB]
-            """),
-        test_hooks=dedent("""\
             import pytest
 
             pytest_plugins = "pytest_asyncio"
 
             @pytest.mark.asyncio
-            async def test_async():
-                assert True
+            async def test_uses_root_loop():
+                loop_name = type(asyncio.get_running_loop()).__name__
+                assert loop_name in ("RootCustomEventLoop", "SubCustomEventLoop")
             """),
     )
-    result = pytester.runpytest("--asyncio-mode=strict")
-    result.assert_outcomes(errors=1)
-    result.stdout.fnmatch_lines(
-        ["*Multiple pytest_asyncio_loop_factories implementations found*"]
+    subdir.joinpath("test_sub.py").write_text(
+        dedent("""\
+        import asyncio
+        import pytest
+
+        pytest_plugins = "pytest_asyncio"
+
+        @pytest.mark.asyncio
+        async def test_uses_sub_loop():
+            loop_name = type(asyncio.get_running_loop()).__name__
+            assert loop_name in ("RootCustomEventLoop", "SubCustomEventLoop")
+        """),
     )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=2)
 
 
 def test_hook_accepts_tuple_return(pytester: Pytester) -> None:

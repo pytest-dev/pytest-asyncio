@@ -22,6 +22,8 @@ When multiple factories are returned, each asynchronous test is run once per fac
 
 Factories should be callables without required parameters and should return an ``asyncio.AbstractEventLoop`` instance. The hook must return a non-empty sequence for every asyncio test.
 
+When multiple ``pytest_asyncio_loop_factories`` implementations are present, pytest-asyncio uses the first non -``None`` result in pytest's normal hook dispatch order.
+
 To select different factories for specific tests, you can inspect ``item``:
 
 .. code-block:: python

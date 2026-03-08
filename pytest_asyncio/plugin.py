@@ -85,7 +85,7 @@ class PytestAsyncioSpecs:
         self,
         config: Config,
         item: Item,
-    ) -> Iterable[LoopFactory]:
+    ) -> Iterable[LoopFactory] | None:
         raise NotImplementedError  # pragma: no cover
 
 
@@ -240,15 +240,8 @@ def _collect_hook_loop_factories(
     item: Item,
 ) -> tuple[LoopFactory, ...] | None:
     hook_caller = config.hook.pytest_asyncio_loop_factories
-    hook_impls = hook_caller.get_hookimpls()
-    if not hook_impls:
+    if not hook_caller.get_hookimpls():
         return None
-    if len(hook_impls) > 1:
-        msg = (
-            "Multiple pytest_asyncio_loop_factories implementations found; please"
-            " provide a single hook implementation."
-        )
-        raise pytest.UsageError(msg)
 
     results: list[Iterable[LoopFactory] | None] = hook_caller(config=config, item=item)
     msg = "pytest_asyncio_loop_factories must return a non-empty sequence of callables."
