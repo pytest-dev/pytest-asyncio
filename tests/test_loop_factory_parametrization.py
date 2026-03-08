@@ -112,11 +112,11 @@ def test_sync_tests_are_not_parametrized(pytester: Pytester) -> None:
         pytest_plugins = "pytest_asyncio"
 
         def test_sync(request):
-            assert "asyncio_loop_factory" not in request.fixturenames
+            assert "_asyncio_loop_factory" not in request.fixturenames
 
         @pytest.mark.asyncio
         async def test_async(request):
-            assert "asyncio_loop_factory" in request.fixturenames
+            assert "_asyncio_loop_factory" in request.fixturenames
             loop_name = type(asyncio.get_running_loop()).__name__
             assert loop_name in ("CustomEventLoopA", "CustomEventLoopB")
         """))

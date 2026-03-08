@@ -670,10 +670,10 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     hook_factories = _collect_hook_loop_factories(metafunc.config, metafunc.definition)
     if hook_factories is None:
         return
-    metafunc.fixturenames.append("asyncio_loop_factory")
+    metafunc.fixturenames.append(_asyncio_loop_factory.name)
     loop_scope = _get_item_loop_scope(metafunc.definition, metafunc.config)
     metafunc.parametrize(
-        "asyncio_loop_factory",
+        _asyncio_loop_factory.name,
         hook_factories,
         indirect=True,
         scope=loop_scope,
@@ -867,7 +867,7 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
     )
     def _scoped_runner(
         event_loop_policy,
-        asyncio_loop_factory,
+        _asyncio_loop_factory,
         request: FixtureRequest,
     ) -> Iterator[Runner]:
         new_loop_policy = event_loop_policy
@@ -875,7 +875,7 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
         with _temporary_event_loop_policy(new_loop_policy):
             runner = Runner(
                 debug=debug_mode,
-                loop_factory=asyncio_loop_factory,
+                loop_factory=_asyncio_loop_factory,
             ).__enter__()
             try:
                 yield runner
@@ -904,7 +904,7 @@ for scope in Scope:
 
 
 @pytest.fixture(scope="session")
-def asyncio_loop_factory(request: FixtureRequest) -> LoopFactory | None:
+def _asyncio_loop_factory(request: FixtureRequest) -> LoopFactory | None:
     return getattr(request, "param", None)
 
 
