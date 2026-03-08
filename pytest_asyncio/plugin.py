@@ -670,10 +670,10 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     hook_factories = _collect_hook_loop_factories(metafunc.config, metafunc.definition)
     if hook_factories is None:
         return
-    metafunc.fixturenames.append(_asyncio_loop_factory.name)
+    metafunc.fixturenames.append(_asyncio_loop_factory.__name__)
     loop_scope = _get_item_loop_scope(metafunc.definition, metafunc.config)
     metafunc.parametrize(
-        _asyncio_loop_factory.name,
+        _asyncio_loop_factory.__name__,
         hook_factories,
         indirect=True,
         scope=loop_scope,
