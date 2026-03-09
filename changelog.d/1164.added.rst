@@ -1,1 +1,3 @@
 Added the ``pytest_asyncio_loop_factories`` hook to parametrize asyncio tests with custom event loop factories.
+
+The hook now returns a mapping of factory names to loop factories, and ``pytest.mark.asyncio(loop_factories=[...])`` can be used to select a subset of configured factories per test.

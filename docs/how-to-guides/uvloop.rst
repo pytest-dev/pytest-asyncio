@@ -2,7 +2,7 @@
 How to test with uvloop
 =======================
 
-Define a ``pytest_asyncio_loop_factories`` hook in your *conftest.py* that returns ``uvloop.new_event_loop`` as a loop factory:
+Define a ``pytest_asyncio_loop_factories`` hook in your *conftest.py* that maps factory names to loop factories:
 
 .. code-block:: python
 
@@ -10,7 +10,9 @@ Define a ``pytest_asyncio_loop_factories`` hook in your *conftest.py* that retur
 
 
     def pytest_asyncio_loop_factories(config, item):
-        return [uvloop.new_event_loop]
+        return {
+            "uvloop": uvloop.new_event_loop,
+        }
 
 .. seealso::
 
@@ -18,7 +20,7 @@ Define a ``pytest_asyncio_loop_factories`` hook in your *conftest.py* that retur
       More details on the ``pytest_asyncio_loop_factories`` hook, including per-test factory selection and multiple factory parametrization.
 
 Using the event_loop_policy fixture
-------------------------------------
+-----------------------------------
 
 .. note::
 

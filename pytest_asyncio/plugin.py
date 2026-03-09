@@ -20,6 +20,7 @@ from collections.abc import (
     Generator,
     Iterable,
     Iterator,
+    Mapping,
     Sequence,
 )
 from types import AsyncGeneratorType, CoroutineType
@@ -80,12 +81,12 @@ hookspec = pluggy.HookspecMarker("pytest")
 
 
 class PytestAsyncioSpecs:
-    @hookspec
+    @hookspec(firstresult=True)
     def pytest_asyncio_loop_factories(
         self,
         config: Config,
         item: Item,
-    ) -> Iterable[LoopFactory] | None:
+    ) -> Mapping[str, LoopFactory] | None:
         raise NotImplementedError  # pragma: no cover
 
 
@@ -235,36 +236,32 @@ def _get_asyncio_debug(config: Config) -> bool:
         return val == "true"
 
 
+_INVALID_LOOP_FACTORIES = (
+    "pytest_asyncio_loop_factories must return a non-empty mapping of factory names "
+    "to callables."
+)
+
+
 def _collect_hook_loop_factories(
     config: Config,
     item: Item,
-) -> tuple[LoopFactory, ...] | None:
+) -> dict[str, LoopFactory] | None:
     hook_caller = config.hook.pytest_asyncio_loop_factories
     if not hook_caller.get_hookimpls():
         return None
 
-    results: list[Iterable[LoopFactory] | None] = hook_caller(config=config, item=item)
-    msg = "pytest_asyncio_loop_factories must return a non-empty sequence of callables."
-    if not results:
-        raise pytest.UsageError(msg)
-    result = results[0]
-    if result is None or not isinstance(result, Sequence):
-        raise pytest.UsageError(msg)
-    # Copy into an immutable snapshot so later mutations of the hook's
-    # original container do not affect stash state or parametrization.
-    factories = tuple(result)
-    if not factories or any(not callable(factory) for factory in factories):
-        raise pytest.UsageError(msg)
+    result = hook_caller(config=config, item=item)
+    if result is None or not isinstance(result, Mapping):
+        raise pytest.UsageError(_INVALID_LOOP_FACTORIES)
+    # Copy into an isolated snapshot so later mutations of the hook's
+    # original container do not affect parametrization.
+    factories = dict(result)
+    if not factories or any(
+        not isinstance(name, str) or not name or not callable(factory)
+        for name, factory in factories.items()
+    ):
+        raise pytest.UsageError(_INVALID_LOOP_FACTORIES)
     return factories
-
-
-def _get_item_loop_scope(item: Item, config: Config) -> _ScopeName:
-    marker = item.get_closest_marker("asyncio")
-    default_loop_scope = _get_default_test_loop_scope(config)
-    if marker is None:
-        return default_loop_scope
-    else:
-        return _get_marked_loop_scope(marker, default_loop_scope)
 
 
 _DEFAULT_FIXTURE_LOOP_SCOPE_UNSET = """\
@@ -526,10 +523,14 @@ class PytestAsyncioFunction(Function):
         marker is present, the the loop scope is determined by the configuration
         value of `asyncio_default_test_loop_scope`, instead.
         """
+        default_loop_scope = _get_default_test_loop_scope(self.config)
         marker = self.get_closest_marker("asyncio")
         assert marker is not None
-        default_loop_scope = _get_default_test_loop_scope(self.config)
-        return _get_marked_loop_scope(marker, default_loop_scope)
+        loop_scope = marker.kwargs.get("loop_scope") or marker.kwargs.get("scope")
+        if loop_scope is None:
+            return default_loop_scope
+        else:
+            return loop_scope
 
     @property
     def _synchronization_target_attr(self) -> tuple[object, str]:
@@ -618,6 +619,16 @@ class AsyncHypothesisTest(PytestAsyncioFunction):
         return self.obj.hypothesis, "inner_test"
 
 
+def _resolve_asyncio_marker(item: Function) -> Mark | None:
+    marker = item.get_closest_marker("asyncio")
+    if marker is not None:
+        return marker
+    if _get_asyncio_mode(item.config) == Mode.AUTO:
+        item.add_marker("asyncio")
+        return item.get_closest_marker("asyncio")
+    return None
+
+
 # The function name needs to start with "pytest_"
 # see https://github.com/pytest-dev/pytest/issues/11307
 @pytest.hookimpl(specname="pytest_pycollect_makeitem", hookwrapper=True)
@@ -648,33 +659,63 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
         updated_item = node
         if isinstance(node, Function):
             specialized_item_class = PytestAsyncioFunction.item_subclass_for(node)
-            if specialized_item_class:
-                if _get_asyncio_mode(
-                    node.config
-                ) == Mode.AUTO and not node.get_closest_marker("asyncio"):
-                    node.add_marker("asyncio")
-                if node.get_closest_marker("asyncio"):
-                    updated_item = specialized_item_class._from_function(node)
+            if (
+                specialized_item_class is not None
+                and _resolve_asyncio_marker(node) is not None
+            ):
+                updated_item = specialized_item_class._from_function(node)
         updated_node_collection.append(updated_item)
     hook_result.force_result(updated_node_collection)
 
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
-    if _get_asyncio_mode(
-        metafunc.config
-    ) == Mode.STRICT and not metafunc.definition.get_closest_marker("asyncio"):
+    specialized_item_class = PytestAsyncioFunction.item_subclass_for(
+        metafunc.definition
+    )
+    if specialized_item_class is None:
         return
-    if PytestAsyncioFunction.item_subclass_for(metafunc.definition) is None:
+
+    asyncio_marker = _resolve_asyncio_marker(metafunc.definition)
+    if asyncio_marker is None:
         return
+    marker_loop_scope, marker_selected_factory_names = _parse_asyncio_marker(
+        asyncio_marker
+    )
+
     hook_factories = _collect_hook_loop_factories(metafunc.config, metafunc.definition)
     if hook_factories is None:
+        if marker_selected_factory_names is not None:
+            raise pytest.UsageError(
+                "mark.asyncio 'loop_factories' requires at least one "
+                "pytest_asyncio_loop_factories hook implementation."
+            )
         return
+
+    if marker_selected_factory_names is None:
+        effective_factories = hook_factories
+    else:
+        missing_factory_names = tuple(
+            name for name in marker_selected_factory_names if name not in hook_factories
+        )
+        if missing_factory_names:
+            msg = (
+                f"Unknown factory name(s) {missing_factory_names}."
+                f" Available names: {', '.join(hook_factories)}."
+            )
+            raise pytest.UsageError(msg)
+        # Build the mapping in marker order to preserve explicit user
+        # selection order in parametrization.
+        effective_factories = {
+            name: hook_factories[name] for name in marker_selected_factory_names
+        }
     metafunc.fixturenames.append(_asyncio_loop_factory.__name__)
-    loop_scope = _get_item_loop_scope(metafunc.definition, metafunc.config)
+    default_loop_scope = _get_default_test_loop_scope(metafunc.config)
+    loop_scope = marker_loop_scope or default_loop_scope
     metafunc.parametrize(
         _asyncio_loop_factory.__name__,
-        hook_factories,
+        effective_factories.values(),
+        ids=effective_factories.keys(),
         indirect=True,
         scope=loop_scope,
     )
@@ -823,15 +864,16 @@ The "scope" keyword argument to the asyncio marker has been deprecated. \
 Please use the "loop_scope" argument instead.
 """
 
+_INVALID_LOOP_FACTORIES_KWARG = """\
+mark.asyncio 'loop_factories' must be a non-empty sequence of strings.
+"""
 
-def _get_marked_loop_scope(
-    asyncio_marker: Mark, default_loop_scope: _ScopeName
-) -> _ScopeName:
+
+def _parse_asyncio_marker(
+    asyncio_marker: Mark,
+) -> tuple[_ScopeName | None, Sequence[str] | None]:
     assert asyncio_marker.name == "asyncio"
-    if asyncio_marker.args or (
-        asyncio_marker.kwargs and set(asyncio_marker.kwargs) - {"loop_scope", "scope"}
-    ):
-        raise ValueError("mark.asyncio accepts only a keyword argument 'loop_scope'.")
+    _validate_asyncio_marker(asyncio_marker)
     if "scope" in asyncio_marker.kwargs:
         if "loop_scope" in asyncio_marker.kwargs:
             raise pytest.UsageError(_DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR)
@@ -839,10 +881,31 @@ def _get_marked_loop_scope(
     scope = asyncio_marker.kwargs.get("loop_scope") or asyncio_marker.kwargs.get(
         "scope"
     )
-    if scope is None:
-        scope = default_loop_scope
-    assert scope in {"function", "class", "module", "package", "session"}
-    return scope
+    if scope is not None:
+        assert scope in {"function", "class", "module", "package", "session"}
+    marker_value = asyncio_marker.kwargs.get("loop_factories")
+    if marker_value is None:
+        return scope, None
+    if isinstance(marker_value, str) or not isinstance(marker_value, Sequence):
+        raise ValueError(_INVALID_LOOP_FACTORIES_KWARG)
+    if not marker_value or any(
+        not isinstance(factory_name, str) or not factory_name
+        for factory_name in marker_value
+    ):
+        raise ValueError(_INVALID_LOOP_FACTORIES_KWARG)
+    return scope, marker_value
+
+
+def _validate_asyncio_marker(asyncio_marker: Mark) -> None:
+    if asyncio_marker.args or (
+        asyncio_marker.kwargs
+        and set(asyncio_marker.kwargs) - {"loop_scope", "scope", "loop_factories"}
+    ):
+        msg = (
+            "mark.asyncio accepts only keyword arguments 'loop_scope' and"
+            " 'loop_factories'."
+        )
+        raise ValueError(msg)
 
 
 def _get_default_test_loop_scope(config: Config) -> Any:

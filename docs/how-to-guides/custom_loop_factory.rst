@@ -1,8 +1,8 @@
-==================================================
+================================================
 How to use custom event loop factories for tests
-==================================================
+================================================
 
-pytest-asyncio can run asynchronous tests with custom event loop factories by defining a ``pytest_asyncio_loop_factories`` hook in ``conftest.py``. The hook returns the factories to use for the current test item:
+pytest-asyncio can run asynchronous tests with custom event loop factories by implementing ``pytest_asyncio_loop_factories`` in ``conftest.py``. The hook returns a mapping from factory names to loop factory callables:
 
 .. code-block:: python
 
@@ -16,31 +16,31 @@ pytest-asyncio can run asynchronous tests with custom event loop factories by de
 
 
    def pytest_asyncio_loop_factories(config, item):
-       return [CustomEventLoop]
+       return {
+           "stdlib": asyncio.new_event_loop,
+           "custom": CustomEventLoop,
+       }
 
-When multiple factories are returned, each asynchronous test is run once per factory. Synchronous tests are not parametrized. The configured loop scope still determines how long each event loop instance is kept alive.
+By default, each asynchronous test is run once per configured factory. Synchronous tests are not parametrized. The configured loop scope still determines how long each event loop instance is kept alive.
 
-Factories should be callables without required parameters and should return an ``asyncio.AbstractEventLoop`` instance. The hook must return a non-empty sequence for every asyncio test.
+Factories should be callables without required parameters and should return an ``asyncio.AbstractEventLoop`` instance. The effective hook result must be a non-empty mapping of non-empty string names to callables.
 
-When multiple ``pytest_asyncio_loop_factories`` implementations are present, pytest-asyncio uses the first non -``None`` result in pytest's normal hook dispatch order.
-
-To select different factories for specific tests, you can inspect ``item``:
+To run a test with only a subset of configured factories, use the ``loop_factories`` argument of ``pytest.mark.asyncio``:
 
 .. code-block:: python
 
-   import asyncio
-
-   import uvloop
+   import pytest
 
 
-   def pytest_asyncio_loop_factories(config, item):
-       if item.get_closest_marker("uvloop"):
-           return [uvloop.new_event_loop]
-       else:
-           return [asyncio.new_event_loop]
+   @pytest.mark.asyncio(loop_factories=["custom"])
+   async def test_only_with_custom_event_loop():
+       pass
 
-Factory selection can vary per test item, regardless of loop scope. In other words, with ``module``/``package``/``session`` loop scopes you can still choose different factories for different tests by inspecting ``item``.
+
+If ``loop_factories`` contains unknown names, pytest-asyncio raises a ``pytest.UsageError`` during collection.
+
+When multiple ``pytest_asyncio_loop_factories`` implementations are present, pytest-asyncio uses the first non-``None`` result in pytest's hook dispatch order.
 
 .. note::
 
-   When the hook is defined, async tests are parametrized, so factory names are appended to test IDs. For example, a test ``test_example`` with factory ``CustomEventLoop`` will appear as ``test_example[CustomEventLoop]`` in the test output.
+   When the hook is defined, async tests are parametrized via ``pytest.metafunc.parametrize``, and mapping keys are used as test IDs. For example, a test ``test_example`` with an event loop factory key ``foo`` will appear as ``test_example[foo]`` in test output.
