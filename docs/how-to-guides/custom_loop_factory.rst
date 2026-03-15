@@ -21,7 +21,7 @@ pytest-asyncio can run asynchronous tests with custom event loop factories by im
            "custom": CustomEventLoop,
        }
 
-By default, each asynchronous test is run once per configured factory. Synchronous tests are not parametrized. The configured loop scope still determines how long each event loop instance is kept alive.
+By default, each pytest-asyncio test is run once per configured factory. Tests managed by other async plugins are unaffected. Synchronous tests are not parametrized. The configured loop scope still determines how long each event loop instance is kept alive.
 
 Factories should be callables without required parameters and should return an ``asyncio.AbstractEventLoop`` instance. The effective hook result must be a non-empty mapping of non-empty string names to callables.
 
