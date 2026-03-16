@@ -611,6 +611,19 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
     hook_result.force_result(updated_node_collection)
 
 
+@pytest.hookimpl(trylast=True)
+def pytest_collection_modifyitems(items: list[Item]) -> None:
+    for i, item in enumerate(items):
+        if (
+            isinstance(item, Function)
+            and not isinstance(item, PytestAsyncioFunction)
+            and item.get_closest_marker("asyncio")
+        ):
+            specialized_item_class = PytestAsyncioFunction.item_subclass_for(item)
+            if specialized_item_class:
+                items[i] = specialized_item_class._from_function(item)
+
+
 @contextlib.contextmanager
 def _temporary_event_loop_policy(policy: AbstractEventLoopPolicy) -> Iterator[None]:
     old_loop_policy = _get_event_loop_policy()
