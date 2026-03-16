@@ -17,7 +17,7 @@ hypothesis==6.151.9
 iniconfig==2.3.0
 id==1.6.1
 idna==3.11
-imagesize==1.4.1
+imagesize==2.0.0
 importlib_metadata==8.7.1
 iniconfig==2.3.0
 jaraco.classes==3.4.0
