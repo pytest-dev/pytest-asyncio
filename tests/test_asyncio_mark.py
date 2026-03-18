@@ -186,3 +186,33 @@ def test_asyncio_marker_uses_marker_loop_scope_even_if_config_is_set(
 
     result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
+
+
+def test_asyncio_mark_added_via_collection_modifyitems_is_recognized(
+    pytester: Pytester,
+):
+    """Regression test for #810.
+
+    When a user plugin adds the asyncio marker via pytest_collection_modifyitems,
+    pytest-asyncio should recognize the async function and run it correctly instead
+    of raising "The test is not an async function".
+    """
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makeconftest(
+        dedent("""\
+        import inspect
+
+        def pytest_collection_modifyitems(items):
+            for item in items:
+                if inspect.iscoroutinefunction(getattr(item, "obj", None)):
+                    item.add_marker("asyncio")
+        """)
+    )
+    pytester.makepyfile(
+        dedent("""\
+        async def test_foo():
+            pass
+        """)
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)
