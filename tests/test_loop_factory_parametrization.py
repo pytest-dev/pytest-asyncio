@@ -571,3 +571,110 @@ def test_function_loop_scope_allows_per_test_factories_with_session_default(
         """))
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=2)
+
+
+def test_sync_fixture_sees_same_loop_as_async_test_under_custom_factory(
+    pytester: Pytester,
+) -> None:
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makeconftest(dedent("""\
+        import asyncio
+
+        class CustomEventLoop(asyncio.SelectorEventLoop):
+            pass
+
+        def pytest_asyncio_loop_factories(config, item):
+            return {"custom": CustomEventLoop}
+        """))
+    pytester.makepyfile(dedent("""\
+        import asyncio
+        import pytest
+        import pytest_asyncio
+
+        pytest_plugins = "pytest_asyncio"
+
+        @pytest_asyncio.fixture(autouse=True)
+        def enable_debug_on_event_loop():
+            asyncio.get_event_loop().set_debug(True)
+
+        @pytest.mark.asyncio
+        async def test_debug_mode_visible():
+            assert asyncio.get_running_loop().get_debug()
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)
+
+
+@pytest.mark.parametrize("loop_scope", ("module", "package", "session"))
+def test_async_generator_fixture_teardown_runs_under_custom_factory(
+    pytester: Pytester,
+    loop_scope: str,
+) -> None:
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makeconftest(dedent(f"""\
+        import asyncio
+        import pytest_asyncio
+
+        class CustomEventLoop(asyncio.SelectorEventLoop):
+            pass
+
+        def pytest_asyncio_loop_factories(config, item):
+            return {{"custom": CustomEventLoop}}
+
+        @pytest_asyncio.fixture(
+            autouse=True, scope="{loop_scope}", loop_scope="{loop_scope}"
+        )
+        async def fixture_with_teardown():
+            yield
+            print("TEARDOWN_EXECUTED")
+        """))
+    pytester.makepyfile(dedent(f"""\
+        import pytest
+
+        pytest_plugins = "pytest_asyncio"
+
+        @pytest.mark.asyncio(loop_scope="{loop_scope}")
+        async def test_passes():
+            assert True
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict", "-s")
+    result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines(["*TEARDOWN_EXECUTED*"])
+
+
+@pytest.mark.parametrize("loop_scope", ("module", "package", "session"))
+def test_async_fixture_recreated_per_loop_factory_variant(
+    pytester: Pytester,
+    loop_scope: str,
+) -> None:
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makeconftest(dedent(f"""\
+        import asyncio
+        import pytest_asyncio
+
+        class CustomLoopA(asyncio.SelectorEventLoop):
+            pass
+
+        class CustomLoopB(asyncio.SelectorEventLoop):
+            pass
+
+        def pytest_asyncio_loop_factories(config, item):
+            return {{"loop_a": CustomLoopA, "loop_b": CustomLoopB}}
+
+        @pytest_asyncio.fixture(scope="{loop_scope}", loop_scope="{loop_scope}")
+        async def fixture_loop_type():
+            return type(asyncio.get_running_loop()).__name__
+        """))
+    pytester.makepyfile(dedent(f"""\
+        import asyncio
+        import pytest
+
+        pytest_plugins = "pytest_asyncio"
+
+        @pytest.mark.asyncio(loop_scope="{loop_scope}")
+        async def test_fixture_matches_running_loop(fixture_loop_type):
+            running_loop_type = type(asyncio.get_running_loop()).__name__
+            assert fixture_loop_type == running_loop_type
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict", "-v")
+    result.assert_outcomes(passed=2)

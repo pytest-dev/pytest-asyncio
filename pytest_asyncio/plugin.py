@@ -498,7 +498,15 @@ class PytestAsyncioFunction(Function):
 
     def setup(self) -> None:
         runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
-        if runner_fixture_id not in self.fixturenames:
+        if runner_fixture_id in self.fixturenames:
+            return super().setup()
+        # The runner must be resolved before async fixtures when loop
+        # factories are configured. Otherwise, the async fixtures see a
+        # stale loop from the previous factory.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            self.fixturenames.insert(0, runner_fixture_id)
+        else:
             self.fixturenames.append(runner_fixture_id)
         return super().setup()
 
@@ -846,6 +854,11 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
     )
     runner_fixture_id = f"_{loop_scope}_scoped_runner"
     runner = request.getfixturevalue(runner_fixture_id)
+    # Prevent the runner closing before the fixture's async teardown.
+    runner_fixturedef = request._get_active_fixturedef(runner_fixture_id)
+    runner_fixturedef.addfinalizer(
+        functools.partial(fixturedef.finish, request=request)
+    )
     synchronizer = _fixture_synchronizer(fixturedef, runner, request)
     _make_asyncio_fixture_function(synchronizer, loop_scope)
     with MonkeyPatch.context() as c:
@@ -940,6 +953,8 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
                 debug=debug_mode,
                 loop_factory=_asyncio_loop_factory,
             ).__enter__()
+            if _asyncio_loop_factory is not None:
+                _set_event_loop(runner.get_loop())
             try:
                 yield runner
             except Exception as e:
