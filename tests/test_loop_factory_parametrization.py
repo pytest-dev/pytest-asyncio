@@ -605,6 +605,119 @@ def test_sync_fixture_sees_same_loop_as_async_test_under_custom_factory(
     result.assert_outcomes(passed=1)
 
 
+@pytest.mark.parametrize(
+    ("fixture_scope", "wider_scope"),
+    [
+        ("function", "module"),
+        ("function", "package"),
+        ("function", "session"),
+        ("module", "session"),
+        ("package", "session"),
+    ],
+)
+def test_sync_fixture_sees_its_own_loop_when_wider_scoped_loop_active(
+    pytester: Pytester,
+    fixture_scope: str,
+    wider_scope: str,
+) -> None:
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makeconftest(dedent(f"""\
+        import asyncio
+        import pytest_asyncio
+
+        class CustomEventLoop(asyncio.SelectorEventLoop):
+            pass
+
+        def pytest_asyncio_loop_factories(config, item):
+            return {{"custom": CustomEventLoop}}
+
+        @pytest_asyncio.fixture(
+            autouse=True,
+            scope="{wider_scope}",
+            loop_scope="{wider_scope}",
+        )
+        async def wider_scoped_fixture():
+            yield
+
+        @pytest_asyncio.fixture(
+            autouse=True,
+            scope="{fixture_scope}",
+            loop_scope="{fixture_scope}",
+        )
+        def sync_fixture_captures_loop():
+            return id(asyncio.get_event_loop())
+        """))
+    pytester.makepyfile(dedent(f"""\
+        import asyncio
+        import pytest
+
+        pytest_plugins = "pytest_asyncio"
+
+        @pytest.mark.asyncio(loop_scope="{fixture_scope}")
+        async def test_sync_fixture_and_test_see_same_loop(sync_fixture_captures_loop):
+            assert sync_fixture_captures_loop == id(asyncio.get_running_loop())
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)
+
+
+@pytest.mark.parametrize(
+    ("fixture_scope", "wider_scope"),
+    [
+        ("function", "module"),
+        ("function", "session"),
+        ("module", "session"),
+    ],
+)
+def test_sync_generator_fixture_teardown_sees_own_loop(
+    pytester: Pytester,
+    fixture_scope: str,
+    wider_scope: str,
+) -> None:
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makeconftest(dedent(f"""\
+        import asyncio
+        import pytest_asyncio
+
+        class CustomEventLoop(asyncio.SelectorEventLoop):
+            pass
+
+        def pytest_asyncio_loop_factories(config, item):
+            return {{"custom": CustomEventLoop}}
+
+        @pytest_asyncio.fixture(
+            autouse=True,
+            scope="{wider_scope}",
+            loop_scope="{wider_scope}",
+        )
+        async def wider_scoped_fixture():
+            yield
+
+        @pytest_asyncio.fixture(
+            autouse=True,
+            scope="{fixture_scope}",
+            loop_scope="{fixture_scope}",
+        )
+        def sync_generator_fixture():
+            loop_at_setup = id(asyncio.get_event_loop())
+            yield loop_at_setup
+            loop_at_teardown = id(asyncio.get_event_loop())
+            assert loop_at_setup == loop_at_teardown
+        """))
+    pytester.makepyfile(dedent(f"""\
+        import asyncio
+        import pytest
+
+        pytest_plugins = "pytest_asyncio"
+
+        @pytest.mark.asyncio(loop_scope="{fixture_scope}")
+        async def test_generator_fixture_sees_correct_loop(sync_generator_fixture):
+            assert sync_generator_fixture == id(asyncio.get_running_loop())
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)
+
+
 @pytest.mark.parametrize("loop_scope", ("module", "package", "session"))
 def test_async_generator_fixture_teardown_runs_under_custom_factory(
     pytester: Pytester,

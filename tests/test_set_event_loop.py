@@ -329,3 +329,60 @@ def test_shared_loop_with_multiple_fixtures_preservation(
             """))
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=5)
+
+
+@pytest.mark.parametrize("test_loop_scope", ("module", "package", "session"))
+@pytest.mark.parametrize(
+    "loop_breaking_action",
+    [
+        "asyncio.set_event_loop(None)",
+        "asyncio.run(asyncio.sleep(0))",
+        pytest.param(
+            "with asyncio.Runner(): pass",
+            marks=pytest.mark.skipif(
+                sys.version_info < (3, 11),
+                reason="asyncio.Runner requires Python 3.11+",
+            ),
+        ),
+    ],
+)
+def test_sync_fixture_sees_correct_loop_after_loop_broken_with_factory(
+    pytester: Pytester,
+    test_loop_scope: str,
+    loop_breaking_action: str,
+):
+    pytester.makeini(dedent(f"""\
+            [pytest]
+            asyncio_default_test_loop_scope = {test_loop_scope}
+            asyncio_default_fixture_loop_scope = function
+            """))
+    pytester.makepyfile(dedent(f"""\
+            import asyncio
+            import pytest
+            import pytest_asyncio
+
+            pytest_plugins = "pytest_asyncio"
+
+            class CustomEventLoop(asyncio.SelectorEventLoop):
+                pass
+
+            def pytest_asyncio_loop_factories(config, item):
+                return {{"custom": CustomEventLoop}}
+
+            @pytest.mark.asyncio
+            async def test_before():
+                pass
+
+            def test_break_event_loop():
+                {loop_breaking_action}
+
+            @pytest_asyncio.fixture(loop_scope="{test_loop_scope}")
+            def sync_fixture_loop_id():
+                return id(asyncio.get_event_loop())
+
+            @pytest.mark.asyncio
+            async def test_sync_fixture_sees_correct_loop(sync_fixture_loop_id):
+                assert sync_fixture_loop_id == id(asyncio.get_running_loop())
+            """))
+    result = pytester.runpytest_subprocess()
+    result.assert_outcomes(passed=3)
