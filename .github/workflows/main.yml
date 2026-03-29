@@ -193,16 +193,32 @@ jobs:
         path: dist
     - name: Create GitHub Release
       if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
-      uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd  # v1.21.0
-      with:
-        name: pytest-asyncio ${{ needs.build.outputs.version }}
-        artifacts: dist/*
-        bodyFile: release-notes.md
-        prerelease: ${{ needs.build.outputs.prerelease }}
-        token: ${{ secrets.GITHUB_TOKEN }}
-        allowUpdates: true
-        draft: true
-        skipIfReleaseExists: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VERSION: ${{ needs.build.outputs.version }}
+        PRERELEASE: ${{ needs.build.outputs.prerelease }}
+      run: |
+        TAG_NAME="${GITHUB_REF#refs/tags/}"
+
+        IS_DRAFT=$(gh release view "${TAG_NAME}" --json isDraft --jq '.isDraft' 2>/dev/null || echo "")
+        if [ -n "${IS_DRAFT}" ]; then
+          if [ "${IS_DRAFT}" = "false" ]; then
+            exit 0
+          fi
+          gh release edit "${TAG_NAME}" \
+            --title "pytest-asyncio ${VERSION}" \
+            --notes-file release-notes.md \
+            --draft
+        
+          gh release upload "${TAG_NAME}" dist/* --clobber
+        else
+          gh release create "${TAG_NAME}" \
+            --title "pytest-asyncio ${VERSION}" \
+            --notes-file release-notes.md \
+            --draft \
+            $( [ "${PRERELEASE}" = "true" ] && echo "--prerelease" ) \
+            dist/*
+        fi
 
   publish-test-pypi:
     name: Publish packages to test.pypi.org
