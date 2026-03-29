@@ -1,1 +1,1 @@
-Fixed ``pytest_asyncio_loop_factories`` not installing the custom event loop as the current loop, and async fixture teardown/cache invalidation not being tied to the runner lifecycle.
+Fixed ``pytest_asyncio_loop_factories`` not installing the custom event loop as the current loop, and async fixture teardown/cache invalidation not being tied to the runner lifecycle, and sync ``@pytest_asyncio.fixture`` seeing the wrong event loop when multiple loop scopes are active.

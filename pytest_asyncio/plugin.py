@@ -328,8 +328,50 @@ def _fixture_synchronizer(
         return _wrap_asyncgen_fixture(fixture_function, runner, request)  # type: ignore[arg-type]
     elif inspect.iscoroutinefunction(fixturedef.func):
         return _wrap_async_fixture(fixture_function, runner, request)  # type: ignore[arg-type]
+    elif inspect.isgeneratorfunction(fixturedef.func):
+        return _wrap_syncgen_fixture(fixture_function, runner)  # type: ignore[arg-type]
     else:
-        return fixturedef.func
+        return _wrap_sync_fixture(fixture_function, runner)  # type: ignore[arg-type]
+
+
+SyncGenFixtureParams = ParamSpec("SyncGenFixtureParams")
+SyncGenFixtureYieldType = TypeVar("SyncGenFixtureYieldType")
+
+
+def _wrap_syncgen_fixture(
+    fixture_function: Callable[
+        SyncGenFixtureParams, Generator[SyncGenFixtureYieldType]
+    ],
+    runner: Runner,
+) -> Callable[SyncGenFixtureParams, Generator[SyncGenFixtureYieldType]]:
+    @functools.wraps(fixture_function)
+    def _syncgen_fixture_wrapper(
+        *args: SyncGenFixtureParams.args,
+        **kwargs: SyncGenFixtureParams.kwargs,
+    ) -> Generator[SyncGenFixtureYieldType]:
+        with _temporary_event_loop(runner.get_loop()):
+            yield from fixture_function(*args, **kwargs)
+
+    return _syncgen_fixture_wrapper
+
+
+SyncFixtureParams = ParamSpec("SyncFixtureParams")
+SyncFixtureReturnType = TypeVar("SyncFixtureReturnType")
+
+
+def _wrap_sync_fixture(
+    fixture_function: Callable[SyncFixtureParams, SyncFixtureReturnType],
+    runner: Runner,
+) -> Callable[SyncFixtureParams, SyncFixtureReturnType]:
+    @functools.wraps(fixture_function)
+    def _sync_fixture_wrapper(
+        *args: SyncFixtureParams.args,
+        **kwargs: SyncFixtureParams.kwargs,
+    ) -> SyncFixtureReturnType:
+        with _temporary_event_loop(runner.get_loop()):
+            return fixture_function(*args, **kwargs)
+
+    return _sync_fixture_wrapper
 
 
 AsyncGenFixtureParams = ParamSpec("AsyncGenFixtureParams")
@@ -727,6 +769,22 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
         indirect=True,
         scope=loop_scope,
     )
+
+
+@contextlib.contextmanager
+def _temporary_event_loop(loop: AbstractEventLoop) -> Iterator[None]:
+    try:
+        old_loop = _get_event_loop_no_warn()
+    except RuntimeError:
+        old_loop = None
+    if old_loop is loop:
+        yield
+        return
+    _set_event_loop(loop)
+    try:
+        yield
+    finally:
+        _set_event_loop(old_loop)
 
 
 @contextlib.contextmanager
