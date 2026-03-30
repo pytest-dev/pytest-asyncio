@@ -18,7 +18,7 @@ iniconfig==2.3.0
 id==1.6.1
 idna==3.11
 imagesize==2.0.0
-importlib_metadata==8.7.1
+importlib_metadata==9.0.0
 iniconfig==2.3.0
 jaraco.classes==3.4.0
 jaraco.context==6.1.1
