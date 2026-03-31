@@ -533,6 +533,42 @@ def test_hook_factories_work_in_auto_mode(pytester: Pytester) -> None:
     result.assert_outcomes(passed=1)
 
 
+def test_no_event_loop_leak_with_custom_factory(pytester: Pytester) -> None:
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makeconftest(dedent("""\
+        import asyncio
+        import pytest_asyncio
+
+        class CustomEventLoop(asyncio.SelectorEventLoop):
+            pass
+
+        def pytest_asyncio_loop_factories(config, item):
+            return {"custom": CustomEventLoop}
+
+        @pytest_asyncio.fixture(autouse=True, scope="session", loop_scope="session")
+        async def session_fixture():
+            yield
+
+        @pytest_asyncio.fixture(autouse=True)
+        def sync_fixture():
+            asyncio.get_event_loop()
+        """))
+    pytester.makepyfile(dedent("""\
+        import pytest
+
+        pytest_plugins = "pytest_asyncio"
+
+        @pytest.mark.asyncio
+        async def test_passes():
+            assert True
+        """))
+    result = pytester.runpytest_subprocess(
+        "--asyncio-mode=auto", "-W", "error::ResourceWarning"
+    )
+    result.assert_outcomes(passed=1)
+    result.stderr.no_fnmatch_line("*unclosed event loop*")
+
+
 def test_function_loop_scope_allows_per_test_factories_with_session_default(
     pytester: Pytester,
 ) -> None:
