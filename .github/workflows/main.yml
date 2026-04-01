@@ -209,7 +209,7 @@ jobs:
             --title "pytest-asyncio ${VERSION}" \
             --notes-file release-notes.md \
             --draft
-        
+
           gh release upload "${TAG_NAME}" dist/* --clobber
         else
           gh release create "${TAG_NAME}" \
