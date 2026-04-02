@@ -546,16 +546,14 @@ class PytestAsyncioFunction(Function):
 
     def setup(self) -> None:
         runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
-        if runner_fixture_id in self.fixturenames:
-            return super().setup()
-        # The runner must be resolved before async fixtures when loop
-        # factories are configured. Otherwise, the async fixtures see a
-        # stale loop from the previous factory.
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
         hook_caller = self.config.hook.pytest_asyncio_loop_factories
         if hook_caller.get_hookimpls():
-            self.fixturenames.insert(0, runner_fixture_id)
-        else:
-            self.fixturenames.append(runner_fixture_id)
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
         return super().setup()
 
     def runtest(self) -> None:
