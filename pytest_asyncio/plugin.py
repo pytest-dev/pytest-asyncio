@@ -12,7 +12,7 @@ import socket
 import sys
 import traceback
 import warnings
-from asyncio import AbstractEventLoop, AbstractEventLoopPolicy
+from asyncio import AbstractEventLoop
 from collections.abc import (
     AsyncIterator,
     Awaitable,
@@ -25,6 +25,7 @@ from collections.abc import (
 )
 from types import AsyncGeneratorType, CoroutineType
 from typing import (
+    TYPE_CHECKING,
     Any,
     Literal,
     ParamSpec,
@@ -60,6 +61,11 @@ if sys.version_info >= (3, 13):
     from typing import TypeIs
 else:
     from typing_extensions import TypeIs
+
+if TYPE_CHECKING:
+    # AbstractEventLoopPolicy is deprecated and scheduled for removal in Python 3.16
+    # Import it for type checking only to avoid raising a DeprecationWarning.
+    from asyncio import AbstractEventLoopPolicy
 
 _ScopeName = Literal["session", "package", "module", "class", "function"]
 _R = TypeVar("_R", bound=Awaitable[Any] | AsyncIterator[Any])
