@@ -6,6 +6,35 @@ import pytest
 from pytest import Pytester
 
 
+@pytest.mark.skipif(
+    not hasattr(pytest, "HIDDEN_PARAM"),
+    reason="pytest.HIDDEN_PARAM requires pytest 9.0+",
+)
+def test_single_factory_does_not_add_suffix_to_test_name(
+    pytester: Pytester,
+) -> None:
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makeconftest(dedent("""\
+        import asyncio
+
+        def pytest_asyncio_loop_factories(config, item):
+            return {"asyncio": asyncio.new_event_loop}
+        """))
+    pytester.makepyfile(dedent("""\
+        import pytest
+
+        pytest_plugins = "pytest_asyncio"
+
+        @pytest.mark.asyncio
+        async def test_example():
+            assert True
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict", "--collect-only", "-q")
+    result.stdout.fnmatch_lines(
+        ["test_single_factory_does_not_add_suffix_to_test_name.py::test_example"]
+    )
+
+
 def test_named_hook_factories_apply_to_async_tests(pytester: Pytester) -> None:
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makeconftest(dedent("""\
