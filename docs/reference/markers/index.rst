@@ -9,25 +9,32 @@ Markers
 A coroutine or async generator with this marker is treated as a test function by pytest.
 The marked function is executed as an asyncio task in the event loop provided by pytest-asyncio.
 
-.. include:: function_scoped_loop_strict_mode_example.py
-    :code: python
+Multiple async tests in a single class or module can be marked in different ways:
 
-Multiple async tests in a single class or module can be marked using |pytestmark|_.
+.. tabs::
 
-.. include:: function_scoped_loop_pytestmark_strict_mode_example.py
-    :code: python
+   .. tab:: decorator
+
+      .. include:: function_scoped_loop_strict_mode_example.py
+         :code: python
+
+   .. tab:: pytestmark
+
+      .. include:: function_scoped_loop_pytestmark_strict_mode_example.py
+         :code: python
 
 The ``pytest.mark.asyncio`` marker can be omitted entirely in |auto mode|_ where the *asyncio* marker is added automatically to *async* test functions.
 
-By default, each test runs in it's own asyncio event loop.
+By default, each test runs in its own asyncio event loop.
 Multiple tests can share the same event loop by providing a *loop_scope* keyword argument to the *asyncio* mark.
-The supported scopes are *function,* *class,* and *module,* *package,* and *session*.
-The following code example provides a shared event loop for all tests in `TestClassScopedLoop`:
+The supported scopes are *function*, *class*, *module*, *package*, and *session*.
+
+The following code example provides a shared event loop for all tests in ``TestClassScopedLoop``:
 
 .. include:: class_scoped_loop_strict_mode_example.py
     :code: python
 
-Similar to class-scoped event loops, a module-scoped loop is provided when setting mark's scope to *module:*
+Similar to class-scoped event loops, a module-scoped loop is provided when setting mark's scope to *module*:
 
 .. include:: module_scoped_loop_strict_mode_example.py
     :code: python
