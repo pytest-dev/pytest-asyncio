@@ -47,6 +47,7 @@ dependencies = [
 optional-dependencies.docs = [
   "sphinx>=5.3",
   "sphinx-rtd-theme>=1",
+  "sphinx-tabs>=3.5",
 ]
 optional-dependencies.testing = [
   "coverage>=6.2",
