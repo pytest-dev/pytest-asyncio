@@ -3,22 +3,28 @@ How to change the default event loop scope of all tests
 =======================================================
 The :ref:`configuration/asyncio_default_test_loop_scope` configuration option sets the default event loop scope for asynchronous tests. The following code snippets configure all tests to run in a session-scoped loop by default:
 
-.. code-block:: ini
-    :caption: pytest.ini
+.. tabs::
 
-    [pytest]
-    asyncio_default_test_loop_scope = session
+   .. tab:: pytest.ini
 
-.. code-block:: toml
-    :caption: pyproject.toml
+      .. code-block:: ini
 
-    [tool.pytest.ini_options]
-    asyncio_default_test_loop_scope = "session"
+         [pytest]
+         asyncio_default_test_loop_scope = session
 
-.. code-block:: ini
-    :caption: setup.cfg
+   .. tab:: pyproject.toml
 
-    [tool:pytest]
-    asyncio_default_test_loop_scope = session
+      .. code-block:: toml
 
-Please refer to :ref:`configuration/asyncio_default_test_loop_scope` for other valid scopes.
+         [tool.pytest.ini_options]
+         asyncio_default_test_loop_scope = "session"
+
+   .. tab:: setup.cfg
+
+      .. code-block:: ini
+
+         [tool:pytest]
+         asyncio_default_test_loop_scope = session
+
+Please refer to :ref:`configuration/asyncio_default_test_loop_scope`
+for other valid scopes.
