@@ -33,7 +33,7 @@ more-itertools==10.8.0
 nh3==0.3.3
 packaging==26.0
 pluggy==1.6.0
-Pygments==2.19.2
+Pygments==2.20.0
 pycparser==3.0
 pydantic==2.12.5
 pydantic-core==2.41.5
