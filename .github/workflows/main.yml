@@ -195,25 +195,15 @@ jobs:
       if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        VERSION: ${{ needs.build.outputs.version }}
         PRERELEASE: ${{ needs.build.outputs.prerelease }}
       run: |
         TAG_NAME="${GITHUB_REF#refs/tags/}"
 
-        IS_DRAFT=$(gh release view "${TAG_NAME}" --json isDraft --jq '.isDraft' 2>/dev/null || echo "")
-        if [ -n "${IS_DRAFT}" ]; then
-          if [ "${IS_DRAFT}" = "false" ]; then
-            exit 0
-          fi
-          gh release edit "${TAG_NAME}" \
-            --title "pytest-asyncio ${VERSION}" \
-            --notes-file release-notes.md \
-            --draft
-
-          gh release upload "${TAG_NAME}" dist/* --clobber
-        else
+        gh release view "${TAG_NAME}" >/dev/null
+        RELEASE_EXISTS=$?
+        if [ $RELEASE_EXISTS -ne 0 ]; then
           gh release create "${TAG_NAME}" \
-            --title "pytest-asyncio ${VERSION}" \
+            --title "pytest-asyncio ${TAG_NAME}" \
             --notes-file release-notes.md \
             --draft \
             $( [ "${PRERELEASE}" = "true" ] && echo "--prerelease" ) \
