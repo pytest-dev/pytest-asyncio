@@ -45,7 +45,7 @@ rfc3986==2.0.0
 rich==14.3.3
 SecretStorage==3.5.0
 setuptools==82.0.1
-setuptools-scm==9.2.2
+setuptools-scm==10.0.5
 snowballstemmer==3.0.1
 sortedcontainers==2.4.0
 Sphinx==8.1.3
