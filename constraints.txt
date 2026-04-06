@@ -13,7 +13,7 @@ coverage==7.13.5
 cryptography==46.0.5
 docutils==0.21.2
 exceptiongroup==1.3.1
-hypothesis==6.151.9
+hypothesis==6.151.10
 iniconfig==2.3.0
 id==1.6.1
 idna==3.11
