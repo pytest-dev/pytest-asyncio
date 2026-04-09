@@ -41,7 +41,7 @@ dynamic = [
 
 dependencies = [
   "backports-asyncio-runner>=1.1,<2; python_version<'3.11'",
-  "pytest>=8.2,<10",
+  "pytest>=8.4,<10",
   "typing-extensions>=4.12; python_version<'3.13'",
 ]
 optional-dependencies.docs = [
