@@ -8,7 +8,7 @@ from pytest import Pytester
 
 @pytest.mark.skipif(
     not hasattr(pytest, "HIDDEN_PARAM"),
-    reason="pytest.HIDDEN_PARAM requires pytest 9.0+",
+    reason="pytest.HIDDEN_PARAM requires pytest 8.4+",
 )
 def test_single_factory_does_not_add_suffix_to_test_name(
     pytester: Pytester,
