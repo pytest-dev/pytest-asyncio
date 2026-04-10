@@ -400,7 +400,7 @@ def test_asyncio_marker_loop_factories_select_subset(pytester: Pytester) -> None
     result.assert_outcomes(passed=1)
 
 
-def test_asyncio_marker_loop_factories_unknown_name_errors(pytester: Pytester) -> None:
+def test_unavailable_factory_skips_with_reason(pytester: Pytester) -> None:
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makeconftest(dedent("""\
         import asyncio
@@ -414,16 +414,77 @@ def test_asyncio_marker_loop_factories_unknown_name_errors(pytester: Pytester) -
         pytest_plugins = "pytest_asyncio"
 
         @pytest.mark.asyncio(loop_factories=["missing"])
-        async def test_errors():
+        async def test_skipped():
             assert True
         """))
-    result = pytester.runpytest("--asyncio-mode=strict")
-    result.assert_outcomes(errors=1)
-    result.stdout.fnmatch_lines(
-        [
-            "*Unknown factory name(s)*Available names:*",
-        ]
-    )
+    result = pytester.runpytest("--asyncio-mode=strict", "-rs")
+    result.assert_outcomes(skipped=1)
+    result.stdout.fnmatch_lines(["*SKIPPED*Loop factory 'missing' is not available*"])
+
+
+def test_partial_intersection_runs_available_and_skips_missing(
+    pytester: Pytester,
+) -> None:
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makeconftest(dedent("""\
+        import asyncio
+
+        class CustomEventLoop(asyncio.SelectorEventLoop):
+            pass
+
+        def pytest_asyncio_loop_factories(config, item):
+            return {
+                "available": CustomEventLoop,
+                "other": asyncio.new_event_loop,
+            }
+        """))
+    pytester.makepyfile(dedent("""\
+        import asyncio
+        import pytest
+
+        pytest_plugins = "pytest_asyncio"
+
+        @pytest.mark.asyncio(loop_factories=["available", "missing"])
+        async def test_runs_with_available():
+            assert type(asyncio.get_running_loop()).__name__ == "CustomEventLoop"
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict", "-rs")
+    result.assert_outcomes(passed=1, skipped=1)
+    result.stdout.fnmatch_lines(["*SKIPPED*Loop factory 'missing' is not available*"])
+
+
+def test_platform_conditional_factories(pytester: Pytester) -> None:
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makeconftest(dedent("""\
+        import asyncio
+        import sys
+
+        def pytest_asyncio_loop_factories(config, item):
+            factories = {"default": asyncio.new_event_loop}
+            if sys.platform == "a_platform_that_does_not_exist":
+                factories["exotic"] = asyncio.new_event_loop
+            return factories
+        """))
+    pytester.makepyfile(dedent("""\
+        import pytest
+
+        pytest_plugins = "pytest_asyncio"
+
+        @pytest.mark.asyncio(loop_factories=["exotic"])
+        async def test_exotic_only():
+            assert True
+
+        @pytest.mark.asyncio(loop_factories=["default"])
+        async def test_default_only():
+            assert True
+
+        @pytest.mark.asyncio(loop_factories=["default", "exotic"])
+        async def test_both():
+            assert True
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict", "-rs")
+    result.assert_outcomes(passed=2, skipped=2)
+    result.stdout.fnmatch_lines(["*SKIPPED*Loop factory 'exotic' is not available*"])
 
 
 def test_asyncio_marker_loop_factories_without_hook_errors(
