@@ -17,6 +17,7 @@ from collections.abc import (
     AsyncIterator,
     Awaitable,
     Callable,
+    Collection,
     Generator,
     Iterable,
     Iterator,
@@ -740,32 +741,41 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
             )
         return
 
+    factory_params: Collection[object]
+    factory_ids: Collection[str]
     if marker_selected_factory_names is None:
-        effective_factories = hook_factories
+        factory_params = hook_factories.values()
+        factory_ids = hook_factories.keys()
     else:
-        missing_factory_names = tuple(
-            name for name in marker_selected_factory_names if name not in hook_factories
-        )
-        if missing_factory_names:
-            msg = (
-                f"Unknown factory name(s) {missing_factory_names}."
-                f" Available names: {', '.join(hook_factories)}."
+        # Iterate in marker order to preserve explicit user selection
+        # order.
+        factory_ids = marker_selected_factory_names
+        factory_params = [
+            (
+                hook_factories[name]
+                if name in hook_factories
+                else pytest.param(
+                    None,
+                    marks=pytest.mark.skip(
+                        reason=(
+                            f"Loop factory {name!r} is not available."
+                            f" Available factories:"
+                            f" {', '.join(hook_factories)}."
+                        ),
+                    ),
+                )
             )
-            raise pytest.UsageError(msg)
-        # Build the mapping in marker order to preserve explicit user
-        # selection order in parametrization.
-        effective_factories = {
-            name: hook_factories[name] for name in marker_selected_factory_names
-        }
+            for name in marker_selected_factory_names
+        ]
     metafunc.fixturenames.append(_asyncio_loop_factory.__name__)
     default_loop_scope = _get_default_test_loop_scope(metafunc.config)
     loop_scope = marker_loop_scope or default_loop_scope
     # pytest.HIDDEN_PARAM was added in pytest 8.4
-    hide_id = len(effective_factories) == 1 and hasattr(pytest, "HIDDEN_PARAM")
+    hide_id = len(factory_ids) == 1 and hasattr(pytest, "HIDDEN_PARAM")
     metafunc.parametrize(
         _asyncio_loop_factory.__name__,
-        effective_factories.values(),
-        ids=(pytest.HIDDEN_PARAM,) if hide_id else effective_factories.keys(),
+        factory_params,
+        ids=(pytest.HIDDEN_PARAM,) if hide_id else factory_ids,
         indirect=True,
         scope=loop_scope,
     )

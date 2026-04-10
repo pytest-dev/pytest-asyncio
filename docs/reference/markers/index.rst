@@ -36,7 +36,7 @@ Subpackages do not share the loop with their parent package.
 
 Tests marked with *session* scope share the same event loop, even if the tests exist in different packages.
 
-The ``pytest.mark.asyncio`` marker also accepts a ``loop_factories`` keyword argument to select a subset of configured event loop factories for a test. If ``loop_factories`` contains unknown names, pytest-asyncio raises a ``pytest.UsageError`` during collection.
+The ``pytest.mark.asyncio`` marker also accepts a ``loop_factories`` keyword argument to select a subset of configured event loop factories for a test. If ``loop_factories`` contains names not available from the hook, those test variants are skipped.
 
 .. |auto mode| replace:: *auto mode*
 .. _auto mode: ../../concepts.html#auto-mode
