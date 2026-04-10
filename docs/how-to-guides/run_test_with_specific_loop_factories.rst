@@ -12,3 +12,5 @@ To run a test with only a subset of configured factories, use the ``loop_factori
    @pytest.mark.asyncio(loop_factories=["custom"])
    async def test_only_with_custom_event_loop():
        pass
+
+If a requested factory name is not available from the hook, the test variant for that factory is skipped.
