@@ -1,0 +1,14 @@
+---
+branch-protection-check-name: Timeline protection
+action-hints:
+  inline-markdown: |
+    This PR is missing news fragments.
+
+    Add a file under `changelog.d/`, like:
+    `123.changed.rst`. You can use the Towncrier CLI to create it. Make sure to match the writing style with the existing change log content.
+
+    If this change isn't user-facing, ask the maintainers to apply the `skip-changelog` label. Please, include a justification.
+enforce-name:
+  suffix: .rst
+labels:
+  skip-changelog: skip-changelog
