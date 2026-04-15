@@ -54,7 +54,7 @@ optional-dependencies.testing = [
   "hypothesis>=5.7.1",
 ]
 urls."Bug Tracker" = "https://github.com/pytest-dev/pytest-asyncio/issues"
-urls.Changelog = "https://pytest-asyncio.readthedocs.io/en/latest/reference/changelog.html"
+urls.Changelog = "https://pytest-asyncio.readthedocs.io/en/stable/reference/changelog.html"
 urls.Documentation = "https://pytest-asyncio.readthedocs.io"
 urls.Homepage = "https://github.com/pytest-dev/pytest-asyncio"
 urls."Source Code" = "https://github.com/pytest-dev/pytest-asyncio"
