@@ -919,6 +919,13 @@ def _synchronize_coroutine(
 
 @pytest.hookimpl(wrapper=True)
 def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
+    if (
+        fixturedef.argname == "event_loop_policy"
+        and fixturedef.func.__module__ != __name__
+    ):
+        warnings.warn(
+            PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+        )
     asyncio_mode = _get_asyncio_mode(request.config)
     if not _is_asyncio_fixture_function(fixturedef.func):
         if asyncio_mode == Mode.STRICT:
@@ -960,6 +967,12 @@ Please use the "loop_scope" argument instead.
 
 _INVALID_LOOP_FACTORIES_KWARG = """\
 mark.asyncio 'loop_factories' must be a non-empty sequence of strings.
+"""
+
+_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING = """\
+Overriding the "event_loop_policy" fixture is deprecated \
+and will be removed in a future version of pytest-asyncio. \
+Use the "pytest_asyncio_loop_factories" hook to customize event loop creation.\
 """
 
 

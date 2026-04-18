@@ -107,7 +107,7 @@ def test_asyncio_mark_respects_the_loop_policy(
         pytest_args.extend(["-W", "default"])
     result = pytester.runpytest(*pytest_args)
     if sys.version_info >= (3, 14):
-        result.assert_outcomes(passed=1, warnings=2)
+        result.assert_outcomes(passed=1, warnings=3)
         result.stdout.fnmatch_lines("*DefaultEventLoopPolicy*")
     else:
         result.assert_outcomes(passed=1)
@@ -148,10 +148,55 @@ def test_asyncio_mark_respects_parametrized_loop_policies(
         pytest_args.extend(["-W", "default"])
     result = pytester.runpytest(*pytest_args)
     if sys.version_info >= (3, 14):
-        result.assert_outcomes(passed=2, warnings=3)
+        result.assert_outcomes(passed=2, warnings=5)
         result.stdout.fnmatch_lines("*DefaultEventLoopPolicy*")
     else:
         result.assert_outcomes(passed=2)
+
+
+def test_event_loop_policy_fixture_override_emits_deprecation_warning(
+    pytester: Pytester,
+):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(
+        dedent("""\
+            import asyncio
+            import pytest
+
+            pytestmark = pytest.mark.asyncio
+
+            @pytest.fixture
+            def event_loop_policy():
+                return asyncio.DefaultEventLoopPolicy()
+
+            async def test_anything():
+                pass
+            """),
+    )
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
+    result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines(
+        "*PytestDeprecationWarning*event_loop_policy*deprecated*"
+    )
+
+
+def test_default_event_loop_policy_fixture_does_not_warn(
+    pytester: Pytester,
+):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(
+        dedent("""\
+            import pytest
+
+            pytestmark = pytest.mark.asyncio
+
+            async def test_anything():
+                pass
+            """),
+    )
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
+    result.assert_outcomes(passed=1)
+    result.stdout.no_fnmatch_line("*PytestDeprecationWarning*event_loop_policy*")
 
 
 def test_asyncio_mark_provides_function_scoped_loop_to_fixtures(

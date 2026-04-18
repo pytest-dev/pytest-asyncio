@@ -24,7 +24,7 @@ Using the event_loop_policy fixture
 
 .. note::
 
-   ``asyncio.AbstractEventLoopPolicy`` is deprecated as of Python 3.14 (removal planned for 3.16), and ``uvloop.EventLoopPolicy`` will be removed alongside it. Prefer the hook approach above.
+   ``asyncio.AbstractEventLoopPolicy`` is deprecated as of Python 3.14 (removal planned for 3.16), and ``uvloop.EventLoopPolicy`` will be removed alongside it. Overriding the *event_loop_policy* fixture is also deprecated in pytest-asyncio. Prefer the hook approach above.
 
 For older versions of Python and uvloop, you can override the *event_loop_policy* fixture in your *conftest.py:*
 

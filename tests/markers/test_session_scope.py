@@ -116,7 +116,7 @@ def test_asyncio_mark_respects_the_loop_policy(
         pytest_args.extend(["-W", "default"])
     result = pytester.runpytest(*pytest_args)
     if sys.version_info >= (3, 14):
-        result.assert_outcomes(passed=2, warnings=3)
+        result.assert_outcomes(passed=2, warnings=4)
         result.stdout.fnmatch_lines("*DefaultEventLoopPolicy*")
     else:
         result.assert_outcomes(passed=2)
@@ -154,7 +154,7 @@ def test_asyncio_mark_respects_parametrized_loop_policies(
         pytest_args.extend(["-W", "default"])
     result = pytester.runpytest(*pytest_args)
     if sys.version_info >= (3, 14):
-        result.assert_outcomes(passed=2, warnings=2)
+        result.assert_outcomes(passed=2, warnings=4)
         result.stdout.fnmatch_lines("*DefaultEventLoopPolicy*")
     else:
         result.assert_outcomes(passed=2)

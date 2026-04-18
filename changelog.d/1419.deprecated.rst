@@ -1,0 +1,1 @@
+Overriding the *event_loop_policy* fixture is deprecated. Use the ``pytest_asyncio_loop_factories`` hook instead.
