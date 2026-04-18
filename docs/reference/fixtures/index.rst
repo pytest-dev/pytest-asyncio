@@ -4,6 +4,11 @@ Fixtures
 
 event_loop_policy
 =================
+
+.. warning::
+
+   Overriding the *event_loop_policy* fixture is deprecated and will be removed in a future version of pytest-asyncio. Use the ``pytest_asyncio_loop_factories`` hook instead. See :doc:`../hooks` for details.
+
 Returns the event loop policy used to create asyncio event loops.
 The default return value is *asyncio.get_event_loop_policy().*
 
