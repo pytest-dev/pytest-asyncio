@@ -35,8 +35,8 @@ packaging==26.0
 pluggy==1.6.0
 Pygments==2.20.0
 pycparser==3.0
-pydantic==2.12.5
-pydantic-core==2.41.5
+pydantic==2.13.0
+pydantic-core==2.46.0
 pytest==9.0.3
 readme-renderer==44.0
 requests==2.33.1
