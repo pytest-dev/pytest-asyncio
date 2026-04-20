@@ -37,7 +37,7 @@ Pygments==2.20.0
 pycparser==3.0
 pydantic==2.12.5
 pydantic-core==2.41.5
-pytest==9.0.2
+pytest==9.0.3
 readme-renderer==44.0
 requests==2.33.1
 requests-toolbelt==1.0.0
