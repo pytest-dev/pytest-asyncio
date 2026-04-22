@@ -100,6 +100,34 @@ jobs:
         path: coverage/coverage.*
         if-no-files-found: error
 
+  test-pytest-dev:
+    name: ubuntu - Python 3.13 - pytest dev
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      with:
+        persist-credentials: false
+    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+      with:
+        python-version: '3.13'
+    - name: Install dependencies
+      run: |
+        python -VV
+        python -m site
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade coverage[toml] virtualenv tox tox-gh-actions
+        python -m pip install --upgrade "git+https://github.com/pytest-dev/pytest.git@main"
+    - name: Run tox targets for pytest development version
+      run: python -m tox
+    - name: Store coverage data
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+      with:
+        name: coverage-pytest-dev
+        path: coverage/coverage.*
+        if-no-files-found: error
+
   lint-github-actions:
     name: Lint GitHub Actions
     permissions:
@@ -109,7 +137,7 @@ jobs:
   check:
     name: Check
     if: always()
-    needs: [build, lint, test]
+    needs: [build, lint, test, test-pytest-dev]
     runs-on: ubuntu-latest
     steps:
     - name: Decide whether the needed jobs succeeded or failed
