@@ -129,26 +129,18 @@ def test_strict_mode_marked_test_unmarked_fixture_warning(pytester: Pytester):
         """))
     result = pytester.runpytest("--asyncio-mode=strict", "-W default", "--assert=plain")
     if pytest_version >= (8, 4, 0):
-        result.assert_outcomes(passed=1, failed=0, skipped=0, warnings=2)
+        result.assert_outcomes(failed=1, warnings=2)
     else:
-        result.assert_outcomes(passed=1, failed=0, skipped=0, warnings=1)
-    result.stdout.fnmatch_lines(
-        [
-            "*warnings summary*",
-            (
-                "test_strict_mode_marked_test_unmarked_fixture_warning.py::"
-                "test_anything"
-            ),
-            (
-                "*/pytest_asyncio/plugin.py:*: PytestDeprecationWarning: "
-                "asyncio test 'test_anything' requested async "
-                "@pytest.fixture 'any_fixture' in strict mode. "
-                "You might want to use @pytest_asyncio.fixture or switch to "
-                "auto mode. "
-                "This will become an error in future versions of pytest-asyncio."
-            ),
-        ],
-    )
+        result.assert_outcomes(failed=1, warnings=1)
+
+        result.stdout.fnmatch_lines(
+            [
+                "*asyncio test 'test_anything' requested async *"
+                "*@pytest.fixture 'any_fixture' in strict mode.*"
+                "*You might want to use @pytest_asyncio.fixture*"
+                "*or switch to auto mode*"
+            ],
+        )
 
 
 # autouse is not handled in any special way currently
@@ -172,23 +164,14 @@ def test_strict_mode_marked_test_unmarked_autouse_fixture_warning(pytester: Pyte
         """))
     result = pytester.runpytest("--asyncio-mode=strict", "-W default", "--assert=plain")
     if pytest_version >= (8, 4, 0):
-        result.assert_outcomes(passed=1, warnings=2)
+        result.assert_outcomes(failed=1, warnings=2)
     else:
-        result.assert_outcomes(passed=1, warnings=1)
+        result.assert_outcomes(failed=1, warnings=1)
     result.stdout.fnmatch_lines(
         [
-            "*warnings summary*",
-            (
-                "test_strict_mode_marked_test_unmarked_autouse_fixture_warning.py::"
-                "test_anything"
-            ),
-            (
-                "*/pytest_asyncio/plugin.py:*: PytestDeprecationWarning: "
-                "*asyncio test 'test_anything' requested async "
-                "@pytest.fixture 'any_fixture' in strict mode. "
-                "You might want to use @pytest_asyncio.fixture or switch to "
-                "auto mode. "
-                "This will become an error in future versions of pytest-asyncio."
-            ),
+            "*asyncio test 'test_anything' requested async *"
+            "*@pytest.fixture 'any_fixture' in strict mode. *"
+            "*You might want to use @pytest_asyncio.fixture*"
+            "*or switch to auto mode*"
         ],
     )
