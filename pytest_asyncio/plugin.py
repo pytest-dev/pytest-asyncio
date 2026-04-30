@@ -806,23 +806,13 @@ def _temporary_event_loop(loop: AbstractEventLoop) -> Iterator[None]:
 @contextlib.contextmanager
 def _temporary_event_loop_policy(
     policy: AbstractEventLoopPolicy,
-    *,
-    has_custom_factory: bool,
 ) -> Iterator[None]:
     old_loop_policy = _get_event_loop_policy()
-    if has_custom_factory:
-        old_loop = None
-    else:
-        try:
-            old_loop = _get_event_loop_no_warn()
-        except RuntimeError:
-            old_loop = None
     _set_event_loop_policy(policy)
     try:
         yield
     finally:
         _set_event_loop_policy(old_loop_policy)
-        _set_event_loop(old_loop)
 
 
 def _get_event_loop_policy() -> AbstractEventLoopPolicy:
@@ -1042,10 +1032,7 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
     ) -> Iterator[Runner]:
         new_loop_policy = event_loop_policy
         debug_mode = _get_asyncio_debug(request.config)
-        with _temporary_event_loop_policy(
-            new_loop_policy,
-            has_custom_factory=_asyncio_loop_factory is not None,
-        ):
+        with _temporary_event_loop_policy(new_loop_policy):
             runner = Runner(
                 debug=debug_mode,
                 loop_factory=_asyncio_loop_factory,
@@ -1068,6 +1055,9 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
                             _RUNNER_TEARDOWN_WARNING % traceback.format_exc(),
                             RuntimeWarning,
                         )
+            finally:
+                if _asyncio_loop_factory is not None:
+                    _set_event_loop(None)
 
     return _scoped_runner
 
