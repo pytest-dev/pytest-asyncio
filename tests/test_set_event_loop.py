@@ -99,6 +99,40 @@ def test_set_event_loop_none_class(pytester: Pytester, loop_breaking_action: str
     result.assert_outcomes(passed=3)
 
 
+def test_asyncio_run_after_async_fixture_does_not_leak_loop(
+    pytester: Pytester,
+):
+    pytester.makeini(dedent("""\
+            [pytest]
+            asyncio_default_fixture_loop_scope = function
+            """))
+    pytester.makepyfile(dedent("""\
+            import asyncio
+            import gc
+            import pytest
+            import pytest_asyncio
+
+            pytest_plugins = "pytest_asyncio"
+
+            @pytest_asyncio.fixture
+            async def async_fixture():
+                yield
+
+            @pytest.mark.asyncio
+            async def test_async_function_uses_async_fixture(async_fixture):
+                pass
+
+            def test_collect_unclosed_loops():
+                async def amain():
+                    pass
+
+                asyncio.run(amain())
+                gc.collect()
+            """))
+    result = pytester.runpytest_subprocess("-W", "error")
+    result.assert_outcomes(passed=2)
+
+
 @pytest.mark.parametrize("test_loop_scope", ("module", "package", "session"))
 @pytest.mark.parametrize(
     "loop_breaking_action",

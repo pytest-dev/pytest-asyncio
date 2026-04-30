@@ -1,0 +1,1 @@
+Fixed a ``ResourceWarning: unclosed event loop`` warning that could occur when a synchronous test called ``asyncio.run()`` or otherwise unset the current event loop after pytest-asyncio had run an async test or fixture.
