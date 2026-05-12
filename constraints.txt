@@ -31,7 +31,7 @@ MarkupSafe==3.0.3
 mdurl==0.1.2
 more-itertools==11.0.2
 nh3==0.3.5
-packaging==26.0
+packaging==26.2
 pluggy==1.6.0
 Pygments==2.20.0
 pycparser==3.0
