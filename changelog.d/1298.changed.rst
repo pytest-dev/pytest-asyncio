@@ -1,1 +1,1 @@
-Improved the readability of the warning message that is displayed when ``asyncio_default_fixture_loop_scope`` is unset
+The default value of ``asyncio_default_fixture_loop_scope`` is now ``function``. The deprecated unset behavior and warning have been removed.
