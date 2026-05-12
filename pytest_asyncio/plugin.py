@@ -271,7 +271,6 @@ def _collect_hook_loop_factories(
     return factories
 
 
-
 def _validate_scope(scope: str | None, option_name: str) -> None:
     if scope is None:
         return
@@ -914,10 +913,7 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
         if not _is_coroutine_or_asyncgen(fixturedef.func):
             return (yield)
     default_loop_scope = request.config.getini("asyncio_default_fixture_loop_scope")
-    loop_scope = (
-        getattr(fixturedef.func, "_loop_scope", None)
-        or default_loop_scope
-    )
+    loop_scope = getattr(fixturedef.func, "_loop_scope", None) or default_loop_scope
     runner_fixture_id = f"_{loop_scope}_scoped_runner"
     runner = request.getfixturevalue(runner_fixture_id)
     # Prevent the runner closing before the fixture's async teardown.

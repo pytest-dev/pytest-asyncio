@@ -34,10 +34,9 @@ def test_loop_scope_session_is_independent_of_fixture_scope(
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
 
+
 def test_default_fixture_loop_scope_is_function_when_unset(pytester: Pytester):
-      pytester.makepyfile(
-          dedent(
-              '''
+    pytester.makepyfile(dedent("""
               import pytest
               import pytest_asyncio
 
@@ -48,17 +47,16 @@ def test_default_fixture_loop_scope_is_function_when_unset(pytester: Pytester):
               @pytest.mark.asyncio
               async def test_value(value):
                   assert value == 1
-              '''
-          )
-      )
+              """))
 
-      result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W", "error")
-      result.assert_outcomes(passed=1)
-      result.stdout.fnmatch_lines(
-          [
-              "*asyncio_default_fixture_loop_scope=function*",
-          ]
-      )
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W", "error")
+    result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*asyncio_default_fixture_loop_scope=function*",
+        ]
+    )
+
 
 @pytest.mark.parametrize("default_loop_scope", ("function", "module", "session"))
 def test_default_loop_scope_config_option_changes_fixture_loop_scope(
