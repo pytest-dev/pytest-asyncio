@@ -126,3 +126,34 @@ def test_auto_mode_static_method_fixture(pytester: Pytester):
         """))
     result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
+
+
+def test_auto_mode_async_test_with_mock_patch_dict(pytester: Pytester):
+    # Regression test for #403: async tests decorated with
+    # unittest.mock.patch.dict were silently skipped in auto mode on
+    # Python 3.8 / 3.9. CPython fixed the underlying iscoroutinefunction
+    # behavior of patch.dict in 3.10 (backported); pytest-asyncio now
+    # requires Python >= 3.10, so the scenario must run cleanly.
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+        from unittest import mock
+
+        import pytest
+
+        pytest_plugins = 'pytest_asyncio'
+
+        bar = {}
+
+
+        @mock.patch.dict("test_auto_mode_async_test_with_mock_patch_dict.bar")
+        async def test_decorated_with_patch_dict():
+            pass
+
+
+        @pytest.mark.asyncio
+        @mock.patch.dict("test_auto_mode_async_test_with_mock_patch_dict.bar")
+        async def test_marked_and_decorated_with_patch_dict():
+            pass
+        """))
+    result = pytester.runpytest("--asyncio-mode=auto")
+    result.assert_outcomes(passed=2)

@@ -1,0 +1,1 @@
+Added a regression test ensuring async tests decorated with ``unittest.mock.patch.dict`` are not silently skipped in ``asyncio_mode=auto``.
