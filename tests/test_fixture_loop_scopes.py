@@ -37,23 +37,26 @@ def test_loop_scope_session_is_independent_of_fixture_scope(
 
 def test_default_fixture_loop_scope_is_function_when_unset(pytester: Pytester):
     pytester.makepyfile(dedent("""
+              import asyncio
               import pytest
               import pytest_asyncio
 
-              @pytest_asyncio.fixture
-              async def value():
-                  return 1
+              @pytest_asyncio.fixture(scope="module")
+              async def fixture_loop():
+                  return asyncio.get_running_loop()
 
-              @pytest.mark.asyncio
-              async def test_value(value):
-                  assert value == 1
+              @pytest.mark.asyncio(loop_scope="module")
+              async def test_fixture_uses_default_function_loop_scope(fixture_loop):
+                  assert asyncio.get_running_loop() is fixture_loop
               """))
 
     result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W", "error")
-    result.assert_outcomes(passed=1)
+    result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
         [
             "*asyncio_default_fixture_loop_scope=function*",
+            "*ScopeMismatch*function scoped fixture _function_scoped_runner*"
+            "module scoped request object*",
         ]
     )
 
