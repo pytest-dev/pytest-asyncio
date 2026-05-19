@@ -39,7 +39,7 @@ pydantic==2.13.3
 pydantic-core==2.46.3
 pytest==9.0.3
 readme-renderer==44.0
-requests==2.33.1
+requests==2.34.0
 requests-toolbelt==1.0.0
 rfc3986==2.0.0
 rich==15.0.0
