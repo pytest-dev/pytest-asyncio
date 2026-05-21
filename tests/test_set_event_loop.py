@@ -112,8 +112,6 @@ def test_asyncio_run_after_async_fixture_does_not_leak_loop(
             import pytest
             import pytest_asyncio
 
-            pytest_plugins = "pytest_asyncio"
-
             @pytest_asyncio.fixture
             async def async_fixture():
                 yield
