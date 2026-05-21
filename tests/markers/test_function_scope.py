@@ -154,6 +154,69 @@ def test_asyncio_mark_respects_parametrized_loop_policies(
         result.assert_outcomes(passed=2)
 
 
+def test_parametrized_loop_policy_does_not_parametrize_sync_tests(
+    pytester: Pytester,
+):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+            import asyncio
+
+            import pytest
+
+            @pytest.fixture(
+                scope="session",
+                params=[
+                    asyncio.get_event_loop_policy(),
+                    asyncio.get_event_loop_policy(),
+                ],
+                ids=["policy_a", "policy_b"],
+            )
+            def event_loop_policy(request):
+                return request.param
+
+            @pytest.mark.asyncio
+            async def test_async():
+                pass
+
+            def test_sync():
+                pass
+            """))
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=3)
+
+
+def test_parametrized_loop_policy_parametrizes_sync_tests_with_async_fixtures(
+    pytester: Pytester,
+):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+            import asyncio
+
+            import pytest
+            import pytest_asyncio
+
+            @pytest.fixture(
+                scope="session",
+                params=[
+                    asyncio.get_event_loop_policy(),
+                    asyncio.get_event_loop_policy(),
+                ],
+                ids=["policy_a", "policy_b"],
+            )
+            def event_loop_policy(request):
+                return request.param
+
+            @pytest_asyncio.fixture
+            async def async_fixture():
+                return True
+
+            def test_sync_with_async_fixture(async_fixture):
+                assert async_fixture
+            """))
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=2)
+
+
 def test_event_loop_policy_fixture_override_emits_deprecation_warning(
     pytester: Pytester,
 ):

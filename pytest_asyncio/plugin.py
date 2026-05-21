@@ -729,14 +729,23 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
         metafunc.definition
     )
     if specialized_item_class is None:
+        if _uses_asyncio_fixtures(metafunc):
+            _add_fixture_to_metafunc(metafunc, "event_loop_policy")
         return
 
     asyncio_marker = _resolve_asyncio_marker(metafunc.definition)
     if asyncio_marker is None:
+        if _uses_asyncio_fixtures(metafunc):
+            _add_fixture_to_metafunc(metafunc, "event_loop_policy")
         return
     marker_loop_scope, marker_selected_factory_names = _parse_asyncio_marker(
         asyncio_marker
     )
+    default_loop_scope = _get_default_test_loop_scope(metafunc.config)
+    loop_scope = marker_loop_scope or default_loop_scope
+    runner_fixture_id = f"_{loop_scope}_scoped_runner"
+    _add_fixture_to_metafunc(metafunc, runner_fixture_id)
+    _add_fixture_to_metafunc(metafunc, "event_loop_policy")
 
     hook_factories = _collect_hook_loop_factories(metafunc.config, metafunc.definition)
     if hook_factories is None:
@@ -774,8 +783,6 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
             for name in marker_selected_factory_names
         ]
     metafunc.fixturenames.append(_asyncio_loop_factory.__name__)
-    default_loop_scope = _get_default_test_loop_scope(metafunc.config)
-    loop_scope = marker_loop_scope or default_loop_scope
     # pytest.HIDDEN_PARAM was added in pytest 8.4
     hide_id = len(factory_ids) == 1 and hasattr(pytest, "HIDDEN_PARAM")
     metafunc.parametrize(
@@ -785,6 +792,30 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
         indirect=True,
         scope=loop_scope,
     )
+
+
+def _add_fixture_to_metafunc(metafunc: pytest.Metafunc, fixture_name: str) -> None:
+    if fixture_name not in metafunc.fixturenames:
+        metafunc.fixturenames.append(fixture_name)
+
+    if fixture_name not in metafunc._arg2fixturedefs:
+        fixturemanager = metafunc.definition.session._fixturemanager
+        fixturedefs = fixturemanager.getfixturedefs(fixture_name, metafunc.definition)
+        if fixturedefs is not None:
+            metafunc._arg2fixturedefs[fixture_name] = fixturedefs
+
+
+def _uses_asyncio_fixtures(metafunc: pytest.Metafunc) -> bool:
+    asyncio_mode = _get_asyncio_mode(metafunc.config)
+    for fixturedefs in metafunc._arg2fixturedefs.values():
+        fixturedef = fixturedefs[-1]
+        fixture_func = fixturedef.func
+        if _is_asyncio_fixture_function(fixture_func):
+            return True
+        if asyncio_mode == Mode.AUTO and _is_coroutine_or_asyncgen(fixture_func):
+            return True
+
+    return False
 
 
 @contextlib.contextmanager
@@ -1073,7 +1104,7 @@ def _asyncio_loop_factory(request: FixtureRequest) -> LoopFactory | None:
     return getattr(request, "param", None)
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def event_loop_policy() -> AbstractEventLoopPolicy:
     """Return an instance of the policy used to create asyncio event loops."""
     return _get_event_loop_policy()

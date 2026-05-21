@@ -1,0 +1,1 @@
+Prevent parametrized ``event_loop_policy`` fixtures from parametrizing synchronous tests.
