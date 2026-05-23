@@ -217,6 +217,35 @@ def test_parametrized_loop_policy_parametrizes_sync_tests_with_async_fixtures(
     result.assert_outcomes(passed=2)
 
 
+def test_parametrized_loop_policy_can_depend_on_parametrized_fixture(
+    pytester: Pytester,
+):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+            import asyncio
+
+            import pytest
+
+            @pytest.fixture(params=["policy_a", "policy_b"])
+            def policy(request):
+                return request.param
+
+            @pytest.fixture
+            def event_loop_policy(policy):
+                assert policy in {"policy_a", "policy_b"}
+                return asyncio.get_event_loop_policy()
+
+            @pytest.mark.asyncio
+            async def test_marked_async():
+                pass
+
+            async def test_auto_async():
+                pass
+            """))
+    result = pytester.runpytest("--asyncio-mode=auto")
+    result.assert_outcomes(passed=4)
+
+
 def test_event_loop_policy_fixture_override_emits_deprecation_warning(
     pytester: Pytester,
 ):

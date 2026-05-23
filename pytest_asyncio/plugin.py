@@ -795,14 +795,16 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
 
 
 def _add_fixture_to_metafunc(metafunc: pytest.Metafunc, fixture_name: str) -> None:
-    if fixture_name not in metafunc.fixturenames:
-        metafunc.fixturenames.append(fixture_name)
-
-    if fixture_name not in metafunc._arg2fixturedefs:
-        fixturemanager = metafunc.definition.session._fixturemanager
-        fixturedefs = fixturemanager.getfixturedefs(fixture_name, metafunc.definition)
-        if fixturedefs is not None:
-            metafunc._arg2fixturedefs[fixture_name] = fixturedefs
+    fixturemanager = metafunc.definition.session._fixturemanager
+    fixturenames_closure, arg2fixturedefs = fixturemanager.getfixtureclosure(
+        metafunc.definition,
+        (fixture_name,),
+        ignore_args=set(),
+    )
+    metafunc._arg2fixturedefs.update(arg2fixturedefs)
+    for name in fixturenames_closure:
+        if name not in metafunc.fixturenames:
+            metafunc.fixturenames.append(name)
 
 
 def _uses_asyncio_fixtures(metafunc: pytest.Metafunc) -> bool:
