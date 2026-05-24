@@ -217,6 +217,74 @@ def test_parametrized_loop_policy_parametrizes_sync_tests_with_async_fixtures(
     result.assert_outcomes(passed=2)
 
 
+def test_parametrized_loop_policy_parametrizes_auto_mode_async_fixtures(
+    pytester: Pytester,
+):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+            import asyncio
+
+            import pytest
+
+            class CustomEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
+                def __init__(self, name):
+                    super().__init__()
+                    self.name = name
+
+            @pytest.fixture(
+                scope="session",
+                params=[
+                    CustomEventLoopPolicy("policy_a"),
+                    CustomEventLoopPolicy("policy_b"),
+                ],
+                ids=["policy_a", "policy_b"],
+            )
+            def event_loop_policy(request):
+                return request.param
+
+            @pytest.fixture
+            async def async_fixture():
+                return asyncio.get_event_loop_policy().name
+
+            def test_sync_with_auto_async_fixture(async_fixture):
+                assert async_fixture in {"policy_a", "policy_b"}
+            """))
+    result = pytester.runpytest("--asyncio-mode=auto")
+    result.assert_outcomes(passed=2)
+
+
+def test_unmarked_async_test_with_async_fixture_uses_loop_policy_closure(
+    pytester: Pytester,
+):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+            import asyncio
+
+            import pytest
+            import pytest_asyncio
+
+            @pytest.fixture(
+                scope="session",
+                params=[
+                    asyncio.get_event_loop_policy(),
+                    asyncio.get_event_loop_policy(),
+                ],
+                ids=["policy_a", "policy_b"],
+            )
+            def event_loop_policy(request):
+                return request.param
+
+            @pytest_asyncio.fixture
+            async def async_fixture():
+                return True
+
+            async def test_unmarked_async(async_fixture):
+                pass
+            """))
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(failed=2)
+
+
 def test_parametrized_loop_policy_can_depend_on_parametrized_fixture(
     pytester: Pytester,
 ):
