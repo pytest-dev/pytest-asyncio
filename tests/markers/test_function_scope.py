@@ -273,6 +273,49 @@ def test_parametrized_loop_policy_can_depend_on_parametrized_fixture(
     result.assert_outcomes(passed=4)
 
 
+def test_injected_loop_policy_is_visible_during_collection_modifyitems(
+    pytester: Pytester,
+):
+    pytester.makeini(dedent("""\
+        [pytest]
+        asyncio_default_fixture_loop_scope = function
+        markers =
+            uses_loop_policy: item uses the event_loop_policy fixture
+        """))
+    pytester.makeconftest(dedent("""\
+        import pytest
+
+        def pytest_collection_modifyitems(items):
+            for item in items:
+                if "event_loop_policy" in item.fixturenames:
+                    item.add_marker(pytest.mark.uses_loop_policy)
+        """))
+    pytester.makepyfile(dedent("""\
+            import asyncio
+
+            import pytest
+
+            @pytest.fixture(
+                scope="session",
+                params=[
+                    asyncio.get_event_loop_policy(),
+                    asyncio.get_event_loop_policy(),
+                ],
+            )
+            def event_loop_policy(request):
+                return request.param
+
+            @pytest.mark.asyncio
+            async def test_async(request):
+                assert request.node.get_closest_marker("uses_loop_policy") is not None
+
+            def test_sync(request):
+                assert request.node.get_closest_marker("uses_loop_policy") is None
+            """))
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=3)
+
+
 def test_event_loop_policy_fixture_override_emits_deprecation_warning(
     pytester: Pytester,
 ):

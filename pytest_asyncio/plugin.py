@@ -724,6 +724,36 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
 
 
 @pytest.hookimpl(tryfirst=True)
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    for item in items:
+        if _item_needs_event_loop_policy(item):
+            _append_fixture_name(item, "event_loop_policy")
+
+
+def _item_needs_event_loop_policy(item: pytest.Item) -> bool:
+    if not isinstance(item, Function):
+        return False
+    if isinstance(item, PytestAsyncioFunction) and _resolve_asyncio_marker(item):
+        return True
+    return _item_uses_asyncio_fixtures(item)
+
+
+def _item_uses_asyncio_fixtures(item: pytest.Item) -> bool:
+    fixtureinfo = getattr(item, "_fixtureinfo", None)
+    if fixtureinfo is None:
+        return False
+    return _fixture_defs_use_asyncio(
+        item.config,
+        fixtureinfo.name2fixturedefs.values(),
+    )
+
+
+def _append_fixture_name(item: pytest.Item, fixture_name: str) -> None:
+    if fixture_name not in item.fixturenames:
+        item.fixturenames.append(fixture_name)
+
+
+@pytest.hookimpl(tryfirst=True)
 def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     specialized_item_class = PytestAsyncioFunction.item_subclass_for(
         metafunc.definition
@@ -808,8 +838,20 @@ def _add_fixture_to_metafunc(metafunc: pytest.Metafunc, fixture_name: str) -> No
 
 
 def _uses_asyncio_fixtures(metafunc: pytest.Metafunc) -> bool:
-    asyncio_mode = _get_asyncio_mode(metafunc.config)
-    for fixturedefs in metafunc._arg2fixturedefs.values():
+    return _fixture_defs_use_asyncio(
+        metafunc.config,
+        metafunc._arg2fixturedefs.values(),
+    )
+
+
+def _fixture_defs_use_asyncio(
+    config: Config,
+    fixturedefs_by_name: Iterable[Sequence[FixtureDef[Any]]],
+) -> bool:
+    asyncio_mode = _get_asyncio_mode(config)
+    for fixturedefs in fixturedefs_by_name:
+        if not fixturedefs:
+            continue
         fixturedef = fixturedefs[-1]
         fixture_func = fixturedef.func
         if _is_asyncio_fixture_function(fixture_func):
