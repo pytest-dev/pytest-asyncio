@@ -64,4 +64,4 @@ typing_extensions==4.15.0
 typing-inspection==0.4.2
 urllib3==2.7.0
 wheel-filename==1.4.2
-zipp==3.23.1
+zipp==4.1.0
