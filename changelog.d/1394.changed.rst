@@ -1,2 +1,0 @@
-Only import ``asyncio.AbstractEventLoopPolicy`` for type checking to avoid raising
-a DeprecationWarning.

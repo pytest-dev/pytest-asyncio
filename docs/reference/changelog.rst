@@ -10,6 +10,46 @@ This project uses `towncrier <https://towncrier.readthedocs.io/>`__ for changelo
 
 .. towncrier release notes start
 
+`1.4.0 <https://github.com/pytest-dev/pytest-asyncio/tree/1.4.0>`_ - 2026-05-26
+===============================================================================
+
+Deprecated
+----------
+
+- Overriding the *event_loop_policy* fixture is deprecated. Use the ``pytest_asyncio_loop_factories`` hook instead. (`#1419 <https://github.com/pytest-dev/pytest-asyncio/issues/1419>`_)
+
+
+Added
+-----
+
+- Added the ``pytest_asyncio_loop_factories`` hook to parametrize asyncio tests with custom event loop factories.
+
+  The hook returns a mapping of factory names to loop factories, and ``pytest.mark.asyncio(loop_factories=[...])`` selects a subset of configured factories per test. When a single factory is configured, test names are unchanged.
+
+  Synchronous ``@pytest_asyncio.fixture`` functions now see the correct event loop when custom loop factories are configured, even when test code disrupts the current event loop (e.g., via ``asyncio.run()`` or ``asyncio.set_event_loop(None)``). (`#1164 <https://github.com/pytest-dev/pytest-asyncio/issues/1164>`_)
+
+
+Changed
+-------
+
+- Improved the readability of the warning message that is displayed when ``asyncio_default_fixture_loop_scope`` is unset (`#1298 <https://github.com/pytest-dev/pytest-asyncio/issues/1298>`_)
+- Only import ``asyncio.AbstractEventLoopPolicy`` for type checking to avoid raising
+  a DeprecationWarning. (`#1394 <https://github.com/pytest-dev/pytest-asyncio/issues/1394>`_)
+- Updated minimum supported pytest version to v8.4.0. (`#1397 <https://github.com/pytest-dev/pytest-asyncio/issues/1397>`_)
+
+
+Fixed
+-----
+
+- Fixed a ``ResourceWarning: unclosed event loop`` warning that could occur when a synchronous test called ``asyncio.run()`` or otherwise unset the current event loop after pytest-asyncio had run an async test or fixture. (`#724 <https://github.com/pytest-dev/pytest-asyncio/issues/724>`_)
+
+
+Notes for Downstream Packagers
+------------------------------
+
+- Added dependency on ``sphinx-tabs >= 3.5`` to organize documentation examples into tabs. (`#1395 <https://github.com/pytest-dev/pytest-asyncio/issues/1395>`_)
+
+
 `1.3.0 <https://github.com/pytest-dev/pytest-asyncio/tree/1.3.0>`_ - 2025-11-10
 ===============================================================================
 

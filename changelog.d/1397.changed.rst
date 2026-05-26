@@ -1,1 +1,0 @@
-Updated minimum supported pytest version to v8.4.0.
