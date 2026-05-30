@@ -1,0 +1,3 @@
+``asyncio_default_fixture_loop_scope`` now defaults to ``"function"`` instead of being unset.
+Previously, leaving the option unset caused a ``PytestDeprecationWarning`` on every test run.
+The old deprecation warning and its associated constant have been removed.
