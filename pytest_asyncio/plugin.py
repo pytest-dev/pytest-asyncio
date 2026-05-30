@@ -271,8 +271,6 @@ def _collect_hook_loop_factories(
     return factories
 
 
-
-
 def _validate_scope(scope: str | None, option_name: str) -> None:
     if scope is None:
         return
