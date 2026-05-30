@@ -137,7 +137,7 @@ def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager) -> None
         "asyncio_default_fixture_loop_scope",
         type="string",
         help="default scope of the asyncio event loop used to execute async fixtures",
-        default=None,
+        default="function",
     )
     parser.addini(
         "asyncio_default_test_loop_scope",
@@ -271,14 +271,6 @@ def _collect_hook_loop_factories(
     return factories
 
 
-_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET = """\
-The configuration option "asyncio_default_fixture_loop_scope" is unset.
-The event loop scope for asynchronous fixtures will default to the "fixture" caching \
-scope. Future versions of pytest-asyncio will default the loop scope for asynchronous \
-fixtures to "function" scope. Set the default fixture loop scope explicitly in order \
-to avoid unexpected behavior in the future. Valid fixture loop scopes are: \
-"function", "class", "module", "package", "session"
-"""
 
 
 def _validate_scope(scope: str | None, option_name: str) -> None:
@@ -295,9 +287,6 @@ def _validate_scope(scope: str | None, option_name: str) -> None:
 def pytest_configure(config: Config) -> None:
     default_fixture_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
     _validate_scope(default_fixture_loop_scope, "asyncio_default_fixture_loop_scope")
-    if not default_fixture_loop_scope:
-        warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
-
     default_test_loop_scope = config.getini("asyncio_default_test_loop_scope")
     _validate_scope(default_test_loop_scope, "asyncio_default_test_loop_scope")
     config.addinivalue_line(
