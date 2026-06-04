@@ -1,0 +1,1 @@
+Using :func:`pytest_asyncio.fixture` to decorate synchronous fixtures is now deprecated. Use :func:`pytest.fixture` instead.

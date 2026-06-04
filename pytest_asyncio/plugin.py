@@ -14,8 +14,6 @@ import traceback
 import warnings
 from asyncio import AbstractEventLoop
 from collections.abc import (
-    AsyncIterator,
-    Awaitable,
     Callable,
     Collection,
     Generator,
@@ -69,7 +67,7 @@ if TYPE_CHECKING:
     from asyncio import AbstractEventLoopPolicy
 
 _ScopeName = Literal["session", "package", "module", "class", "function"]
-_R = TypeVar("_R", bound=Awaitable[Any] | AsyncIterator[Any])
+_R = TypeVar("_R")
 _P = ParamSpec("_P")
 FixtureFunction = Callable[_P, _R]
 LoopFactory: TypeAlias = Callable[[], AbstractEventLoop]
@@ -211,6 +209,19 @@ def _make_asyncio_fixture_function(obj: Any, loop_scope: _ScopeName | None) -> N
     if hasattr(obj, "__func__"):
         # instance method, check the function object
         obj = obj.__func__
+    if not _is_coroutine_or_asyncgen(obj):
+        warnings.warn(
+            PytestDeprecationWarning(
+                "@pytest_asyncio.fixture was applied to the synchronous function "
+                f"{obj.__name__!r}. Use @pytest.fixture for synchronous fixtures. "
+                "This will become an error in future versions of pytest-asyncio."
+            ),
+            stacklevel=3,
+            # stacklevel=3 points at the user's @pytest_asyncio.fixture line for
+            # the bare-decorator path (user → fixture() → here). The factory path
+            # (@pytest_asyncio.fixture(...)) adds one extra frame via inner(), so
+            # the warning lands on plugin.py:inner instead — still the plugin.
+        )
     obj._force_asyncio_fixture = True
     obj._loop_scope = loop_scope
 
@@ -938,7 +949,8 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
         functools.partial(fixturedef.finish, request=request)
     )
     synchronizer = _fixture_synchronizer(fixturedef, runner, request)
-    _make_asyncio_fixture_function(synchronizer, loop_scope)
+    synchronizer._force_asyncio_fixture = True  # type: ignore[attr-defined]
+    synchronizer._loop_scope = loop_scope  # type: ignore[attr-defined]
     with MonkeyPatch.context() as c:
         c.setattr(fixturedef, "func", synchronizer)
         hook_result = yield

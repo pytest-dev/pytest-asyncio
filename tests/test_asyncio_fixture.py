@@ -62,3 +62,55 @@ def test_sync_function_uses_async_fixture(pytester: Pytester, mode):
         """))
     result = pytester.runpytest(f"--asyncio-mode={mode}")
     result.assert_outcomes(passed=1)
+
+
+def test_sync_fixture_emits_deprecation_warning(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+        import pytest
+        import pytest_asyncio
+
+        @pytest_asyncio.fixture
+        def sync_fixture():
+            return 42
+
+        @pytest.mark.asyncio
+        async def test_uses_sync(sync_fixture):
+            assert sync_fixture == 42
+        """))
+    result = pytester.runpytest("-W", "default")
+    result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines(
+        [
+            (
+                "*PytestDeprecationWarning*@pytest_asyncio.fixture*"
+                "*sync_fixture*@pytest.fixture*"
+            )
+        ]
+    )
+
+
+def test_sync_fixture_factory_path_emits_deprecation_warning(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+        import pytest
+        import pytest_asyncio
+
+        @pytest_asyncio.fixture(loop_scope="function")
+        def sync_fixture():
+            return 42
+
+        @pytest.mark.asyncio
+        async def test_uses_sync(sync_fixture):
+            assert sync_fixture == 42
+        """))
+    result = pytester.runpytest("-W", "default")
+    result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines(
+        [
+            (
+                "*PytestDeprecationWarning*@pytest_asyncio.fixture*"
+                "*sync_fixture*@pytest.fixture*"
+            )
+        ]
+    )
