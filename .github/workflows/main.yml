@@ -268,4 +268,4 @@ jobs:
       run: |
         set +e
         TAG_NAME="${GITHUB_REF#refs/tags/}"
-        gh release edit "${TAG_NAME}" --draft=false
+        gh release edit --repo "${GITHUB_REPOSITORY}" "${TAG_NAME}" --draft=false
