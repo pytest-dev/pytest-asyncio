@@ -44,7 +44,7 @@ repos:
   rev: v1.19.1
   hooks:
   - id: mypy
-    exclude: ^(docs|tests)/.*
+    exclude: ^docs/.*
     additional_dependencies:
     - pytest
 - repo: https://github.com/pre-commit/pygrep-hooks
