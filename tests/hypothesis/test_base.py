@@ -7,8 +7,6 @@ from __future__ import annotations
 
 from textwrap import dedent
 
-import pytest
-from hypothesis import given, strategies as st
 from pytest import Pytester
 
 
@@ -27,18 +25,36 @@ def test_hypothesis_given_decorator_before_asyncio_mark(pytester: Pytester):
     result.assert_outcomes(passed=1)
 
 
-@pytest.mark.asyncio
-@given(st.integers())
-async def test_mark_outer(n):
-    assert isinstance(n, int)
+def test_hypothesis_given_decorator_after_asyncio_mark(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+            import pytest
+            from hypothesis import given, strategies as st
+
+            @pytest.mark.asyncio
+            @given(st.integers())
+            async def test_mark_outer(n):
+                assert isinstance(n, int)
+            """))
+    result = pytester.runpytest("--asyncio-mode=strict", "-W default")
+    result.assert_outcomes(passed=1)
 
 
-@pytest.mark.parametrize("y", [1, 2])
-@given(x=st.none())
-@pytest.mark.asyncio
-async def test_mark_and_parametrize(x, y):
-    assert x is None
-    assert y in (1, 2)
+def test_parametrization(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+            import pytest
+            from hypothesis import given, strategies as st
+
+            @pytest.mark.parametrize("y", [1, 2])
+            @given(x=st.none())
+            @pytest.mark.asyncio
+            async def test_mark_and_parametrize(x, y):
+                assert x is None
+                assert y in (1, 2)
+            """))
+    result = pytester.runpytest("--asyncio-mode=strict", "-W default")
+    result.assert_outcomes(passed=2)
 
 
 def test_async_auto_marked(pytester: Pytester):
