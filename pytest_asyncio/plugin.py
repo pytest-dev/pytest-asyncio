@@ -69,7 +69,7 @@ if TYPE_CHECKING:
     from asyncio import AbstractEventLoopPolicy
 
 _ScopeName = Literal["session", "package", "module", "class", "function"]
-_R = TypeVar("_R", bound=Awaitable[Any] | AsyncIterator[Any])
+_R = TypeVar("_R", bound=Awaitable | AsyncIterator)
 _P = ParamSpec("_P")
 FixtureFunction = Callable[_P, _R]
 LoopFactory: TypeAlias = Callable[[], AbstractEventLoop]
