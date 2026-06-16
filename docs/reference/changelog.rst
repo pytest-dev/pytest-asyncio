@@ -191,6 +191,7 @@ Notes for Downstream Packagers
 - Updates the error message about `pytest.mark.asyncio`'s `scope` keyword argument to say `loop_scope` instead. `#1004 <https://github.com/pytest-dev/pytest-asyncio/pull/1004>`_
 - Verbose log displays correct parameter name: asyncio_default_fixture_loop_scope `#990 <https://github.com/pytest-dev/pytest-asyncio/pull/990>`_
 - Propagates `contextvars` set in async fixtures to other fixtures and tests on Python 3.11 and above. `#1008 <https://github.com/pytest-dev/pytest-asyncio/pull/1008>`_
+- Remove support for Python 3.8 (`#968 <https://github.com/pytest-dev/pytest-asyncio/issues/968>`_)
 
 
 0.24.0 (2024-08-22)
