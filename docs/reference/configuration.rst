@@ -12,7 +12,7 @@ Determines the default event loop scope of asynchronous fixtures. When this conf
 
 asyncio_default_test_loop_scope
 ===============================
-Determines the default event loop scope of asynchronous tests. When this configuration option is unset, it default to function scope. Possible values are: ``function``, ``class``, ``module``, ``package``, ``session``
+Determines the default event loop scope of asynchronous tests. When this configuration option is unset, it defaults to function scope. Possible values are: ``function``, ``class``, ``module``, ``package``, ``session``
 
 .. _configuration/asyncio_debug:
 
