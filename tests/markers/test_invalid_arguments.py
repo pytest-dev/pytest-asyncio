@@ -34,9 +34,7 @@ def test_error_when_scope_passed_as_positional_argument(
             """))
     result = pytester.runpytest("--assert=plain")
     result.assert_outcomes(errors=1)
-    result.stdout.fnmatch_lines(
-        ["*mark.asyncio does not accept positional arguments*"]
-    )
+    result.stdout.fnmatch_lines(["*mark.asyncio does not accept positional arguments*"])
 
 
 def test_error_when_wrong_keyword_argument_is_passed(
