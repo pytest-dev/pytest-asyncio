@@ -730,6 +730,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
         metafunc.definition
     )
     if specialized_item_class is None:
+        _remove_autouse_event_loop_policy_for_sync_tests(metafunc)
         return
 
     asyncio_marker = _resolve_asyncio_marker(metafunc.definition)
@@ -786,6 +787,25 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
         indirect=True,
         scope=loop_scope,
     )
+
+
+def _remove_autouse_event_loop_policy_for_sync_tests(
+    metafunc: pytest.Metafunc,
+) -> None:
+    fixture_name = event_loop_policy.__name__
+    fixtureinfo = metafunc.definition._fixtureinfo
+    if fixture_name in fixtureinfo.argnames:
+        return
+    if any(
+        fixture_name in marker.args
+        for marker in metafunc.definition.iter_markers(name="usefixtures")
+    ):
+        return
+    if fixture_name in metafunc.fixturenames:
+        metafunc.fixturenames.remove(fixture_name)
+    if fixture_name in fixtureinfo.names_closure:
+        fixtureinfo.names_closure.remove(fixture_name)
+    fixtureinfo.name2fixturedefs.pop(fixture_name, None)
 
 
 @contextlib.contextmanager
