@@ -27,7 +27,7 @@ jobs:
       with:
         fetch-depth: 0
         persist-credentials: false
-    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
       with:
         python-version: ${{ env.PYTHON_LATEST }}
     - name: Install tox
@@ -55,7 +55,7 @@ jobs:
       with:
         fetch-depth: 0
         persist-credentials: false
-    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
       with:
         python-version: ${{ env.PYTHON_LATEST }}
     - name: Install GitHub matcher for ActionLint checker
@@ -80,7 +80,7 @@ jobs:
     - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       with:
         persist-credentials: false
-    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -108,7 +108,7 @@ jobs:
     - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       with:
         persist-credentials: false
-    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
       with:
         python-version: ${{ env.PYTHON_LATEST }}
     - name: Install dependencies
@@ -139,7 +139,7 @@ jobs:
     - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       with:
         persist-credentials: false
-    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
       with:
         python-version: ${{ env.PYTHON_LATEST }}
     - name: Install Coverage.py
@@ -176,7 +176,7 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
     - name: Install Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
     - name: Install towncrier
       run: pip install towncrier==24.8.0
     - name: Install pandoc
