@@ -44,7 +44,7 @@ requests-toolbelt==1.0.0
 rfc3986==2.0.0
 rich==15.0.0
 SecretStorage==3.5.0
-setuptools==82.0.1
+setuptools==83.0.0
 setuptools-scm==10.2.0
 snowballstemmer==3.1.1
 sortedcontainers==2.4.0
