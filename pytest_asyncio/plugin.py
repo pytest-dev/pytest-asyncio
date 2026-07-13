@@ -328,18 +328,29 @@ def pytest_report_header(config: Config) -> list[str]:
 
 
 def _fixture_synchronizer(
-    fixturedef: FixtureDef, runner: Runner, request: FixtureRequest
+    fixturedef: FixtureDef,
+    runner: Runner,
+    request: FixtureRequest,
+    runner_fixture_id: str,
 ) -> Callable:
     """Returns a synchronous function evaluating the specified fixture."""
     fixture_function = resolve_fixture_function(fixturedef, request)
     if inspect.isasyncgenfunction(fixturedef.func):
-        return _wrap_asyncgen_fixture(fixture_function, runner, request)  # type: ignore[arg-type]
+        return _wrap_asyncgen_fixture(  # type: ignore[arg-type]
+            fixture_function, runner, request, runner_fixture_id
+        )
     elif inspect.iscoroutinefunction(fixturedef.func):
-        return _wrap_async_fixture(fixture_function, runner, request)  # type: ignore[arg-type]
+        return _wrap_async_fixture(  # type: ignore[arg-type]
+            fixture_function, runner, request, runner_fixture_id
+        )
     elif inspect.isgeneratorfunction(fixturedef.func):
-        return _wrap_syncgen_fixture(fixture_function, runner)  # type: ignore[arg-type]
+        return _wrap_syncgen_fixture(  # type: ignore[arg-type]
+            fixture_function, runner, runner_fixture_id
+        )
     else:
-        return _wrap_sync_fixture(fixture_function, runner)  # type: ignore[arg-type]
+        return _wrap_sync_fixture(  # type: ignore[arg-type]
+            fixture_function, runner, runner_fixture_id
+        )
 
 
 SyncGenFixtureParams = ParamSpec("SyncGenFixtureParams")
@@ -351,12 +362,14 @@ def _wrap_syncgen_fixture(
         SyncGenFixtureParams, Generator[SyncGenFixtureYieldType]
     ],
     runner: Runner,
+    runner_fixture_id: str,
 ) -> Callable[SyncGenFixtureParams, Generator[SyncGenFixtureYieldType]]:
     @functools.wraps(fixture_function)
     def _syncgen_fixture_wrapper(
         *args: SyncGenFixtureParams.args,
         **kwargs: SyncGenFixtureParams.kwargs,
     ) -> Generator[SyncGenFixtureYieldType]:
+        kwargs.pop(runner_fixture_id, None)
         with _temporary_event_loop(runner.get_loop()):
             yield from fixture_function(*args, **kwargs)
 
@@ -370,12 +383,14 @@ SyncFixtureReturnType = TypeVar("SyncFixtureReturnType")
 def _wrap_sync_fixture(
     fixture_function: Callable[SyncFixtureParams, SyncFixtureReturnType],
     runner: Runner,
+    runner_fixture_id: str,
 ) -> Callable[SyncFixtureParams, SyncFixtureReturnType]:
     @functools.wraps(fixture_function)
     def _sync_fixture_wrapper(
         *args: SyncFixtureParams.args,
         **kwargs: SyncFixtureParams.kwargs,
     ) -> SyncFixtureReturnType:
+        kwargs.pop(runner_fixture_id, None)
         with _temporary_event_loop(runner.get_loop()):
             return fixture_function(*args, **kwargs)
 
@@ -392,12 +407,14 @@ def _wrap_asyncgen_fixture(
     ],
     runner: Runner,
     request: FixtureRequest,
+    runner_fixture_id: str,
 ) -> Callable[AsyncGenFixtureParams, AsyncGenFixtureYieldType]:
     @functools.wraps(fixture_function)
     def _asyncgen_fixture_wrapper(
         *args: AsyncGenFixtureParams.args,
         **kwargs: AsyncGenFixtureParams.kwargs,
     ):
+        kwargs.pop(runner_fixture_id, None)
         gen_obj = fixture_function(*args, **kwargs)
 
         async def setup():
@@ -442,12 +459,15 @@ def _wrap_async_fixture(
     ],
     runner: Runner,
     request: FixtureRequest,
+    runner_fixture_id: str,
 ) -> Callable[AsyncFixtureParams, AsyncFixtureReturnType]:
     @functools.wraps(fixture_function)
     def _async_fixture_wrapper(
         *args: AsyncFixtureParams.args,
         **kwargs: AsyncFixtureParams.kwargs,
     ):
+        kwargs.pop(runner_fixture_id, None)
+
         async def setup():
             res = await fixture_function(*args, **kwargs)
             return res
@@ -932,13 +952,20 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
         or fixturedef.scope
     )
     runner_fixture_id = f"_{loop_scope}_scoped_runner"
+    if runner_fixture_id not in fixturedef.argnames:
+        # pytest derives fixture dependencies from argnames. Add the runner here so
+        # its parametrization invalidates dependent async fixtures in dependency
+        # order, rather than finalizing a parent fixture before its child.
+        object.__setattr__(
+            fixturedef, "argnames", (*fixturedef.argnames, runner_fixture_id)
+        )
     runner = request.getfixturevalue(runner_fixture_id)
     # Prevent the runner closing before the fixture's async teardown.
     runner_fixturedef = request._get_active_fixturedef(runner_fixture_id)
     runner_fixturedef.addfinalizer(
         functools.partial(fixturedef.finish, request=request)
     )
-    synchronizer = _fixture_synchronizer(fixturedef, runner, request)
+    synchronizer = _fixture_synchronizer(fixturedef, runner, request, runner_fixture_id)
     _make_asyncio_fixture_function(synchronizer, loop_scope)
     with MonkeyPatch.context() as c:
         c.setattr(fixturedef, "func", synchronizer)
