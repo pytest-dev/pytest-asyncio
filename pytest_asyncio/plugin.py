@@ -293,14 +293,10 @@ def _validate_scope(scope: str | None, option_name: str) -> None:
         )
 
 
-_default_fixture_loop_scope_warning_emitted_for_config: set[int] = set()
-
-
 def _warn_default_fixture_loop_scope_unset(config: Config) -> None:
-    config_id = id(config)
-    if config_id in _default_fixture_loop_scope_warning_emitted_for_config:
+    if getattr(config, "_asyncio_default_fixture_loop_scope_warning_emitted", False):
         return
-    _default_fixture_loop_scope_warning_emitted_for_config.add(config_id)
+    config._asyncio_default_fixture_loop_scope_warning_emitted = True
     warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
 
 
