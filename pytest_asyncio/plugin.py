@@ -935,12 +935,9 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
         if not _is_coroutine_or_asyncgen(fixturedef.func):
             return (yield)
     default_loop_scope = request.config.getini("asyncio_default_fixture_loop_scope")
-    loop_scope = (
-        getattr(fixturedef.func, "_loop_scope", None)
-        or default_loop_scope
-        or fixturedef.scope
-    )
-    if not default_loop_scope and not getattr(fixturedef.func, "_loop_scope", None):
+    fixture_loop_scope = getattr(fixturedef.func, "_loop_scope", None)
+    loop_scope = fixture_loop_scope or default_loop_scope or fixturedef.scope
+    if not default_loop_scope and not fixture_loop_scope:
         _warn_default_fixture_loop_scope_unset(request.config)
     runner_fixture_id = f"_{loop_scope}_scoped_runner"
     runner = request.getfixturevalue(runner_fixture_id)

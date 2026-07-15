@@ -168,6 +168,6 @@ def test_warning_for_unset_default_fixture_loop_scope_with_async_fixture(
     result.stdout.fnmatch_lines(
         [
             "*PytestDeprecationWarning: The configuration option "
-            "\"asyncio_default_fixture_loop_scope\" is unset.*"
+            '"asyncio_default_fixture_loop_scope" is unset.*'
         ]
     )
