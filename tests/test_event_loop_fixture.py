@@ -13,8 +13,6 @@ def test_event_loop_fixture_handles_unclosed_async_gen(
             import asyncio
             import pytest
 
-            pytest_plugins = 'pytest_asyncio'
-
             @pytest.mark.asyncio
             async def test_something():
                 async def generator_fn():
@@ -66,8 +64,6 @@ def test_event_loop_fixture_asyncgen_error(
     pytester.makepyfile(dedent("""\
             import asyncio
             import pytest
-
-            pytest_plugins = 'pytest_asyncio'
 
             @pytest.mark.asyncio
             async def test_something():
