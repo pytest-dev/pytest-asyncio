@@ -126,3 +126,48 @@ def test_invalid_default_fixture_loop_scope_raises_error(pytester: Pytester):
             "function, class, module, package, session."
         ]
     )
+
+
+def test_no_warning_for_unset_default_fixture_loop_scope_without_async_fixtures(
+    pytester: Pytester,
+):
+    """Regression test for #1344."""
+    pytester.makeini(dedent("""\
+        [pytest]
+        asyncio_mode = strict
+        """))
+    pytester.makepyfile(dedent("""\
+        def test_no_async():
+            pass
+        """))
+    result = pytester.runpytest_subprocess("-Werror")
+    result.assert_outcomes(passed=1)
+
+
+def test_warning_for_unset_default_fixture_loop_scope_with_async_fixture(
+    pytester: Pytester,
+):
+    pytester.makeini(dedent("""\
+        [pytest]
+        asyncio_mode = strict
+        """))
+    pytester.makepyfile(dedent("""\
+        import pytest
+        import pytest_asyncio
+
+        @pytest_asyncio.fixture
+        async def async_fixture():
+            return 42
+
+        @pytest.mark.asyncio
+        async def test_async(async_fixture):
+            assert async_fixture == 42
+        """))
+    result = pytester.runpytest_subprocess("-Wdefault")
+    result.assert_outcomes(passed=1, warnings=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestDeprecationWarning: The configuration option "
+            "\"asyncio_default_fixture_loop_scope\" is unset.*"
+        ]
+    )

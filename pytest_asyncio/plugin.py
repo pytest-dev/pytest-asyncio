@@ -293,11 +293,20 @@ def _validate_scope(scope: str | None, option_name: str) -> None:
         )
 
 
+_default_fixture_loop_scope_warning_emitted_for_config: set[int] = set()
+
+
+def _warn_default_fixture_loop_scope_unset(config: Config) -> None:
+    config_id = id(config)
+    if config_id in _default_fixture_loop_scope_warning_emitted_for_config:
+        return
+    _default_fixture_loop_scope_warning_emitted_for_config.add(config_id)
+    warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+
+
 def pytest_configure(config: Config) -> None:
     default_fixture_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
     _validate_scope(default_fixture_loop_scope, "asyncio_default_fixture_loop_scope")
-    if not default_fixture_loop_scope:
-        warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
 
     default_test_loop_scope = config.getini("asyncio_default_test_loop_scope")
     _validate_scope(default_test_loop_scope, "asyncio_default_test_loop_scope")
@@ -931,6 +940,8 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
         or default_loop_scope
         or fixturedef.scope
     )
+    if not default_loop_scope and not getattr(fixturedef.func, "_loop_scope", None):
+        _warn_default_fixture_loop_scope_unset(request.config)
     runner_fixture_id = f"_{loop_scope}_scoped_runner"
     runner = request.getfixturevalue(runner_fixture_id)
     # Prevent the runner closing before the fixture's async teardown.
