@@ -52,6 +52,7 @@ from pytest import (
     PytestCollectionWarning,
     PytestDeprecationWarning,
     PytestPluginManager,
+    StashKey,
 )
 
 if sys.version_info >= (3, 11):
@@ -293,10 +294,13 @@ def _validate_scope(scope: str | None, option_name: str) -> None:
         )
 
 
+_DEFAULT_FIXTURE_LOOP_SCOPE_WARNING_EMITTED: StashKey[bool] = StashKey()
+
+
 def _warn_default_fixture_loop_scope_unset(config: Config) -> None:
-    if getattr(config, "_asyncio_default_fixture_loop_scope_warning_emitted", False):
+    if config.stash.get(_DEFAULT_FIXTURE_LOOP_SCOPE_WARNING_EMITTED, False):
         return
-    config._asyncio_default_fixture_loop_scope_warning_emitted = True
+    config.stash[_DEFAULT_FIXTURE_LOOP_SCOPE_WARNING_EMITTED] = True
     warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
 
 
