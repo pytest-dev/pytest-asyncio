@@ -685,6 +685,51 @@ def _resolve_asyncio_marker(item: Function) -> Mark | None:
     return None
 
 
+def _mark_name(mark: object) -> str | None:
+    """Return the pytest mark name for Mark or MarkDecorator instances."""
+    name = getattr(mark, "name", None)
+    if isinstance(name, str):
+        return name
+    nested = getattr(mark, "mark", None)
+    nested_name = getattr(nested, "name", None)
+    return nested_name if isinstance(nested_name, str) else None
+
+
+def _as_mark(mark: object) -> Mark | None:
+    """Normalize MarkDecorator/Mark objects to a Mark instance."""
+    if isinstance(mark, Mark):
+        return mark
+    nested = getattr(mark, "mark", None)
+    return nested if isinstance(nested, Mark) else None
+
+
+def _asyncio_marker_from_parametrize(definition: Function) -> Mark | None:
+    """Return an asyncio mark applied via ``@pytest.mark.parametrize`` params.
+
+    In strict mode, ``pytest.mark.asyncio`` may only be present on individual
+    parameter sets (for example multi-backend tests). Collection still converts
+    those async parameter sets into Coroutine items, but ``pytest_generate_tests``
+    previously only looked at function-level markers and therefore skipped
+    ``pytest_asyncio_loop_factories`` parametrization for such tests.
+    """
+    from _pytest.mark.structures import ParameterSet
+
+    for mark in definition.iter_markers("parametrize"):
+        if not mark.args:
+            continue
+        # ``@pytest.mark.parametrize(argnames, argvalues, ...)``
+        argvalues = mark.args[1] if len(mark.args) >= 2 else ()
+        for argvalue in argvalues:
+            parameter_set = ParameterSet.extract_from(argvalue, force_tuple=True)
+            for param_mark in parameter_set.marks:
+                if _mark_name(param_mark) != "asyncio":
+                    continue
+                resolved = _as_mark(param_mark)
+                if resolved is not None:
+                    return resolved
+    return None
+
+
 # The function name needs to start with "pytest_"
 # see https://github.com/pytest-dev/pytest/issues/11307
 @pytest.hookimpl(specname="pytest_pycollect_makeitem", hookwrapper=True)
@@ -733,6 +778,8 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
         return
 
     asyncio_marker = _resolve_asyncio_marker(metafunc.definition)
+    if asyncio_marker is None:
+        asyncio_marker = _asyncio_marker_from_parametrize(metafunc.definition)
     if asyncio_marker is None:
         return
     marker_loop_scope, marker_selected_factory_names = _parse_asyncio_marker(
