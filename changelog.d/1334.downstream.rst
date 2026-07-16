@@ -1,0 +1,1 @@
+Avoided a ``PytestAssertRewriteWarning`` in the test suite when pytest-asyncio is already imported, such as when tests are run against a system-installed copy on Guix or FreeBSD.
