@@ -704,7 +704,8 @@ def _as_mark(mark: object) -> Mark | None:
 
 
 def _asyncio_marker_from_parametrize(definition: Function) -> Mark | None:
-    """Return an asyncio mark applied via ``@pytest.mark.parametrize`` params.
+    """
+    Return an asyncio mark applied via ``@pytest.mark.parametrize`` params.
 
     In strict mode, ``pytest.mark.asyncio`` may only be present on individual
     parameter sets (for example multi-backend tests). Collection still converts

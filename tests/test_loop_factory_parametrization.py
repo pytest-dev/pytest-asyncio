@@ -922,11 +922,11 @@ def test_async_fixture_recreated_per_loop_factory_variant(
 def test_asyncio_mark_via_parametrize_uses_hook_loop_factories(
     pytester: Pytester,
 ) -> None:
-    """Regression for #1463: asyncio mark only on a parameter set still uses factories."""
+    """
+    Regression for #1463: asyncio mark only on a parameter set still uses
+    factories."""
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makeconftest(
-        dedent(
-            """\
+    pytester.makeconftest(dedent("""\
         import asyncio
 
         class CustomEventLoop(asyncio.SelectorEventLoop):
@@ -934,12 +934,8 @@ def test_asyncio_mark_via_parametrize_uses_hook_loop_factories(
 
         def pytest_asyncio_loop_factories(config, item):
             return {"custom": CustomEventLoop}
-        """
-        )
-    )
-    pytester.makepyfile(
-        dedent(
-            """\
+        """))
+    pytester.makepyfile(dedent("""\
         import asyncio
         import pytest
 
@@ -955,8 +951,6 @@ def test_asyncio_mark_via_parametrize_uses_hook_loop_factories(
         )
         async def test_async(backend: str) -> None:
             assert type(asyncio.get_running_loop()).__name__ == "CustomEventLoop"
-        """
-        )
-    )
+        """))
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1, skipped=1)
