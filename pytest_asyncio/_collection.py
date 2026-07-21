@@ -11,7 +11,7 @@ import pytest
 from pytest import Function, Item, PytestCollectionWarning
 
 from ._config import _get_default_test_loop_scope
-from ._hooks import _ScopeName, _is_coroutine_or_asyncgen
+from ._hooks import _is_coroutine_or_asyncgen, _ScopeName
 from ._markers import (
     _collect_hook_loop_factories,
     _parse_asyncio_marker,
@@ -32,10 +32,11 @@ _hypothesis_version_incompatible_key: pytest.StashKey[bool] = pytest.StashKey()
 
 
 def _is_hypothesis_wrapped_coroutine(func: object) -> bool:
+    hypothesis_handle = getattr(func, "hypothesis", None)
     return bool(
         getattr(func, "is_hypothesis_test", False)
-        and getattr(func, "hypothesis", None)
-        and inspect.iscoroutinefunction(func.hypothesis.inner_test)
+        and hypothesis_handle is not None
+        and inspect.iscoroutinefunction(hypothesis_handle.inner_test)
     )
 
 

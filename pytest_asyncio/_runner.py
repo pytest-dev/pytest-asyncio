@@ -12,7 +12,6 @@ from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING
 
 import pytest
-from _pytest.scope import Scope
 from pytest import FixtureRequest
 
 from ._config import _get_asyncio_debug
@@ -138,10 +137,11 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
     return _scoped_runner
 
 
-for scope in Scope:
-    globals()[f"_{scope.value}_scoped_runner"] = _create_scoped_runner_fixture(
-        scope.value
-    )
+_function_scoped_runner = _create_scoped_runner_fixture("function")
+_class_scoped_runner = _create_scoped_runner_fixture("class")
+_module_scoped_runner = _create_scoped_runner_fixture("module")
+_package_scoped_runner = _create_scoped_runner_fixture("package")
+_session_scoped_runner = _create_scoped_runner_fixture("session")
 
 
 @pytest.fixture(scope="session")

@@ -7,8 +7,7 @@ from pytest import Pytester
 
 def test_warns_when_fixture_loop_scope_is_wider_than_test(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent("""\
+    pytester.makepyfile(dedent("""\
             import pytest
             import pytest_asyncio
 
@@ -21,8 +20,7 @@ def test_warns_when_fixture_loop_scope_is_wider_than_test(pytester: Pytester):
             @pytest.mark.asyncio(loop_scope="function")
             async def test_narrow(wide_fixture):
                 assert wide_fixture == 1
-            """)
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1)
     result.stdout.fnmatch_lines(
@@ -32,8 +30,7 @@ def test_warns_when_fixture_loop_scope_is_wider_than_test(pytester: Pytester):
 
 def test_warns_when_fixture_loop_scope_is_narrower_than_test(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent("""\
+    pytester.makepyfile(dedent("""\
             import pytest
             import pytest_asyncio
 
@@ -46,8 +43,7 @@ def test_warns_when_fixture_loop_scope_is_narrower_than_test(pytester: Pytester)
             @pytest.mark.asyncio(loop_scope="session")
             async def test_wide(narrow_fixture):
                 assert narrow_fixture == 1
-            """)
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1)
     result.stdout.fnmatch_lines(
@@ -57,8 +53,7 @@ def test_warns_when_fixture_loop_scope_is_narrower_than_test(pytester: Pytester)
 
 def test_warns_for_mismatch_reachable_only_transitively(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent("""\
+    pytester.makepyfile(dedent("""\
             import pytest
             import pytest_asyncio
 
@@ -75,8 +70,7 @@ def test_warns_for_mismatch_reachable_only_transitively(pytester: Pytester):
             @pytest.mark.asyncio(loop_scope="function")
             async def test_uses_sync_fixture(sync_fixture):
                 assert sync_fixture == 1
-            """)
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1)
     result.stdout.fnmatch_lines(
@@ -86,8 +80,7 @@ def test_warns_for_mismatch_reachable_only_transitively(pytester: Pytester):
 
 def test_diamond_shaped_dependency_warns_only_once(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent("""\
+    pytester.makepyfile(dedent("""\
             import pytest
             import pytest_asyncio
 
@@ -108,8 +101,7 @@ def test_diamond_shaped_dependency_warns_only_once(pytester: Pytester):
             @pytest.mark.asyncio(loop_scope="function")
             async def test_uses_both(fixture_a, fixture_b):
                 assert fixture_a == fixture_b == 1
-            """)
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1)
     warning_lines = [
@@ -124,8 +116,7 @@ def test_no_warning_when_loop_scope_matches_despite_differing_cache_scope(
     pytester: Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent("""\
+    pytester.makepyfile(dedent("""\
             import pytest
             import pytest_asyncio
 
@@ -138,8 +129,7 @@ def test_no_warning_when_loop_scope_matches_despite_differing_cache_scope(
             @pytest.mark.asyncio(loop_scope="session")
             async def test_matches(fixture_with_matching_loop_scope):
                 assert fixture_with_matching_loop_scope == 1
-            """)
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1)
     result.stdout.no_fnmatch_line("*PytestAsyncioLoopScopeMismatchWarning*")
@@ -147,8 +137,7 @@ def test_no_warning_when_loop_scope_matches_despite_differing_cache_scope(
 
 def test_no_warning_for_sync_fixture_with_differing_cache_scope(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent("""\
+    pytester.makepyfile(dedent("""\
             import pytest
 
             pytest_plugins = "pytest_asyncio"
@@ -160,8 +149,7 @@ def test_no_warning_for_sync_fixture_with_differing_cache_scope(pytester: Pytest
             @pytest.mark.asyncio(loop_scope="function")
             async def test_uses_plain_sync_fixture(plain_sync_fixture):
                 assert plain_sync_fixture == 1
-            """)
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1)
     result.stdout.no_fnmatch_line("*PytestAsyncioLoopScopeMismatchWarning*")
@@ -171,8 +159,7 @@ def test_mismatch_warning_can_be_silenced_via_filterwarnings_marker(
     pytester: Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent("""\
+    pytester.makepyfile(dedent("""\
             import pytest
             import pytest_asyncio
 
@@ -188,8 +175,7 @@ def test_mismatch_warning_can_be_silenced_via_filterwarnings_marker(
             )
             async def test_narrow(wide_fixture):
                 assert wide_fixture == 1
-            """)
-    )
+            """))
     result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1)
     result.stdout.no_fnmatch_line("*PytestAsyncioLoopScopeMismatchWarning*")

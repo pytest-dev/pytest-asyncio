@@ -14,14 +14,14 @@ from collections.abc import (
     Iterable,
 )
 from types import AsyncGeneratorType, CoroutineType
-from typing import Any, ParamSpec, TypeVar, overload
+from typing import Any, ParamSpec, TypeVar, cast, overload
 
 import pytest
 from _pytest.fixtures import resolve_fixture_function
 from pytest import Config, FixtureDef, FixtureRequest, MonkeyPatch
 
 from ._config import Mode, _get_asyncio_mode
-from ._hooks import _ScopeName, _is_coroutine_or_asyncgen
+from ._hooks import _is_coroutine_or_asyncgen, _ScopeName
 from ._runner import Runner, _temporary_event_loop
 
 _R = TypeVar("_R", bound=Awaitable | AsyncIterable | AsyncIterator)
@@ -116,7 +116,10 @@ def _effective_fixture_loop_scope(
     explicit loop_scope kwarg, else the configured fixture-loop-scope
     default, else its pytest cache scope."""
     default_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
-    return getattr(func, "_loop_scope", None) or default_loop_scope or cache_scope
+    return cast(
+        "_ScopeName",
+        getattr(func, "_loop_scope", None) or default_loop_scope or cache_scope,
+    )
 
 
 def _fixture_synchronizer(

@@ -11,6 +11,7 @@ Every async test and every async fixture runs on an event loop determined by its
 .. code-block:: python
 
     import pytest
+
     import pytest_asyncio
 
 

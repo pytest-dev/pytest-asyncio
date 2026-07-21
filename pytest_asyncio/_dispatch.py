@@ -97,7 +97,7 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
             with MonkeyPatch.context() as c:
                 c.setattr(target_obj, target_attr, synchronized_obj)
                 yield
-            return
+            return None
         else:
             pyfuncitem.warn(
                 pytest.PytestWarning(
