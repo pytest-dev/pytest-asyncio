@@ -5,7 +5,6 @@ from __future__ import annotations
 import contextvars
 import functools
 import inspect
-import warnings
 from collections.abc import (
     AsyncIterable,
     AsyncIterator,
@@ -19,23 +18,12 @@ from typing import Any, ParamSpec, TypeVar, overload
 
 import pytest
 from _pytest.fixtures import resolve_fixture_function
-from pytest import (
-    Config,
-    FixtureDef,
-    FixtureRequest,
-    MonkeyPatch,
-    PytestDeprecationWarning,
-)
+from pytest import Config, FixtureDef, FixtureRequest, MonkeyPatch
 
-from . import _runner
 from ._collection import _is_coroutine_or_asyncgen
 from ._config import Mode, _get_asyncio_mode
 from ._hooks import _ScopeName
-from ._runner import (
-    Runner,
-    _EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING,
-    _temporary_event_loop,
-)
+from ._runner import Runner, _temporary_event_loop
 
 _R = TypeVar("_R", bound=Awaitable | AsyncIterable | AsyncIterator)
 _P = ParamSpec("_P")
@@ -289,13 +277,6 @@ def _apply_contextvar_changes(
 
 @pytest.hookimpl(wrapper=True)
 def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
-    if (
-        fixturedef.argname == "event_loop_policy"
-        and fixturedef.func.__module__ != _runner.__name__
-    ):
-        warnings.warn(
-            PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
-        )
     asyncio_mode = _get_asyncio_mode(request.config)
     if not _is_asyncio_fixture_function(fixturedef.func):
         if asyncio_mode == Mode.STRICT:

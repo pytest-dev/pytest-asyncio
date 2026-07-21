@@ -25,8 +25,8 @@ from ._runner import (
     _module_scoped_runner,
     _package_scoped_runner,
     _session_scoped_runner,
-    event_loop_policy,
 )
+from ._usage_checks import pytest_collection_finish
 
 __all__ = [
     "PytestAsyncioError",
@@ -36,10 +36,10 @@ __all__ = [
     "_module_scoped_runner",
     "_package_scoped_runner",
     "_session_scoped_runner",
-    "event_loop_policy",
     "fixture",
     "is_async_test",
     "pytest_addoption",
+    "pytest_collection_finish",
     "pytest_configure",
     "pytest_fixture_setup",
     "pytest_generate_tests",

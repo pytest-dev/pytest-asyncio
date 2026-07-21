@@ -96,12 +96,6 @@ Here is the traceback of the exception triggered during teardown:
 %s
 """
 
-_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING = """\
-Overriding the "event_loop_policy" fixture is deprecated \
-and will be removed in a future version of pytest-asyncio. \
-Use the "pytest_asyncio_loop_factories" hook to customize event loop creation.\
-"""
-
 
 def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
     @pytest.fixture(
@@ -109,11 +103,10 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
         name=f"_{scope}_scoped_runner",
     )
     def _scoped_runner(
-        event_loop_policy,
         _asyncio_loop_factory,
         request: FixtureRequest,
     ) -> Iterator[Runner]:
-        new_loop_policy = event_loop_policy
+        new_loop_policy = _get_event_loop_policy()
         debug_mode = _get_asyncio_debug(request.config)
         with _temporary_event_loop_policy(new_loop_policy):
             runner = Runner(
@@ -154,9 +147,3 @@ for scope in Scope:
 @pytest.fixture(scope="session")
 def _asyncio_loop_factory(request: FixtureRequest) -> LoopFactory | None:
     return getattr(request, "param", None)
-
-
-@pytest.fixture(scope="session", autouse=True)
-def event_loop_policy() -> AbstractEventLoopPolicy:
-    """Return an instance of the policy used to create asyncio event loops."""
-    return _get_event_loop_policy()
