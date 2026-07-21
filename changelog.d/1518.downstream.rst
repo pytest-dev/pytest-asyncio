@@ -1,0 +1,1 @@
+Source-tree development dependencies now use PEP 735 dependency groups and ``uv.lock``.

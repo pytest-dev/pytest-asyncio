@@ -30,8 +30,12 @@ jobs:
     - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
       with:
         python-version: ${{ env.PYTHON_LATEST }}
+    - name: Set up the latest version of uv
+      uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9  # v9.0.0
+      with:
+        enable-cache: false
     - name: Install tox
-      run: python -m pip install tox
+      run: uv tool install tox --with tox-uv
     - name: Build package and check distributions
       run: tox run -e build
     - name: List result
@@ -83,14 +87,14 @@ jobs:
     - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -VV
-        python -m site
-        python -m pip install --upgrade pip
-        python -m pip install --upgrade coverage[toml] virtualenv tox tox-gh-actions
+    - name: Set up the latest version of uv
+      uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9  # v9.0.0
+      with:
+        enable-cache: false
+    - name: Install tox
+      run: uv tool install tox --with tox-uv --with tox-gh-actions
     - name: Run tox targets for ${{ matrix.python-version }}
-      run: python -m tox
+      run: tox
 
     - name: Store coverage data
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -111,14 +115,14 @@ jobs:
     - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
       with:
         python-version: ${{ env.PYTHON_LATEST }}
-    - name: Install dependencies
-      run: |
-        python -VV
-        python -m site
-        python -m pip install --upgrade pip
-        python -m pip install --upgrade tox
+    - name: Set up the latest version of uv
+      uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9  # v9.0.0
+      with:
+        enable-cache: false
+    - name: Install tox
+      run: uv tool install tox --with tox-uv
     - name: Run tests against pytest main
-      run: python -m tox run -e pytest-dev
+      run: tox run -e pytest-dev
 
   lint-github-actions:
     name: Lint GitHub Actions
