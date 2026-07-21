@@ -24,9 +24,7 @@ def test_asyncio_and_analogous_backend_parametrize_uses_loop_factories(
         "markers =\n"
         "    other_async: analogous non-asyncio backend for multi-backend params\n"
     )
-    pytester.makeconftest(
-        dedent(
-            """\
+    pytester.makeconftest(dedent("""\
         import asyncio
         import inspect
 
@@ -66,12 +64,8 @@ def test_asyncio_and_analogous_backend_parametrize_uses_loop_factories(
                     pass
                 loop.close()
             return True
-        """
-        )
-    )
-    pytester.makepyfile(
-        dedent(
-            """\
+        """))
+    pytester.makepyfile(dedent("""\
         import asyncio
         import pytest
 
@@ -92,8 +86,6 @@ def test_asyncio_and_analogous_backend_parametrize_uses_loop_factories(
             else:
                 assert backend == "other"
                 assert loop_name == "OtherBackendLoop"
-        """
-        )
-    )
+        """))
     result = pytester.runpytest("--asyncio-mode=strict", "-v")
     result.assert_outcomes(passed=2)
