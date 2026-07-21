@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import warnings
 from collections.abc import Mapping, Sequence
 
 import pytest
-from pytest import Config, Function, Item, Mark, PytestDeprecationWarning
+from pytest import Config, Function, Item, Mark
 
 from ._config import Mode, _get_asyncio_mode
 from ._hooks import LoopFactory, _ScopeName
@@ -39,16 +38,6 @@ def _collect_hook_loop_factories(
     return factories
 
 
-_DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR = """\
-An asyncio pytest marker defines both "scope" and "loop_scope", \
-but it should only use "loop_scope".
-"""
-
-_MARKER_SCOPE_KWARG_DEPRECATION_WARNING = """\
-The "scope" keyword argument to the asyncio marker has been deprecated. \
-Please use the "loop_scope" argument instead.
-"""
-
 _INVALID_LOOP_FACTORIES_KWARG = """\
 mark.asyncio 'loop_factories' must be a non-empty sequence of strings.
 """
@@ -59,13 +48,7 @@ def _parse_asyncio_marker(
 ) -> tuple[_ScopeName | None, Sequence[str] | None]:
     assert asyncio_marker.name == "asyncio"
     _validate_asyncio_marker(asyncio_marker)
-    if "scope" in asyncio_marker.kwargs:
-        if "loop_scope" in asyncio_marker.kwargs:
-            raise pytest.UsageError(_DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR)
-        warnings.warn(PytestDeprecationWarning(_MARKER_SCOPE_KWARG_DEPRECATION_WARNING))
-    scope = asyncio_marker.kwargs.get("loop_scope") or asyncio_marker.kwargs.get(
-        "scope"
-    )
+    scope = asyncio_marker.kwargs.get("loop_scope")
     if scope is not None:
         assert scope in {"function", "class", "module", "package", "session"}
     marker_value = asyncio_marker.kwargs.get("loop_factories")
@@ -84,7 +67,7 @@ def _parse_asyncio_marker(
 def _validate_asyncio_marker(asyncio_marker: Mark) -> None:
     if asyncio_marker.args or (
         asyncio_marker.kwargs
-        and set(asyncio_marker.kwargs) - {"loop_scope", "scope", "loop_factories"}
+        and set(asyncio_marker.kwargs) - {"loop_scope", "loop_factories"}
     ):
         msg = (
             "mark.asyncio accepts only keyword arguments 'loop_scope' and"

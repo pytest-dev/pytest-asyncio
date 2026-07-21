@@ -74,7 +74,7 @@ def _synchronization_target(item: Function) -> tuple[object, str]:
 def _compute_test_loop_scope(item: Function) -> _ScopeName:
     marker = item.get_closest_marker("asyncio")
     assert marker is not None
-    loop_scope = marker.kwargs.get("loop_scope") or marker.kwargs.get("scope")
+    loop_scope = marker.kwargs.get("loop_scope")
     if loop_scope is not None:
         return loop_scope
     return _get_default_test_loop_scope(item.config)
