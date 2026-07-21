@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Collection, Generator, Sequence
+from typing import Literal
 
 import pluggy
 import pytest
@@ -18,6 +19,9 @@ from ._markers import (
 )
 from ._mismatch import _compute_loop_scope_mismatches
 from ._runner import _asyncio_loop_factory
+
+_AsyncFunctionCategory = Literal["coroutine", "asyncgen", "staticmethod", "hypothesis"]
+_SynchronizationTargetAttr = Literal["obj", "inner_test"]
 
 asyncio_test_key: pytest.StashKey[bool] = pytest.StashKey()
 loop_scope_key: pytest.StashKey[_ScopeName] = pytest.StashKey()
@@ -35,7 +39,7 @@ def _is_hypothesis_wrapped_coroutine(func: object) -> bool:
     )
 
 
-def _classify_async_function(func: object) -> str | None:
+def _classify_async_function(func: object) -> _AsyncFunctionCategory | None:
     """
     Classify a collected test function, mirroring the precedence of
     pytest-asyncio's historical Item-subclass hierarchy exactly (first
@@ -59,7 +63,9 @@ def _classify_async_function(func: object) -> str | None:
     return None
 
 
-def _synchronization_target(item: Function) -> tuple[object, str]:
+def _synchronization_target(
+    item: Function,
+) -> tuple[object, _SynchronizationTargetAttr]:
     """
     Return the (obj, attr) pair that needs to be monkeypatched with a
     synchronized wrapper while the test runs. Normally this is the item
