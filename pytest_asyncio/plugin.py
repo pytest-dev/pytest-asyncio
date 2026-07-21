@@ -805,11 +805,8 @@ def _temporary_event_loop(loop: AbstractEventLoop) -> Iterator[None]:
 
 
 @contextlib.contextmanager
-def _temporary_event_loop_policy(
-    policy: AbstractEventLoopPolicy,
-) -> Iterator[None]:
+def _restore_event_loop_policy() -> Iterator[None]:
     old_loop_policy = _get_event_loop_policy()
-    _set_event_loop_policy(policy)
     try:
         yield
     finally:
@@ -1018,7 +1015,7 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
         request: FixtureRequest,
     ) -> Iterator[Runner]:
         debug_mode = _get_asyncio_debug(request.config)
-        with _temporary_event_loop_policy(asyncio.get_event_loop_policy()):
+        with _restore_event_loop_policy():
             runner = Runner(
                 debug=debug_mode,
                 loop_factory=_asyncio_loop_factory,
