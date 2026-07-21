@@ -111,7 +111,8 @@ def test_asyncio_mark_respects_the_loop_policy(
 
             class TestUsesCustomEventLoop:
                 @pytest.fixture(scope="class")
-                def event_loop_policy(self):
+                @classmethod
+                def event_loop_policy(cls):
                     return CustomEventLoopPolicy()
 
                 @pytest.mark.asyncio
