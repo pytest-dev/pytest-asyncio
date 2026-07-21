@@ -11,7 +11,8 @@ import pytest
 from ._collection import (
     is_async_test,
     pytest_generate_tests,
-    pytest_pycollect_makeitem_convert_async_functions_to_subclass,
+    pytest_pycollect_makeitem_tag_async_items,
+    pytest_runtest_setup,
 )
 from ._config import pytest_addoption, pytest_configure, pytest_report_header
 from ._dispatch import pytest_pyfunc_call
@@ -42,9 +43,10 @@ __all__ = [
     "pytest_configure",
     "pytest_fixture_setup",
     "pytest_generate_tests",
-    "pytest_pycollect_makeitem_convert_async_functions_to_subclass",
+    "pytest_pycollect_makeitem_tag_async_items",
     "pytest_pyfunc_call",
     "pytest_report_header",
+    "pytest_runtest_setup",
     "unused_tcp_port",
     "unused_tcp_port_factory",
     "unused_udp_port",

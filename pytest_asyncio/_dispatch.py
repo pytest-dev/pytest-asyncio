@@ -1,15 +1,42 @@
-"""Pre-flight checks that run just before an asyncio test executes."""
+"""Dispatch of asyncio tests: synchronized execution plus pre-flight warnings."""
 
 from __future__ import annotations
 
+import contextvars
+import functools
 import warnings
+from collections.abc import Callable
+from types import CoroutineType
 
 import pytest
-from pytest import Function, PytestDeprecationWarning
+from pytest import Function, MonkeyPatch, PytestDeprecationWarning
 
-from ._collection import _is_coroutine_or_asyncgen, is_async_test
+from ._collection import (
+    _is_coroutine_or_asyncgen,
+    _synchronization_target,
+    is_async_test,
+    loop_scope_key,
+)
 from ._config import Mode, _get_asyncio_mode
 from ._fixtures import _is_asyncio_fixture_function
+
+
+def _synchronize_coroutine(
+    func: Callable[..., CoroutineType],
+    runner,
+    context: contextvars.Context,
+):
+    """
+    Return a sync wrapper around a coroutine executing it in the
+    specified runner and context.
+    """
+
+    @functools.wraps(func)
+    def inner(*args, **kwargs):
+        coro = func(*args, **kwargs)
+        runner.run(coro, context=context)
+
+    return inner
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
@@ -43,6 +70,18 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
                     # so it at least indicates that it's the plugin complaining.
                     # Pytest gives the test file & name in the warnings summary at least
 
+            loop_scope = pyfuncitem.stash[loop_scope_key]
+            runner_fixture_id = f"_{loop_scope}_scoped_runner"
+            runner = pyfuncitem._request.getfixturevalue(runner_fixture_id)  # type: ignore[attr-defined]
+            context = contextvars.copy_context()
+            target_obj, target_attr = _synchronization_target(pyfuncitem)
+            synchronized_obj = _synchronize_coroutine(
+                getattr(target_obj, target_attr), runner, context
+            )
+            with MonkeyPatch.context() as c:
+                c.setattr(target_obj, target_attr, synchronized_obj)
+                yield
+            return
         else:
             pyfuncitem.warn(
                 pytest.PytestWarning(
