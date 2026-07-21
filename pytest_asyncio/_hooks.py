@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 from asyncio import AbstractEventLoop
 from collections.abc import Callable, Mapping
 from typing import Literal, TypeAlias
@@ -11,6 +12,10 @@ from pytest import Config, Item
 
 _ScopeName = Literal["session", "package", "module", "class", "function"]
 LoopFactory: TypeAlias = Callable[[], AbstractEventLoop]
+
+
+def _is_coroutine_or_asyncgen(obj: object) -> bool:
+    return inspect.iscoroutinefunction(obj) or inspect.isasyncgenfunction(obj)
 
 
 class PytestAsyncioError(Exception):

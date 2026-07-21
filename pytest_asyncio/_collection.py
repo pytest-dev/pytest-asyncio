@@ -10,21 +10,21 @@ import pytest
 from pytest import Function, Item, PytestCollectionWarning
 
 from ._config import _get_default_test_loop_scope
-from ._hooks import _ScopeName
+from ._hooks import _ScopeName, _is_coroutine_or_asyncgen
 from ._markers import (
     _collect_hook_loop_factories,
     _parse_asyncio_marker,
     _resolve_asyncio_marker,
 )
+from ._mismatch import _compute_loop_scope_mismatches
 from ._runner import _asyncio_loop_factory
 
 asyncio_test_key: pytest.StashKey[bool] = pytest.StashKey()
 loop_scope_key: pytest.StashKey[_ScopeName] = pytest.StashKey()
+loop_scope_mismatches_key: pytest.StashKey[list[tuple[str, _ScopeName]]] = (
+    pytest.StashKey()
+)
 _hypothesis_version_incompatible_key: pytest.StashKey[bool] = pytest.StashKey()
-
-
-def _is_coroutine_or_asyncgen(obj: object) -> bool:
-    return inspect.iscoroutinefunction(obj) or inspect.isasyncgenfunction(obj)
 
 
 def _is_hypothesis_wrapped_coroutine(func: object) -> bool:
@@ -132,6 +132,9 @@ def pytest_pycollect_makeitem_tag_async_items(
             node.stash[_hypothesis_version_incompatible_key] = True
         loop_scope = _compute_test_loop_scope(node)
         node.stash[loop_scope_key] = loop_scope
+        node.stash[loop_scope_mismatches_key] = _compute_loop_scope_mismatches(
+            node, loop_scope, node.config
+        )
         # Insert (rather than append) so that _fillfixtures(), which resolves
         # item.fixturenames strictly in order, resolves the loop factory
         # before any other same-scope async fixture. A loop-factory variant

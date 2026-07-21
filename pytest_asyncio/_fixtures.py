@@ -20,9 +20,8 @@ import pytest
 from _pytest.fixtures import resolve_fixture_function
 from pytest import Config, FixtureDef, FixtureRequest, MonkeyPatch
 
-from ._collection import _is_coroutine_or_asyncgen
 from ._config import Mode, _get_asyncio_mode
-from ._hooks import _ScopeName
+from ._hooks import _ScopeName, _is_coroutine_or_asyncgen
 from ._runner import Runner, _temporary_event_loop
 
 _R = TypeVar("_R", bound=Awaitable | AsyncIterable | AsyncIterator)
@@ -96,6 +95,28 @@ def _make_asyncio_fixture_function(obj: Any, loop_scope: _ScopeName | None) -> N
         obj = obj.__func__
     obj._force_asyncio_fixture = True
     obj._loop_scope = loop_scope
+
+
+def _owns_fixture(func: Any, mode: Mode) -> bool:
+    """
+    Returns whether pytest-asyncio takes ownership of (wraps/synchronizes)
+    the given fixture function."""
+    if _is_asyncio_fixture_function(func):
+        return True
+    if mode is not Mode.AUTO:
+        return False
+    return _is_coroutine_or_asyncgen(func)
+
+
+def _effective_fixture_loop_scope(
+    func: Any, cache_scope: str, config: Config
+) -> _ScopeName:
+    """
+    The loop scope an async fixture actually runs its body under: its own
+    explicit loop_scope kwarg, else the configured fixture-loop-scope
+    default, else its pytest cache scope."""
+    default_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
+    return getattr(func, "_loop_scope", None) or default_loop_scope or cache_scope
 
 
 def _fixture_synchronizer(
@@ -278,18 +299,10 @@ def _apply_contextvar_changes(
 @pytest.hookimpl(wrapper=True)
 def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
     asyncio_mode = _get_asyncio_mode(request.config)
-    if not _is_asyncio_fixture_function(fixturedef.func):
-        if asyncio_mode == Mode.STRICT:
-            # Ignore async fixtures without explicit asyncio mark in strict mode
-            # This applies to pytest_trio fixtures, for example
-            return (yield)
-        if not _is_coroutine_or_asyncgen(fixturedef.func):
-            return (yield)
-    default_loop_scope = request.config.getini("asyncio_default_fixture_loop_scope")
-    loop_scope = (
-        getattr(fixturedef.func, "_loop_scope", None)
-        or default_loop_scope
-        or fixturedef.scope
+    if not _owns_fixture(fixturedef.func, asyncio_mode):
+        return (yield)
+    loop_scope = _effective_fixture_loop_scope(
+        fixturedef.func, fixturedef.scope, request.config
     )
     runner_fixture_id = f"_{loop_scope}_scoped_runner"
     runner = request.getfixturevalue(runner_fixture_id)

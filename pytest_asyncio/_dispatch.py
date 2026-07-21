@@ -16,9 +16,11 @@ from ._collection import (
     _synchronization_target,
     is_async_test,
     loop_scope_key,
+    loop_scope_mismatches_key,
 )
 from ._config import Mode, _get_asyncio_mode
 from ._fixtures import _is_asyncio_fixture_function
+from ._mismatch import PytestAsyncioLoopScopeMismatchWarning
 
 
 def _synchronize_coroutine(
@@ -71,6 +73,20 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
                     # Pytest gives the test file & name in the warnings summary at least
 
             loop_scope = pyfuncitem.stash[loop_scope_key]
+            for fixture_name, fixture_loop_scope in pyfuncitem.stash.get(
+                loop_scope_mismatches_key, ()
+            ):
+                warnings.warn(
+                    PytestAsyncioLoopScopeMismatchWarning(
+                        f"{pyfuncitem.nodeid}: the test's effective loop_scope "
+                        f"{loop_scope!r} differs from fixture {fixture_name!r}'s "
+                        f"effective loop_scope {fixture_loop_scope!r}. The fixture "
+                        "will run on a different event loop than the test, which "
+                        "can silently break objects (e.g. asyncio.Future, Task, or "
+                        "Lock) bound to the loop they were created on."
+                    ),
+                    stacklevel=1,
+                )
             runner_fixture_id = f"_{loop_scope}_scoped_runner"
             runner = pyfuncitem._request.getfixturevalue(runner_fixture_id)  # type: ignore[attr-defined]
             context = contextvars.copy_context()

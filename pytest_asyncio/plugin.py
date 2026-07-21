@@ -18,6 +18,7 @@ from ._config import pytest_addoption, pytest_configure, pytest_report_header
 from ._dispatch import pytest_pyfunc_call
 from ._fixtures import fixture, pytest_fixture_setup
 from ._hooks import PytestAsyncioError
+from ._mismatch import PytestAsyncioLoopScopeMismatchWarning
 from ._runner import (
     _asyncio_loop_factory,
     _class_scoped_runner,
@@ -30,6 +31,7 @@ from ._usage_checks import pytest_collection_finish
 
 __all__ = [
     "PytestAsyncioError",
+    "PytestAsyncioLoopScopeMismatchWarning",
     "_asyncio_loop_factory",
     "_class_scoped_runner",
     "_function_scoped_runner",

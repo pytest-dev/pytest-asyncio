@@ -128,8 +128,9 @@ def test_asyncio_mark_allows_combining_session_scoped_fixture_with_package_scope
                 assert asyncio.get_running_loop() is not loop
             """),
     )
-    result = pytester.runpytest("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines("*PytestAsyncioLoopScopeMismatchWarning*")
 
 
 def test_asyncio_mark_allows_combining_session_scoped_fixture_with_module_scoped_test(
@@ -157,8 +158,9 @@ def test_asyncio_mark_allows_combining_session_scoped_fixture_with_module_scoped
                 assert asyncio.get_running_loop() is not loop
             """),
     )
-    result = pytester.runpytest("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines("*PytestAsyncioLoopScopeMismatchWarning*")
 
 
 def test_asyncio_mark_allows_combining_session_scoped_fixture_with_class_scoped_test(
@@ -187,8 +189,9 @@ def test_asyncio_mark_allows_combining_session_scoped_fixture_with_class_scoped_
                     assert asyncio.get_running_loop() is not loop
             """),
     )
-    result = pytester.runpytest("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines("*PytestAsyncioLoopScopeMismatchWarning*")
 
 
 def test_asyncio_mark_allows_combining_session_scoped_fixture_with_function_scoped_test(
@@ -216,8 +219,9 @@ def test_asyncio_mark_allows_combining_session_scoped_fixture_with_function_scop
                 assert asyncio.get_running_loop() is not loop
             """),
     )
-    result = pytester.runpytest("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines("*PytestAsyncioLoopScopeMismatchWarning*")
 
 
 def test_allows_combining_session_scoped_asyncgen_fixture_with_function_scoped_test(
@@ -246,8 +250,9 @@ def test_allows_combining_session_scoped_asyncgen_fixture_with_function_scoped_t
                 assert asyncio.get_running_loop() is not loop
             """),
     )
-    result = pytester.runpytest("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines("*PytestAsyncioLoopScopeMismatchWarning*")
 
 
 def test_asyncio_mark_handles_missing_event_loop_triggered_by_fixture(
