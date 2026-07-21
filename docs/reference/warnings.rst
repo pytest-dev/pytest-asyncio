@@ -6,7 +6,7 @@ PytestAsyncioLoopScopeMismatchWarning
 ======================================
 Warns that a test or fixture requests an async fixture whose effective *loop_scope* differs from its own.
 
-Every async test and every async fixture runs on an event loop determined by its effective *loop_scope* (its own explicit *loop_scope* argument, else the configured default, else its pytest caching scope). When a test or fixture (transitively) depends on an async fixture with a *different* effective *loop_scope*, the two run on different event loops. This can silently break objects -- such as :class:`asyncio.Future`, :class:`asyncio.Task`, or :class:`asyncio.Lock` -- that are bound to the loop they were created on.
+Every async test and every async fixture runs on an event loop determined by its effective *loop_scope* (its own explicit *loop_scope* argument, else the configured default, else its pytest caching scope). When a test or fixture (transitively) depends on an async fixture with a *different* effective *loop_scope*, the two run on different event loops. This can silently break objects -- such as ``asyncio.Future``, ``asyncio.Task``, or ``asyncio.Lock`` -- that are bound to the loop they were created on.
 
 .. code-block:: python
 
