@@ -90,7 +90,7 @@ pytest-min = [
   "hypothesis==6.88.3",
   "iniconfig==2",
   "packaging==23.2",
-  "pluggy==1.5",
+  "pluggy==1.6.0",
   "pygments==2.16.1",
   "pytest==8.4",
   "sortedcontainers==2.4",
