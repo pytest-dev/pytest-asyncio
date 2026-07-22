@@ -20,5 +20,6 @@ How-To Guides
   parametrize_with_asyncio
   uvloop
   test_item_is_async
+  isolate_async_apps
 
 This section of the documentation provides code snippets and recipes to accomplish specific tasks with pytest-asyncio.
