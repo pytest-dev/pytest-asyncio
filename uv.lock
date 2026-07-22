@@ -595,29 +595,12 @@ wheels = [
 
 [[package]]
 name = "hypothesis"
-version = "6.88.3"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.12'",
-    "python_full_version < '3.12'",
-]
-dependencies = [
-    { name = "attrs", version = "23.1.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "exceptiongroup", version = "1.1.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and extra == 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-dev' and extra == 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
-    { name = "sortedcontainers", marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/e9/1b/bfbf5ff8fcb63008baf87ab7a4fbf2deccf27efcbae03f9b695859e95f5e/hypothesis-6.88.3.tar.gz", hash = "sha256:5cfda253e34726c98ab04b9595fca15677ee9f4f6055146aea25a6278d71f6f1", size = 360081, upload-time = "2023-11-05T02:32:26.613Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9c/1e/33278c57e90cd2bad400f567fc0f0eb2007fc0360fd87b122223dfd88844/hypothesis-6.88.3-py3-none-any.whl", hash = "sha256:781ce6fd35e11ca77ad132a20cebe66fd215f56678f8efd6b87013b14500151b", size = 420965, upload-time = "2023-11-05T02:32:18.805Z" },
-]
-
-[[package]]
-name = "hypothesis"
 version = "6.156.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "exceptiongroup", version = "1.1.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and extra == 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-dev' and extra == 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
     { name = "exceptiongroup", version = "1.3.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and extra == 'group-14-pytest-asyncio-dev') or (python_full_version < '3.11' and extra != 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-dev' and extra == 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
-    { name = "sortedcontainers", marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
+    { name = "sortedcontainers" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/20/83/8dbe89bdb8c6f25a7a52e7898af6d82fe35dfef08e5c702f6e33231ce6c6/hypothesis-6.156.6.tar.gz", hash = "sha256:96de02faefa3ce079873541da96f42595583bb001e8e4219294ed7d4501cc4cc", size = 476304, upload-time = "2026-07-10T20:56:49.96Z" }
 wheels = [
@@ -1328,8 +1311,7 @@ docs = [
 ]
 testing = [
     { name = "coverage" },
-    { name = "hypothesis", version = "6.88.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "hypothesis", version = "6.156.6", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
+    { name = "hypothesis" },
 ]
 
 [package.dev-dependencies]
@@ -1344,7 +1326,7 @@ dev = [
     { name = "build", version = "1.5.0", source = { registry = "https://pypi.org/simple" } },
     { name = "check-wheel-contents" },
     { name = "coverage" },
-    { name = "hypothesis", version = "6.156.6", source = { registry = "https://pypi.org/simple" } },
+    { name = "hypothesis" },
     { name = "pre-commit" },
     { name = "pyright", extra = ["nodejs"], marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
     { name = "pytest", version = "9.1.0", source = { registry = "https://pypi.org/simple" } },
@@ -1364,7 +1346,7 @@ pytest-min = [
     { name = "backports-asyncio-runner", marker = "python_full_version < '3.11'" },
     { name = "coverage" },
     { name = "exceptiongroup", version = "1.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "hypothesis", version = "6.88.3", source = { registry = "https://pypi.org/simple" } },
+    { name = "hypothesis" },
     { name = "iniconfig", version = "2.0.0", source = { registry = "https://pypi.org/simple" } },
     { name = "packaging", version = "23.2", source = { registry = "https://pypi.org/simple" } },
     { name = "pluggy", version = "1.5.0", source = { registry = "https://pypi.org/simple" } },
@@ -1376,7 +1358,7 @@ pytest-min = [
 ]
 test = [
     { name = "coverage" },
-    { name = "hypothesis", version = "6.156.6", source = { registry = "https://pypi.org/simple" } },
+    { name = "hypothesis" },
 ]
 typing = [
     { name = "pyright", extra = ["nodejs"] },
@@ -1426,7 +1408,7 @@ pytest-min = [
     { name = "backports-asyncio-runner", marker = "python_full_version < '3.11'", specifier = "==1.2" },
     { name = "coverage", specifier = "==7.15.1" },
     { name = "exceptiongroup", marker = "python_full_version < '3.11'", specifier = "==1.1.3" },
-    { name = "hypothesis", specifier = "==6.88.3" },
+    { name = "hypothesis", specifier = "==6.156.6" },
     { name = "iniconfig", specifier = "==2" },
     { name = "packaging", specifier = "==23.2" },
     { name = "pluggy", specifier = "==1.5" },
