@@ -91,7 +91,7 @@ pytest-min = [
   "iniconfig==2",
   "packaging==23.2",
   "pluggy==1.5",
-  "pygments==2.16.1",
+  "pygments==2.20.0",
   "pytest==8.4",
   "sortedcontainers==2.4",
   "tomli==2.0.1; python_version<'3.11'",
