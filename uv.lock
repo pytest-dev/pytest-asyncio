@@ -17,19 +17,6 @@ conflicts = [[
 
 [[package]]
 name = "alabaster"
-version = "0.7.16"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.12'",
-    "python_full_version < '3.12'",
-]
-sdist = { url = "https://files.pythonhosted.org/packages/c9/3e/13dd8e5ed9094e734ac430b5d0eb4f2bb001708a8b7856cbf8e084e001ba/alabaster-0.7.16.tar.gz", hash = "sha256:75a8b99c28a5dad50dd7f8ccdd447a121ddb3892da9e53d1ca5cca3106d58d65", size = 23776, upload-time = "2024-01-10T00:56:10.189Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/32/34/d4e1c02d3bee589efb5dfa17f88ea08bdb3e3eac12bc475462aec52ed223/alabaster-0.7.16-py3-none-any.whl", hash = "sha256:b46733c07dce03ae4e150330b975c75737fa60f0a7c591b6c8bf4928a28e2c92", size = 13511, upload-time = "2024-01-10T00:56:08.388Z" },
-]
-
-[[package]]
-name = "alabaster"
 version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a6/f8/d9c74d0daf3f742840fd818d69cfae176fa332022fd44e3469487d5a9420/alabaster-1.0.0.tar.gz", hash = "sha256:c00dca57bca26fa62a6d7d0a9fcce65f3e026e9bfe33e9c538fd3fbb2144fd9e", size = 24210, upload-time = "2024-07-26T18:15:03.762Z" }
@@ -1265,19 +1252,6 @@ wheels = [
 
 [[package]]
 name = "pygments"
-version = "2.16.1"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.12'",
-    "python_full_version < '3.12'",
-]
-sdist = { url = "https://files.pythonhosted.org/packages/d6/f7/4d461ddf9c2bcd6a4d7b2b139267ca32a69439387cc1f02a924ff8883825/Pygments-2.16.1.tar.gz", hash = "sha256:1daff0494820c69bc8941e407aa20f577374ee88364ee10a98fdbe0aece96e29", size = 4872980, upload-time = "2023-08-06T15:14:55.713Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/43/88/29adf0b44ba6ac85045e63734ae0997d3c58d8b1a91c914d240828d0d73d/Pygments-2.16.1-py3-none-any.whl", hash = "sha256:13fc09fa63bc8d8671a6d247e1eb303c4b343eaee81d861f3404db2935653692", size = 1164750, upload-time = "2023-08-06T15:14:51.905Z" },
-]
-
-[[package]]
-name = "pygments"
 version = "2.20.0"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/c3/b2/bc9c9196916376152d655522fdcebac55e66de6603a76a02bca1b6414f6c/pygments-2.20.0.tar.gz", hash = "sha256:6757cd03768053ff99f3039c1a36d6c0aa0b263438fcab17520b30a303a82b5f", size = 4955991, upload-time = "2026-03-29T13:29:33.898Z" }
@@ -1326,7 +1300,7 @@ dependencies = [
     { name = "iniconfig", version = "2.0.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
     { name = "packaging", version = "23.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
     { name = "pluggy", version = "1.5.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "pygments", version = "2.16.1", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
+    { name = "pygments", marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
     { name = "tomli", version = "2.0.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and extra == 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-dev' and extra == 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/fb/aa/405082ce2749be5398045152251ac69c0f3578c7077efc53431303af97ce/pytest-8.4.0.tar.gz", hash = "sha256:14d920b48472ea0dbf68e45b96cd1ffda4705f33307dcc86c676c1b5104838a6", size = 1515232, upload-time = "2025-06-02T17:36:30.03Z" }
@@ -1344,7 +1318,7 @@ dependencies = [
     { name = "iniconfig", version = "2.3.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
     { name = "packaging", version = "26.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
     { name = "pluggy", version = "1.6.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
-    { name = "pygments", version = "2.20.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
+    { name = "pygments", marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
     { name = "tomli", version = "2.4.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and extra == 'group-14-pytest-asyncio-dev') or (python_full_version < '3.11' and extra != 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-dev' and extra == 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/84/0e/b5858858d74958632c49b72cb25a3976ff9f632397626715be71c89d3971/pytest-9.1.0.tar.gz", hash = "sha256:41dd9148c08072446394cefd3d79701701335a9f4cae69ba92e39f6c7f5c061c", size = 1634181, upload-time = "2026-06-13T18:52:45.983Z" }
@@ -1364,8 +1338,7 @@ dependencies = [
 
 [package.optional-dependencies]
 docs = [
-    { name = "sphinx", version = "7.3.7", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
+    { name = "sphinx" },
     { name = "sphinx-rtd-theme" },
     { name = "sphinx-tabs" },
 ]
@@ -1392,14 +1365,13 @@ dev = [
     { name = "pre-commit" },
     { name = "pyright", extra = ["nodejs"], marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
     { name = "pytest", version = "9.1.0", source = { registry = "https://pypi.org/simple" } },
-    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" } },
+    { name = "sphinx" },
     { name = "sphinx-rtd-theme" },
     { name = "sphinx-tabs" },
     { name = "twine", version = "6.2.0", source = { registry = "https://pypi.org/simple" } },
 ]
 docs = [
-    { name = "sphinx", version = "7.3.7", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
+    { name = "sphinx" },
     { name = "sphinx-rtd-theme" },
     { name = "sphinx-tabs" },
 ]
@@ -1412,7 +1384,7 @@ pytest-min = [
     { name = "iniconfig", version = "2.0.0", source = { registry = "https://pypi.org/simple" } },
     { name = "packaging", version = "23.2", source = { registry = "https://pypi.org/simple" } },
     { name = "pluggy", version = "1.5.0", source = { registry = "https://pypi.org/simple" } },
-    { name = "pygments", version = "2.16.1", source = { registry = "https://pypi.org/simple" } },
+    { name = "pygments" },
     { name = "pytest", version = "8.4.0", source = { registry = "https://pypi.org/simple" } },
     { name = "sortedcontainers" },
     { name = "tomli", version = "2.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
@@ -1474,7 +1446,7 @@ pytest-min = [
     { name = "iniconfig", specifier = "==2" },
     { name = "packaging", specifier = "==23.2" },
     { name = "pluggy", specifier = "==1.5" },
-    { name = "pygments", specifier = "==2.16.1" },
+    { name = "pygments", specifier = "==2.20.0" },
     { name = "pytest", specifier = "==8.4" },
     { name = "sortedcontainers", specifier = "==2.4" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = "==2.0.1" },
@@ -1582,8 +1554,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docutils" },
     { name = "nh3" },
-    { name = "pygments", version = "2.16.1", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "pygments", version = "2.20.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
+    { name = "pygments" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/02/51/d3a6ea424652c60f05600d8c2e01a55c913755e7cdad64afabbd1aa16f44/readme_renderer-45.0.tar.gz", hash = "sha256:030a8fac74904f8fba11ad1bb6964e3f76e896dc7e5e71f16af190c9056696d1", size = 36172, upload-time = "2026-06-09T21:05:17.37Z" }
 wheels = [
@@ -1632,8 +1603,7 @@ version = "15.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "markdown-it-py" },
-    { name = "pygments", version = "2.16.1", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "pygments", version = "2.20.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
+    { name = "pygments" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/c0/8f/0722ca900cc807c13a6a0c696dacf35430f72e0ec571c4275d2371fca3e9/rich-15.0.0.tar.gz", hash = "sha256:edd07a4824c6b40189fb7ac9bc4c52536e9780fbbfbddf6f1e2502c31b068c36", size = 230680, upload-time = "2026-04-12T08:24:00.75Z" }
 wheels = [
@@ -1673,57 +1643,27 @@ wheels = [
 
 [[package]]
 name = "sphinx"
-version = "7.3.7"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.12'",
-    "python_full_version < '3.12'",
-]
-dependencies = [
-    { name = "alabaster", version = "0.7.16", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "babel", marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "colorama", marker = "(sys_platform == 'win32' and extra == 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-dev' and extra == 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
-    { name = "docutils", marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "imagesize", marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "jinja2", marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "packaging", version = "23.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "pygments", version = "2.16.1", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "requests", marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "snowballstemmer", marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "sphinxcontrib-applehelp", marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "sphinxcontrib-devhelp", marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "sphinxcontrib-htmlhelp", marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "sphinxcontrib-jsmath", marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "sphinxcontrib-qthelp", marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "sphinxcontrib-serializinghtml", marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "tomli", version = "2.0.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and extra == 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-dev' and extra == 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/b7/0a/b88033900b1582f5ed8f880263363daef968d1cd064175e32abfd9714410/sphinx-7.3.7.tar.gz", hash = "sha256:a4a7db75ed37531c05002d56ed6948d4c42f473a36f46e1382b0bd76ca9627bc", size = 7094808, upload-time = "2024-04-19T04:44:48.297Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b4/fa/130c32ed94cf270e3d0b9ded16fb7b2c8fea86fa7263c29a696a30c1dde7/sphinx-7.3.7-py3-none-any.whl", hash = "sha256:413f75440be4cacf328f580b4274ada4565fb2187d696a84970c23f77b64d8c3", size = 3335650, upload-time = "2024-04-19T04:44:43.839Z" },
-]
-
-[[package]]
-name = "sphinx"
 version = "8.1.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "alabaster", version = "1.0.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
-    { name = "babel", marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
-    { name = "colorama", marker = "(sys_platform == 'win32' and extra == 'group-14-pytest-asyncio-dev') or (sys_platform == 'win32' and extra != 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-dev' and extra == 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
-    { name = "docutils", marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
-    { name = "imagesize", marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
-    { name = "jinja2", marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
+    { name = "alabaster" },
+    { name = "babel" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-14-pytest-asyncio-dev' and extra == 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
+    { name = "docutils" },
+    { name = "imagesize" },
+    { name = "jinja2" },
+    { name = "packaging", version = "23.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
     { name = "packaging", version = "26.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
-    { name = "pygments", version = "2.20.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
-    { name = "requests", marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
-    { name = "snowballstemmer", marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
-    { name = "sphinxcontrib-applehelp", marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
-    { name = "sphinxcontrib-devhelp", marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
-    { name = "sphinxcontrib-htmlhelp", marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
-    { name = "sphinxcontrib-jsmath", marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
-    { name = "sphinxcontrib-qthelp", marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
-    { name = "sphinxcontrib-serializinghtml", marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
+    { name = "pygments" },
+    { name = "requests" },
+    { name = "snowballstemmer" },
+    { name = "sphinxcontrib-applehelp" },
+    { name = "sphinxcontrib-devhelp" },
+    { name = "sphinxcontrib-htmlhelp" },
+    { name = "sphinxcontrib-jsmath" },
+    { name = "sphinxcontrib-qthelp" },
+    { name = "sphinxcontrib-serializinghtml" },
+    { name = "tomli", version = "2.0.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and extra == 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-dev' and extra == 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
     { name = "tomli", version = "2.4.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and extra == 'group-14-pytest-asyncio-dev') or (python_full_version < '3.11' and extra != 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-dev' and extra == 'group-14-pytest-asyncio-pytest-min') or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/6f/6d/be0b61178fe2cdcb67e2a92fc9ebb488e3c51c4f74a36a7824c0adf23425/sphinx-8.1.3.tar.gz", hash = "sha256:43c1911eecb0d3e161ad78611bc905d1ad0e523e4ddc202a58a821773dc4c927", size = 8184611, upload-time = "2024-10-13T20:27:13.93Z" }
@@ -1737,8 +1677,7 @@ version = "3.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docutils" },
-    { name = "sphinx", version = "7.3.7", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
+    { name = "sphinx" },
     { name = "sphinxcontrib-jquery" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/84/68/a1bfbf38c0f7bccc9b10bbf76b94606f64acb1552ae394f0b8285bfaea25/sphinx_rtd_theme-3.1.0.tar.gz", hash = "sha256:b44276f2c276e909239a4f6c955aa667aaafeb78597923b1c60babc76db78e4c", size = 7620915, upload-time = "2026-01-12T16:03:31.17Z" }
@@ -1752,10 +1691,8 @@ version = "3.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docutils" },
-    { name = "pygments", version = "2.16.1", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "pygments", version = "2.20.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
-    { name = "sphinx", version = "7.3.7", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
+    { name = "pygments" },
+    { name = "sphinx" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ce/30/ca5b0de830f369968d8e3483dd45a8908fd10169c05cd9837f0bd075982e/sphinx_tabs-3.5.0.tar.gz", hash = "sha256:91dba1187e4c35fd37380a56ac228bbd54c6c649b2351829f3bf033718277537", size = 17006, upload-time = "2026-03-03T23:00:30.404Z" }
 wheels = [
@@ -1794,8 +1731,7 @@ name = "sphinxcontrib-jquery"
 version = "4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "sphinx", version = "7.3.7", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-pytest-min'" },
-    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-14-pytest-asyncio-dev' or extra != 'group-14-pytest-asyncio-pytest-min' or (extra == 'group-14-pytest-asyncio-pytest-min' and extra == 'group-14-pytest-asyncio-test')" },
+    { name = "sphinx" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/de/f3/aa67467e051df70a6330fe7770894b3e4f09436dea6881ae0b4f3d87cad8/sphinxcontrib-jquery-4.1.tar.gz", hash = "sha256:1620739f04e36a2c779f1a131a2dfd49b2fd07351bf1968ced074365933abc7a", size = 122331, upload-time = "2023-03-14T15:01:01.944Z" }
 wheels = [
