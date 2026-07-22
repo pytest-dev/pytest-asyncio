@@ -83,7 +83,7 @@ build = [
   "twine",
 ]
 pytest-min = [
-  "attrs==23.1",
+  "attrs==26.1.0",
   "backports-asyncio-runner==1.2; python_version<'3.11'",
   "coverage==7.15.1",
   "exceptiongroup==1.1.3; python_version<'3.11'",
