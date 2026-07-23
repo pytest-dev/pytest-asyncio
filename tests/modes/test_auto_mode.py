@@ -113,8 +113,8 @@ def test_auto_mode_static_method_fixture(pytester: Pytester):
 
         class TestA:
 
-            @staticmethod
             @pytest.fixture
+            @staticmethod
             async def fixture_a():
                 await asyncio.sleep(0)
                 return 1
