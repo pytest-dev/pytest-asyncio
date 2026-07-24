@@ -82,21 +82,6 @@ build = [
   "check-wheel-contents",
   "twine",
 ]
-pytest-min = [
-  "attrs==23.1",
-  "backports-asyncio-runner==1.2; python_version<'3.11'",
-  "coverage==7.15.1",
-  "exceptiongroup==1.1.3; python_version<'3.11'",
-  "hypothesis==6.88.3",
-  "iniconfig==2",
-  "packaging==23.2",
-  "pluggy==1.5",
-  "pygments==2.16.1",
-  "pytest==8.4",
-  "sortedcontainers==2.4",
-  "tomli==2.0.1; python_version<'3.11'",
-  "typing-extensions==4.16; python_version<'3.13'",
-]
 typing = [
   "pyright[nodejs]",
   "pytest",
@@ -110,14 +95,6 @@ include-package-data = true
 
 [tool.setuptools_scm]
 local_scheme = "no-local-version"
-
-[tool.uv]
-conflicts = [
-  [
-    { group = "pytest-min" },
-    { group = "test" },
-  ],
-]
 
 [tool.ruff]
 line-length = 88
