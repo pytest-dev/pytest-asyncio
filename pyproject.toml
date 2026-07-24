@@ -15,6 +15,7 @@ license-files = [
   "LICENSE",
 ]
 maintainers = [
+  { name = "Tom Kuson", email = "mail@tjkuson.me" },
   { name = "Michael Seifert", email = "m.seifert@digitalernachschub.de" },
 ]
 authors = [
