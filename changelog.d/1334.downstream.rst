@@ -1,1 +1,1 @@
-Avoided a ``PytestAssertRewriteWarning`` in the test suite when pytest-asyncio is already imported, such as when tests are run against a system-installed copy on Guix or FreeBSD.
+Avoided a ``PytestAssertRewriteWarning`` in the test suite when it is run from an unpacked sdist. The sdist ships ``pytest_asyncio.egg-info/SOURCES.txt``, which lists ``tests/__init__.py``, so pytest marks the ``tests`` package for assertion rewriting even though it has already been imported by the outer session. This affects downstream distributors such as Guix.
