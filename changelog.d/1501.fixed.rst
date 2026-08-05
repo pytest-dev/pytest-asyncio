@@ -1,0 +1,1 @@
+The scoped runner is now registered as a dependency of managed fixtures. This ensures loop factory parameter changes tear down dependent fixtures in dependency order. (`#1501 <https://github.com/pytest-dev/pytest-asyncio/issues/1501>`_)

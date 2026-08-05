@@ -190,6 +190,41 @@ def test_sync_tests_are_not_parametrized_by_hook_factories(pytester: Pytester) -
     result.assert_outcomes(passed=3)
 
 
+def test_sync_test_with_shared_async_fixture_is_not_torn_down(
+    pytester: Pytester,
+) -> None:
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = session")
+    pytester.makeconftest(dedent("""\
+        import asyncio
+
+        def pytest_asyncio_loop_factories(config, item):
+            return {"default": asyncio.new_event_loop}
+        """))
+    pytester.makepyfile(dedent("""\
+        import pytest
+        import pytest_asyncio
+
+        pytest_plugins = "pytest_asyncio"
+
+        @pytest_asyncio.fixture(scope="session")
+        async def parent():
+            yield "parent"
+
+        @pytest_asyncio.fixture(scope="session")
+        async def child(parent):
+            yield "child"
+
+        @pytest.mark.asyncio(loop_scope="session")
+        async def test_async(parent):
+            assert parent == "parent"
+
+        def test_sync(child):
+            assert child == "child"
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=2)
+
+
 @pytest.mark.parametrize(
     "hook_body",
     (
