@@ -1,0 +1,1 @@
+Removed the *event_loop_policy* fixture. Defining a fixture with this name now raises a usage error at collection time instead of silently having no effect. Use the ``pytest_asyncio_loop_factories`` hook to customize event loop creation instead. See the :doc:`migration guide </how-to-guides/migrate_from_1_x>`.
