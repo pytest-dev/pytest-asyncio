@@ -133,6 +133,38 @@ def test_asyncio_run_after_async_fixture_does_not_leak_loop(
     result.assert_outcomes(passed=2)
 
 
+def test_runner_encompasses_sync_fixtures(pytester: Pytester):
+    pytester.makeini(dedent("""\
+            [pytest]
+            asyncio_default_fixture_loop_scope = function
+            """))
+    pytester.makepyfile(dedent("""\
+            import pytest
+            import pytest_asyncio.plugin
+
+            pytest_plugins = "pytest_asyncio"
+
+
+            class BrokenRunner:
+                def __init__(self, *args, **kwargs):
+                    raise RuntimeError(
+                        "Runner constructed while user fixture is active"
+                    )
+
+
+            @pytest.fixture
+            def patch_runner(monkeypatch):
+                monkeypatch.setattr(pytest_asyncio.plugin, "Runner", BrokenRunner)
+
+
+            @pytest.mark.asyncio
+            async def test_async_function_uses_sync_fixture(patch_runner):
+                pass
+            """))
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
 @pytest.mark.parametrize("test_loop_scope", ("module", "package", "session"))
 @pytest.mark.parametrize(
     "loop_breaking_action",
