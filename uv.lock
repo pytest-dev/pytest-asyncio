@@ -1155,7 +1155,7 @@ typing = [
 [package.metadata]
 requires-dist = [
     { name = "backports-asyncio-runner", marker = "python_full_version < '3.11'", specifier = ">=1.1,<2" },
-    { name = "coverage", marker = "extra == 'testing'", specifier = ">=6.2" },
+    { name = "coverage", marker = "extra == 'testing'", specifier = ">=7.10.3" },
     { name = "hypothesis", marker = "extra == 'testing'", specifier = ">=5.7.1" },
     { name = "pytest", specifier = ">=8.4,<10" },
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=5.3" },
@@ -1174,7 +1174,7 @@ build = [
 dev = [
     { name = "build" },
     { name = "check-wheel-contents" },
-    { name = "coverage", specifier = ">=6.2" },
+    { name = "coverage", specifier = ">=7.10.3" },
     { name = "hypothesis", specifier = ">=5.7.1" },
     { name = "pre-commit" },
     { name = "pyright", extras = ["nodejs"] },
@@ -1190,7 +1190,7 @@ docs = [
     { name = "sphinx-tabs", specifier = ">=3.5" },
 ]
 test = [
-    { name = "coverage", specifier = ">=6.2" },
+    { name = "coverage", specifier = ">=7.10.3" },
     { name = "hypothesis", specifier = ">=5.7.1" },
 ]
 typing = [

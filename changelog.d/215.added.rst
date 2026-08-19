@@ -1,0 +1,1 @@
+Add opt-in cooperative delivery of pytest-timeout signal failures in asynchronous tests and fixtures.

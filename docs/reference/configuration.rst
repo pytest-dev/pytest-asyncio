@@ -56,3 +56,10 @@ The value can also be set via the ``--asyncio-mode`` command-line option:
 
 
 If the asyncio mode is set in both the pytest configuration file and the command-line option, the command-line option takes precedence. If no asyncio mode is specified, the mode defaults to `strict`.
+
+asyncio_cooperative_timeouts
+============================
+
+Enable cooperative delivery of pytest-timeout signal failures. This is disabled
+by default and can also be enabled with ``--asyncio-cooperative-timeouts``.
+See :doc:`timeouts` for the required plugin support and cancellation limits.
