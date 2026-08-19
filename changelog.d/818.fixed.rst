@@ -1,0 +1,2 @@
+Set up the event loop runner before synchronous fixtures used by async tests so
+fixture monkeypatching cannot interfere with event loop creation.
