@@ -51,7 +51,7 @@ optional-dependencies.docs = [
   "sphinx-tabs>=3.5",
 ]
 optional-dependencies.testing = [
-  "coverage>=6.2",
+  "coverage>=7.10.3",
   "hypothesis>=5.7.1",
 ]
 urls."Bug Tracker" = "https://github.com/pytest-dev/pytest-asyncio/issues"
@@ -70,7 +70,7 @@ dev = [
   { include-group = "typing" },
 ]
 test = [
-  "coverage>=6.2",
+  "coverage>=7.10.3",
   "hypothesis>=5.7.1",
 ]
 docs = [
@@ -160,12 +160,21 @@ filterwarnings = [
 ]
 
 [tool.coverage.run]
-source = [
+source_pkgs = [
   "pytest_asyncio",
+]
+patch = [
+  "subprocess",
 ]
 branch = true
 data_file = "coverage/coverage"
 parallel = true
+
+[tool.coverage.paths]
+source = [
+  "pytest_asyncio",
+  "*/site-packages/pytest_asyncio",
+]
 
 [tool.coverage.report]
 show_missing = true

@@ -54,6 +54,13 @@ from pytest import (
     PytestPluginManager,
 )
 
+from ._timeout import (
+    close as _close_with_timeout,
+    configure as _configure_timeouts,
+    pytest_timeout_expired as pytest_timeout_expired,
+    run as _run_with_timeout,
+)
+
 if sys.version_info >= (3, 11):
     from asyncio import Runner
 else:
@@ -123,6 +130,11 @@ def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager) -> None
         default=None,
         help="enable asyncio debug mode for the default event loop",
     )
+    group.addoption(
+        "--asyncio-cooperative-timeouts",
+        action="store_true",
+        help="deliver pytest-timeout signal failures by cancelling the active task",
+    )
     parser.addini(
         "asyncio_mode",
         help="default value for --asyncio-mode",
@@ -133,6 +145,12 @@ def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager) -> None
         help="enable asyncio debug mode for the default event loop",
         type="bool",
         default="false",
+    )
+    parser.addini(
+        "asyncio_cooperative_timeouts",
+        help="default value for --asyncio-cooperative-timeouts",
+        type="bool",
+        default=False,
     )
     parser.addini(
         "asyncio_default_fixture_loop_scope",
@@ -294,6 +312,7 @@ def _validate_scope(scope: str | None, option_name: str) -> None:
 
 
 def pytest_configure(config: Config) -> None:
+    _configure_timeouts(config)
     default_fixture_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
     _validate_scope(default_fixture_loop_scope, "asyncio_default_fixture_loop_scope")
     if not default_fixture_loop_scope:
@@ -405,7 +424,9 @@ def _wrap_asyncgen_fixture(
             return res
 
         context = contextvars.copy_context()
-        result = runner.run(setup(), context=context)
+        result = _run_with_timeout(
+            runner, setup(), context=context, config=request.config
+        )
 
         reset_contextvars = _apply_contextvar_changes(context)
 
@@ -422,7 +443,9 @@ def _wrap_asyncgen_fixture(
                     msg += "Yield only once."
                     raise ValueError(msg)
 
-            runner.run(async_finalizer(), context=context)
+            _run_with_timeout(
+                runner, async_finalizer(), context=context, config=request.config
+            )
             if reset_contextvars is not None:
                 reset_contextvars()
 
@@ -453,7 +476,9 @@ def _wrap_async_fixture(
             return res
 
         context = contextvars.copy_context()
-        result = runner.run(setup(), context=context)
+        result = _run_with_timeout(
+            runner, setup(), context=context, config=request.config
+        )
 
         # Copy the context vars modified by the setup task into the current
         # context, and (if needed) add a finalizer to reset them.
@@ -563,7 +588,7 @@ class PytestAsyncioFunction(Function):
         runner = self._request.getfixturevalue(runner_fixture_id)
         context = contextvars.copy_context()
         synchronized_obj = _synchronize_coroutine(
-            getattr(*self._synchronization_target_attr), runner, context
+            getattr(*self._synchronization_target_attr), runner, context, self.config
         )
         with MonkeyPatch.context() as c:
             c.setattr(*self._synchronization_target_attr, synchronized_obj)
@@ -894,6 +919,7 @@ def _synchronize_coroutine(
     func: Callable[..., CoroutineType],
     runner: asyncio.Runner,
     context: contextvars.Context,
+    config: Config,
 ):
     """
     Return a sync wrapper around a coroutine executing it in the
@@ -903,7 +929,7 @@ def _synchronize_coroutine(
     @functools.wraps(func)
     def inner(*args, **kwargs):
         coro = func(*args, **kwargs)
-        runner.run(coro, context=context)
+        _run_with_timeout(runner, coro, context=context, config=config)
 
     return inner
 
@@ -1042,15 +1068,15 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
                 _set_event_loop(runner.get_loop())
             try:
                 yield runner
-            except Exception as e:
-                runner.__exit__(type(e), e, e.__traceback__)
+            except Exception:
+                _close_with_timeout(runner, config=request.config)
             else:
                 with warnings.catch_warnings():
                     warnings.filterwarnings(
                         "ignore", ".*BaseEventLoop.shutdown_asyncgens.*", RuntimeWarning
                     )
                     try:
-                        runner.__exit__(None, None, None)
+                        _close_with_timeout(runner, config=request.config)
                     except RuntimeError:
                         warnings.warn(
                             _RUNNER_TEARDOWN_WARNING % traceback.format_exc(),
