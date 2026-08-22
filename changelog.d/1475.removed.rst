@@ -1,0 +1,1 @@
+Removed the deprecated ``scope`` keyword argument of the ``asyncio`` marker. Passing ``scope=`` (or any other unknown keyword argument) to ``@pytest.mark.asyncio`` now raises ``pytest.UsageError`` instead of emitting a deprecation warning. Use ``loop_scope=`` instead.
