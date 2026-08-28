@@ -685,6 +685,27 @@ def _resolve_asyncio_marker(item: Function) -> Mark | None:
     return None
 
 
+def _asyncio_marker_from_parametrize(item: Function) -> Mark | None:
+    """Return an asyncio mark attached via pytest.param(..., marks=...)."""
+    for mark in item.iter_markers("parametrize"):
+        if len(mark.args) >= 2:
+            argvalues = mark.args[1]
+        else:
+            argvalues = mark.kwargs.get("argvalues", ())
+        if isinstance(argvalues, str) or not hasattr(argvalues, "__iter__"):
+            continue
+        for val in argvalues:
+            marks = getattr(val, "marks", ())
+            if not marks:
+                continue
+            if not isinstance(marks, (list, tuple)):
+                marks = (marks,)
+            for m in marks:
+                if getattr(m, "name", None) == "asyncio":
+                    return m
+    return None
+
+
 # The function name needs to start with "pytest_"
 # see https://github.com/pytest-dev/pytest/issues/11307
 @pytest.hookimpl(specname="pytest_pycollect_makeitem", hookwrapper=True)
@@ -715,9 +736,9 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
         updated_item = node
         if isinstance(node, Function):
             specialized_item_class = PytestAsyncioFunction.item_subclass_for(node)
-            if (
-                specialized_item_class is not None
-                and _resolve_asyncio_marker(node) is not None
+            if specialized_item_class is not None and (
+                _resolve_asyncio_marker(node) is not None
+                or _asyncio_marker_from_parametrize(node) is not None
             ):
                 updated_item = specialized_item_class._from_function(node)
         updated_node_collection.append(updated_item)
@@ -733,6 +754,8 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
         return
 
     asyncio_marker = _resolve_asyncio_marker(metafunc.definition)
+    if asyncio_marker is None:
+        asyncio_marker = _asyncio_marker_from_parametrize(metafunc.definition)
     if asyncio_marker is None:
         return
     marker_loop_scope, marker_selected_factory_names = _parse_asyncio_marker(

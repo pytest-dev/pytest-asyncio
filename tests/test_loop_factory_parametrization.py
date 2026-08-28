@@ -60,6 +60,36 @@ def test_named_hook_factories_apply_to_async_tests(pytester: Pytester) -> None:
     result.assert_outcomes(passed=1)
 
 
+def test_loop_factories_apply_when_asyncio_mark_comes_from_parametrize(
+    pytester: Pytester,
+) -> None:
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makeconftest(dedent("""\
+        import asyncio
+
+        class CustomEventLoop(asyncio.SelectorEventLoop):
+            pass
+
+        def pytest_asyncio_loop_factories(config, item):
+            return {"custom": CustomEventLoop}
+        """))
+    pytester.makepyfile(dedent("""\
+        import asyncio
+        import pytest
+
+        pytest_plugins = "pytest_asyncio"
+
+        @pytest.mark.parametrize(
+            "backend",
+            [pytest.param("asyncio", marks=pytest.mark.asyncio)],
+        )
+        async def test_uses_custom_loop(backend):
+            assert type(asyncio.get_running_loop()).__name__ == "CustomEventLoop"
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)
+
+
 def test_named_hook_factories_parametrize_async_tests(pytester: Pytester) -> None:
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makeconftest(dedent("""\
