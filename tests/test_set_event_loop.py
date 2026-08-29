@@ -129,7 +129,7 @@ def test_asyncio_run_after_async_fixture_does_not_leak_loop(
                 asyncio.run(amain())
                 gc.collect()
             """))
-    result = pytester.runpytest_subprocess("-W", "error")
+    result = pytester.runpytest_subprocess("-W", "error::ResourceWarning")
     result.assert_outcomes(passed=2)
 
 

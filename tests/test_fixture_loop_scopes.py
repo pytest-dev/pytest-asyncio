@@ -113,6 +113,61 @@ def test_default_package_loop_scope_config_option_changes_fixture_loop_scope(
     result.assert_outcomes(passed=1)
 
 
+def test_warns_when_fixture_and_test_loop_scopes_differ(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(
+        dedent("""\
+            import pytest
+            import pytest_asyncio
+
+            @pytest_asyncio.fixture(loop_scope="session")
+            async def fixture():
+                pass
+
+            @pytest.mark.asyncio(loop_scope="function")
+            async def test_mismatched_loop_scope(fixture):
+                pass
+            """)
+    )
+    result = pytester.runpytest(
+        "--asyncio-mode=strict", "-W", "default::pytest.PytestWarning"
+    )
+    result.assert_outcomes(passed=1, warnings=1)
+    result.stdout.fnmatch_lines(
+        "*Async fixture 'fixture' with loop_scope='session' is requested by test*"
+    )
+
+
+def test_warns_when_async_fixtures_request_different_loop_scopes(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(
+        dedent("""\
+            import pytest
+            import pytest_asyncio
+
+            @pytest_asyncio.fixture(loop_scope="function")
+            async def inner_fixture():
+                pass
+
+            @pytest_asyncio.fixture(loop_scope="session")
+            async def outer_fixture(inner_fixture):
+                pass
+
+            @pytest.mark.asyncio(loop_scope="session")
+            async def test_mismatched_fixture_scopes(outer_fixture):
+                pass
+            """)
+    )
+    result = pytester.runpytest(
+        "--asyncio-mode=strict", "-W", "default::pytest.PytestWarning"
+    )
+    result.assert_outcomes(passed=1, warnings=1)
+    result.stdout.fnmatch_lines(
+        "*Async fixture 'inner_fixture' with loop_scope='function' is requested "
+        "by fixture 'outer_fixture'*"
+    )
+
+
 def test_invalid_default_fixture_loop_scope_raises_error(pytester: Pytester):
     pytester.makeini("""\
         [pytest]

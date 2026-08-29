@@ -342,6 +342,57 @@ def _fixture_synchronizer(
         return _wrap_sync_fixture(fixture_function, runner)  # type: ignore[arg-type]
 
 
+def _get_fixture_loop_scope(fixturedef: FixtureDef, config: Config) -> _ScopeName:
+    return (
+        getattr(fixturedef.func, "_loop_scope", None)
+        or config.getini("asyncio_default_fixture_loop_scope")
+        or fixturedef.scope
+    )
+
+
+def _get_requesting_loop_scope(
+    request: FixtureRequest,
+) -> tuple[str, _ScopeName] | None:
+    parent_request = getattr(request, "_parent_request", None)
+    parent_fixturedef = getattr(parent_request, "_fixturedef", None)
+    if parent_fixturedef is not None and _is_asyncio_fixture_function(
+        parent_fixturedef.func
+    ):
+        return (
+            f"fixture {parent_fixturedef.argname!r}",
+            _get_fixture_loop_scope(parent_fixturedef, request.config),
+        )
+
+    marker = request.node.get_closest_marker("asyncio")
+    if marker is None:
+        return None
+    return (
+        f"test {request.node.name!r}",
+        marker.kwargs.get("loop_scope")
+        or marker.kwargs.get("scope")
+        or _get_default_test_loop_scope(request.config),
+    )
+
+
+def _warn_if_fixture_loop_scope_mismatch(
+    fixturedef: FixtureDef, request: FixtureRequest, loop_scope: _ScopeName
+) -> None:
+    requesting_context = _get_requesting_loop_scope(request)
+    if requesting_context is None:
+        return
+    requester, requesting_loop_scope = requesting_context
+    if requesting_loop_scope == loop_scope:
+        return
+    warnings.warn(
+        pytest.PytestWarning(
+            f"Async fixture {fixturedef.argname!r} with loop_scope={loop_scope!r} "
+            f"is requested by {requester} with loop_scope={requesting_loop_scope!r}. "
+            "Fixtures with different loop scopes may cause unexpected behavior."
+        ),
+        stacklevel=2,
+    )
+
+
 SyncGenFixtureParams = ParamSpec("SyncGenFixtureParams")
 SyncGenFixtureYieldType = TypeVar("SyncGenFixtureYieldType")
 
@@ -925,12 +976,8 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
             return (yield)
         if not _is_coroutine_or_asyncgen(fixturedef.func):
             return (yield)
-    default_loop_scope = request.config.getini("asyncio_default_fixture_loop_scope")
-    loop_scope = (
-        getattr(fixturedef.func, "_loop_scope", None)
-        or default_loop_scope
-        or fixturedef.scope
-    )
+    loop_scope = _get_fixture_loop_scope(fixturedef, request.config)
+    _warn_if_fixture_loop_scope_mismatch(fixturedef, request, loop_scope)
     runner_fixture_id = f"_{loop_scope}_scoped_runner"
     runner = request.getfixturevalue(runner_fixture_id)
     # Prevent the runner closing before the fixture's async teardown.

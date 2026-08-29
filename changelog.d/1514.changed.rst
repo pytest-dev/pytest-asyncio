@@ -1,0 +1,1 @@
+Warn when an asynchronous fixture is requested from a test or fixture using a different event-loop scope.
