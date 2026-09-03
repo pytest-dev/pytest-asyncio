@@ -828,6 +828,11 @@ def _set_event_loop_policy(policy: AbstractEventLoopPolicy) -> None:
         asyncio.set_event_loop_policy(policy)
 
 
+def _is_glib_policy(policy: AbstractEventLoopPolicy) -> bool:
+    """Detect GLibEventLoopPolicy without importing gi (avoids gi dependency)."""
+    return type(policy).__module__ == "gi.events"
+
+
 def _get_event_loop_no_warn(
     policy: AbstractEventLoopPolicy | None = None,
 ) -> asyncio.AbstractEventLoop:
@@ -1033,10 +1038,22 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
     ) -> Iterator[Runner]:
         new_loop_policy = event_loop_policy
         debug_mode = _get_asyncio_debug(request.config)
+        # Workaround for pytest-dev/pytest-asyncio#1233: GLib's policy
+        # rejects set_event_loop() on the main thread because GLib owns
+        # the default MainContext there. Reuse the policy's existing
+        # loop via loop_factory so asyncio.Runner skips its internal
+        # set_event_loop call. Only applies when the user has not
+        # configured an explicit loop factory.
+        loop_factory = _asyncio_loop_factory
+        if loop_factory is None and _is_glib_policy(new_loop_policy):
+            def _glib_loop_factory():
+                return _get_event_loop_no_warn(new_loop_policy)
+
+            loop_factory = _glib_loop_factory
         with _temporary_event_loop_policy(new_loop_policy):
             runner = Runner(
                 debug=debug_mode,
-                loop_factory=_asyncio_loop_factory,
+                loop_factory=loop_factory,
             ).__enter__()
             if _asyncio_loop_factory is not None:
                 _set_event_loop(runner.get_loop())

@@ -1,8 +1,17 @@
 from __future__ import annotations
 
+import warnings
 from textwrap import dedent
 
+import pytest
 from pytest import Pytester
+
+try:
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        from gi.events import GLibEventLoopPolicy
+except ImportError:
+    GLibEventLoopPolicy = None  # type: ignore[assignment,misc]
 
 
 def test_event_loop_fixture_handles_unclosed_async_gen(
@@ -79,3 +88,35 @@ def test_event_loop_fixture_asyncgen_error(
             """))
     result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1, warnings=1)
+
+
+@pytest.mark.skipif(
+    GLibEventLoopPolicy is None,
+    reason="PyGObject (gi) is not installed",
+)
+def test_event_loop_fixture_supports_glib_policy(
+    pytester: Pytester,
+):
+    """Regression test for pytest-dev/pytest-asyncio#1233.
+
+    GLib's main-context policy rejects set_event_loop() on the main
+    thread. pytest-asyncio's scoped runner must work when the test
+    installs a GLibEventLoopPolicy. Runs in a subprocess so the GLib
+    policy does not leak into other tests in the same pytest session.
+    """
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+            import asyncio
+            import pytest
+
+            from gi.events import GLibEventLoopPolicy
+            asyncio.set_event_loop_policy(GLibEventLoopPolicy())
+
+            pytest_plugins = 'pytest_asyncio'
+
+            @pytest.mark.asyncio
+            async def test_foo():
+                assert asyncio.get_running_loop() is not None
+            """))
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict", "-W", "default")
+    result.assert_outcomes(passed=1)
