@@ -49,5 +49,12 @@ This is enough for pytest to pick up pytest-asyncio.
 
 Contributing
 ------------
-Contributions are very welcome. Tests can be run with ``tox``, please ensure
-the coverage at least stays the same before you submit a pull request.
+
+Contributions are very welcome.
+
+Tests can be run with ``tox``. Please ensure that all tests are passing and
+coverage at least stays the same before opening a pull request and marking it as
+ready for review.
+
+Use of AI in contributions, including issues, pull requests, and comments, must
+follow our `AI policy <.github/AI_POLICY.md>`_.
