@@ -1,0 +1,1 @@
+Fixed a bare ``AssertionError``, instead of the original error, in each test after the first that uses a shared async fixture whose event loop could not be created, for example because a loop factory raised an exception.
