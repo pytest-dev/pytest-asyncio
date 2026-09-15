@@ -1,0 +1,1 @@
+pytest-asyncio now supports opt-in warnings when an asyncio event loop scope ends with unfinished tasks. The warning can be promoted to an error with pytest's warning filters.

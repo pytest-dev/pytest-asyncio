@@ -146,6 +146,12 @@ def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager) -> None
         help="default scope of the asyncio event loop used to execute tests",
         default="function",
     )
+    parser.addini(
+        "asyncio_warn_on_pending_tasks",
+        type="bool",
+        help="warn when an asyncio event loop scope ends with pending tasks",
+        default="false",
+    )
 
 
 @overload
@@ -242,6 +248,13 @@ def _get_asyncio_debug(config: Config) -> bool:
         return val
     else:
         return val == "true"
+
+
+def _get_warn_on_pending_tasks(config: Config) -> bool:
+    val = config.getini("asyncio_warn_on_pending_tasks")
+    if isinstance(val, bool):
+        return val
+    return val in {"true", "1"}
 
 
 _INVALID_LOOP_FACTORIES = """\
@@ -1020,6 +1033,30 @@ Here is the traceback of the exception triggered during teardown:
 %s
 """
 
+_PENDING_TASKS_WARNING = """\
+The event loop scope ended with pending tasks:
+%s
+"""
+
+
+def _pending_tasks(loop: AbstractEventLoop) -> list[str]:
+    return sorted(
+        repr(task)
+        for task in asyncio.all_tasks(loop)
+        if not task.done()
+        # Async generator finalizers are scheduled by asyncio and handled
+        # by Runner.close(), so they are not leaked user tasks.
+        and type(task.get_coro()).__name__ != "async_generator_athrow"
+    )
+
+
+def _warn_for_pending_tasks(tasks: Collection[str]) -> None:
+    if tasks:
+        warnings.warn(
+            _PENDING_TASKS_WARNING % "\n".join(f"  {task}" for task in tasks),
+            RuntimeWarning,
+        )
+
 
 def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
     @pytest.fixture(
@@ -1043,8 +1080,19 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
             try:
                 yield runner
             except Exception as e:
+                pending_tasks = (
+                    _pending_tasks(runner.get_loop())
+                    if _get_warn_on_pending_tasks(request.config)
+                    else []
+                )
                 runner.__exit__(type(e), e, e.__traceback__)
+                _warn_for_pending_tasks(pending_tasks)
             else:
+                pending_tasks = (
+                    _pending_tasks(runner.get_loop())
+                    if _get_warn_on_pending_tasks(request.config)
+                    else []
+                )
                 with warnings.catch_warnings():
                     warnings.filterwarnings(
                         "ignore", ".*BaseEventLoop.shutdown_asyncgens.*", RuntimeWarning
@@ -1056,6 +1104,7 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
                             _RUNNER_TEARDOWN_WARNING % traceback.format_exc(),
                             RuntimeWarning,
                         )
+                _warn_for_pending_tasks(pending_tasks)
             finally:
                 if _asyncio_loop_factory is not None:
                     _set_event_loop(None)

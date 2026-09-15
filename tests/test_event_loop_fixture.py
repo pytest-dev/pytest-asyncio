@@ -79,3 +79,45 @@ def test_event_loop_fixture_asyncgen_error(
             """))
     result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1, warnings=1)
+
+
+def test_pending_tasks_emit_warning(pytester: Pytester):
+    pytester.makeini(
+        "[pytest]\n"
+        "asyncio_default_fixture_loop_scope = function\n"
+        "asyncio_warn_on_pending_tasks = true"
+    )
+    pytester.makepyfile(dedent("""\
+            import asyncio
+            import pytest
+
+            pytest_plugins = 'pytest_asyncio'
+
+            @pytest.mark.asyncio
+            async def test_leaves_task_pending():
+                asyncio.create_task(asyncio.sleep(60))
+            """))
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
+    result.assert_outcomes(passed=1, warnings=1)
+    result.stdout.fnmatch_lines(["*event loop scope ended with pending tasks*"])
+
+
+def test_completed_tasks_do_not_emit_warning(pytester: Pytester):
+    pytester.makeini(
+        "[pytest]\n"
+        "asyncio_default_fixture_loop_scope = function\n"
+        "asyncio_warn_on_pending_tasks = true"
+    )
+    pytester.makepyfile(dedent("""\
+            import asyncio
+            import pytest
+
+            pytest_plugins = 'pytest_asyncio'
+
+            @pytest.mark.asyncio
+            async def test_waits_for_task():
+                task = asyncio.create_task(asyncio.sleep(0))
+                await task
+            """))
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
+    result.assert_outcomes(passed=1, warnings=0)

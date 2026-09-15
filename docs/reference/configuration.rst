@@ -37,6 +37,21 @@ The value can also be set via the ``--asyncio-debug`` command-line option:
 
 By default, asyncio debug mode is disabled.
 
+asyncio_warn_on_pending_tasks
+============================
+When enabled, pytest-asyncio emits a ``RuntimeWarning`` containing unfinished
+tasks when an event loop scope ends. Configure pytest to turn this warning into
+an error if pending tasks should fail the test run, for example:
+
+.. code-block:: ini
+
+   [pytest]
+   asyncio_warn_on_pending_tasks = true
+   filterwarnings =
+       error::RuntimeWarning
+
+By default, this option is disabled.
+
 asyncio_mode
 ============
 The pytest-asyncio mode can be set by the ``asyncio_mode`` configuration option in the `configuration file
