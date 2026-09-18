@@ -297,13 +297,6 @@ def pytest_configure(config: Config) -> None:
     default_fixture_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
     _validate_scope(default_fixture_loop_scope, "asyncio_default_fixture_loop_scope")
     if not default_fixture_loop_scope:
-        # A plain warnings.warn() here is silently lost: pytest can't wrap
-        # pytest_configure with catch_warnings_for_item (no hookwrappers are
-        # possible around it), so the warning never reaches pytest's own
-        # recording/filtering and is dropped before the warnings summary.
-        # issue_config_time_warning is pytest's documented way to emit a
-        # warning during configure and have it actually surface; pytest's
-        # own core plugins (e.g. _pytest/pastebin.py) use the same pattern.
         config.issue_config_time_warning(
             PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET), stacklevel=2
         )

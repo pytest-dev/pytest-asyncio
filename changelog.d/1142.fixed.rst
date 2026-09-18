@@ -1,1 +1,1 @@
-Fix the deprecation warning for an unset `asyncio_default_fixture_loop_scope` not being reported. The warning is now issued via `Config.issue_config_time_warning`, so it correctly appears in the warnings summary and respects `-W`/`filterwarnings`.
+The deprecation warning for an unset `asyncio_default_fixture_loop_scope` is now visible to pytest: it appears in the warnings summary and can be filtered with `-W` and `filterwarnings`.
