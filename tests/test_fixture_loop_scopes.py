@@ -113,70 +113,52 @@ def test_default_package_loop_scope_config_option_changes_fixture_loop_scope(
     result.assert_outcomes(passed=1)
 
 
-def test_unset_default_fixture_loop_scope_warning_is_reported(pytester: Pytester):
+_UNSET_FIXTURE_LOOP_SCOPE_WARNING = (
+    "*PytestDeprecationWarning: The configuration option "
+    '"asyncio_default_fixture_loop_scope" is unset.*'
+)
+
+
+def test_unset_default_fixture_loop_scope_warning_appears_in_summary(
+    pytester: Pytester,
+):
     """
-    A plain `warnings.warn()` call in `pytest_configure` is invisible to
-    pytest: pytest can't wrap `pytest_configure` with the hookwrapper that
-    normally records warnings, so the warning never reaches the warnings
-    summary or respects `-W`/`filterwarnings`, and silently vanishes.
+    The warning is emitted during configure, so it must still be recorded.
 
     https://github.com/pytest-dev/pytest-asyncio/issues/1142
     """
-    pytester.makepyfile(dedent("""\
-            import asyncio
-
-            import pytest
-            import pytest_asyncio
-
-            loop: asyncio.AbstractEventLoop
-
-
-            @pytest_asyncio.fixture
-            async def fixt() -> None:
-                yield
-
-
-            @pytest.mark.asyncio(loop_scope="session")
-            async def test_a():
-                global loop
-                loop = asyncio.get_running_loop()
-
-
-            @pytest.mark.asyncio(loop_scope="session")
-            async def test_b(fixt):
-                assert asyncio.get_running_loop() is loop
-            """))
-    result = pytester.runpytest("--asyncio-mode=strict")
-    result.assert_outcomes(passed=2, warnings=1)
+    pytester.makepyfile("async def test_it(): pass")
+    result = pytester.runpytest("--asyncio-mode=auto")
+    result.assert_outcomes(passed=1, warnings=1)
     result.stdout.fnmatch_lines(
-        [
-            "*warnings summary*",
-            (
-                "*PytestDeprecationWarning: The configuration option "
-                '"asyncio_default_fixture_loop_scope" is unset.*'
-            ),
-        ]
+        ["*warnings summary*", _UNSET_FIXTURE_LOOP_SCOPE_WARNING]
     )
 
 
-def test_configured_default_fixture_loop_scope_has_no_warning(pytester: Pytester):
-    """Sanity check: the warning above is specific to the unset case."""
-    pytester.makeini("""\
-        [pytest]
-        asyncio_default_fixture_loop_scope = function
-        """)
-    pytester.makepyfile(dedent("""\
-            import pytest_asyncio
-
-            @pytest_asyncio.fixture
-            async def fixt() -> None:
-                yield
-
-            async def test_it(fixt) -> None:
-                pass
-            """))
-    result = pytester.runpytest("--asyncio-mode=auto")
+@pytest.mark.parametrize(
+    ("ini", "args"),
+    (
+        pytest.param(
+            "", ("-Wignore::pytest.PytestDeprecationWarning",), id="command-line-W"
+        ),
+        pytest.param(
+            "filterwarnings = ignore::pytest.PytestDeprecationWarning",
+            (),
+            id="filterwarnings-ini",
+        ),
+    ),
+)
+def test_unset_default_fixture_loop_scope_warning_is_filterable(
+    pytester: Pytester,
+    ini: str,
+    args: tuple[str, ...],
+):
+    """Being recorded properly also means users can silence it."""
+    pytester.makeini(f"[pytest]\n{ini}")
+    pytester.makepyfile("async def test_it(): pass")
+    result = pytester.runpytest("--asyncio-mode=auto", *args)
     result.assert_outcomes(passed=1, warnings=0)
+    result.stdout.no_fnmatch_line(_UNSET_FIXTURE_LOOP_SCOPE_WARNING)
 
 
 def test_invalid_default_fixture_loop_scope_raises_error(pytester: Pytester):
