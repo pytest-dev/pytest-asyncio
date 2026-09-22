@@ -14,7 +14,8 @@ def test_loop_scope_session_is_independent_of_fixture_scope(
     fixture_scope: str,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(dedent(f"""\
+    pytester.makepyfile(
+        dedent(f"""\
             import asyncio
             import pytest
             import pytest_asyncio
@@ -30,7 +31,8 @@ def test_loop_scope_session_is_independent_of_fixture_scope(
             async def test_runs_in_same_loop_as_fixture(fixture):
                 global loop
                 assert loop == asyncio.get_running_loop()
-            """))
+            """)
+    )
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
 
@@ -40,11 +42,14 @@ def test_default_loop_scope_config_option_changes_fixture_loop_scope(
     pytester: Pytester,
     default_loop_scope: str,
 ):
-    pytester.makeini(dedent(f"""\
+    pytester.makeini(
+        dedent(f"""\
             [pytest]
             asyncio_default_fixture_loop_scope = {default_loop_scope}
-            """))
-    pytester.makepyfile(dedent(f"""\
+            """)
+    )
+    pytester.makepyfile(
+        dedent(f"""\
             import asyncio
             import pytest
             import pytest_asyncio
@@ -56,7 +61,8 @@ def test_default_loop_scope_config_option_changes_fixture_loop_scope(
             @pytest.mark.asyncio(loop_scope="{default_loop_scope}")
             async def test_runs_in_fixture_loop(fixture_loop):
                 assert asyncio.get_running_loop() is fixture_loop
-            """))
+            """)
+    )
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
 
@@ -64,11 +70,14 @@ def test_default_loop_scope_config_option_changes_fixture_loop_scope(
 def test_default_class_loop_scope_config_option_changes_fixture_loop_scope(
     pytester: Pytester,
 ):
-    pytester.makeini(dedent("""\
+    pytester.makeini(
+        dedent("""\
             [pytest]
             asyncio_default_fixture_loop_scope = class
-            """))
-    pytester.makepyfile(dedent("""\
+            """)
+    )
+    pytester.makepyfile(
+        dedent("""\
             import asyncio
             import pytest
             import pytest_asyncio
@@ -81,7 +90,8 @@ def test_default_class_loop_scope_config_option_changes_fixture_loop_scope(
                 @pytest.mark.asyncio(loop_scope="class")
                 async def test_runs_in_fixture_loop(self, fixture_loop):
                     assert asyncio.get_running_loop() is fixture_loop
-            """))
+            """)
+    )
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
 
@@ -89,10 +99,12 @@ def test_default_class_loop_scope_config_option_changes_fixture_loop_scope(
 def test_default_package_loop_scope_config_option_changes_fixture_loop_scope(
     pytester: Pytester,
 ):
-    pytester.makeini(dedent("""\
+    pytester.makeini(
+        dedent("""\
             [pytest]
             asyncio_default_fixture_loop_scope = package
-            """))
+            """)
+    )
     pytester.makepyfile(
         __init__="",
         test_a=dedent("""\
@@ -131,7 +143,8 @@ def test_invalid_default_fixture_loop_scope_raises_error(pytester: Pytester):
 def test_unset_default_fixture_loop_scope_warns_when_async_fixture_is_used(
     pytester: Pytester,
 ):
-    pytester.makepyfile(dedent("""\
+    pytester.makepyfile(
+        dedent("""\
         import pytest
         import pytest_asyncio
 
@@ -142,19 +155,23 @@ def test_unset_default_fixture_loop_scope_warns_when_async_fixture_is_used(
         @pytest.mark.asyncio
         async def test_uses_async_fixture(async_fixture):
             assert async_fixture == 1
-        """))
+        """)
+    )
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
     result.stdout.fnmatch_lines(
-        ['*PytestDeprecationWarning: The configuration option '
-         '"asyncio_default_fixture_loop_scope" is unset*']
+        [
+            "*PytestDeprecationWarning: The configuration option "
+            '"asyncio_default_fixture_loop_scope" is unset*'
+        ]
     )
 
 
 def test_unset_default_fixture_loop_scope_warns_only_once(
     pytester: Pytester,
 ):
-    pytester.makepyfile(dedent("""\
+    pytester.makepyfile(
+        dedent("""\
         import pytest
         import pytest_asyncio
 
@@ -169,7 +186,8 @@ def test_unset_default_fixture_loop_scope_warns_only_once(
         @pytest.mark.asyncio
         async def test_uses_async_fixtures(async_fixture_one, async_fixture_two):
             assert (async_fixture_one, async_fixture_two) == (1, 2)
-        """))
+        """)
+    )
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
     warning_lines = [
@@ -184,7 +202,8 @@ def test_unset_default_fixture_loop_scope_does_not_warn_when_option_is_set(
     pytester: Pytester,
 ):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(dedent("""\
+    pytester.makepyfile(
+        dedent("""\
         import pytest
         import pytest_asyncio
 
@@ -195,7 +214,8 @@ def test_unset_default_fixture_loop_scope_does_not_warn_when_option_is_set(
         @pytest.mark.asyncio
         async def test_uses_async_fixture(async_fixture):
             assert async_fixture == 1
-        """))
+        """)
+    )
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
     assert 'asyncio_default_fixture_loop_scope" is unset' not in result.stdout.str()
@@ -207,7 +227,8 @@ def test_unset_default_fixture_loop_scope_does_not_warn_without_async_fixtures(
     # The option only affects asynchronous fixtures, so a session that never
     # sets one up (e.g. a nested pytest run picked up via another config file)
     # must not warn. See https://github.com/pytest-dev/pytest-asyncio/issues/1033
-    pytester.makepyfile(dedent("""\
+    pytester.makepyfile(
+        dedent("""\
         import pytest
 
         @pytest.mark.asyncio
@@ -216,7 +237,8 @@ def test_unset_default_fixture_loop_scope_does_not_warn_without_async_fixtures(
 
         def test_sync_test():
             assert True
-        """))
+        """)
+    )
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=2)
     assert 'asyncio_default_fixture_loop_scope" is unset' not in result.stdout.str()
@@ -225,7 +247,8 @@ def test_unset_default_fixture_loop_scope_does_not_warn_without_async_fixtures(
 def test_unset_default_fixture_loop_scope_does_not_warn_with_explicit_loop_scope(
     pytester: Pytester,
 ):
-    pytester.makepyfile(dedent("""\
+    pytester.makepyfile(
+        dedent("""\
         import pytest
         import pytest_asyncio
 
@@ -236,7 +259,8 @@ def test_unset_default_fixture_loop_scope_does_not_warn_with_explicit_loop_scope
         @pytest.mark.asyncio
         async def test_uses_async_fixture(async_fixture):
             assert async_fixture == 1
-        """))
+        """)
+    )
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
     assert 'asyncio_default_fixture_loop_scope" is unset' not in result.stdout.str()

@@ -1,0 +1,1 @@
+The warning about the unset ``asyncio_default_fixture_loop_scope`` configuration option is now only emitted when an asynchronous fixture is actually used.

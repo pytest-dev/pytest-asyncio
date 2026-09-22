@@ -52,7 +52,6 @@ from pytest import (
     PytestCollectionWarning,
     PytestDeprecationWarning,
     PytestPluginManager,
-    StashKey,
 )
 
 if sys.version_info >= (3, 11):
@@ -283,18 +282,6 @@ to avoid unexpected behavior in the future. Valid fixture loop scopes are: \
 """
 
 
-_UNSET_FIXTURE_LOOP_SCOPE_WARNING_EMITTED = StashKey[bool]()
-"""Tracks whether the unset fixture loop scope warning has been emitted.
-
-The deprecation warning for an unset "asyncio_default_fixture_loop_scope" is
-only relevant when an asynchronous fixture is actually being set up, so it is
-emitted lazily from pytest_fixture_setup instead of unconditionally from
-pytest_configure. This avoids false-positive warnings for test sessions that
-never use asynchronous fixtures (e.g. nested pytest runs picked up via a
-different config file).
-"""
-
-
 def _validate_scope(scope: str | None, option_name: str) -> None:
     if scope is None:
         return
@@ -309,6 +296,8 @@ def _validate_scope(scope: str | None, option_name: str) -> None:
 def pytest_configure(config: Config) -> None:
     default_fixture_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
     _validate_scope(default_fixture_loop_scope, "asyncio_default_fixture_loop_scope")
+    if not default_fixture_loop_scope:
+        warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
 
     default_test_loop_scope = config.getini("asyncio_default_test_loop_scope")
     _validate_scope(default_test_loop_scope, "asyncio_default_test_loop_scope")
@@ -937,16 +926,6 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
         if not _is_coroutine_or_asyncgen(fixturedef.func):
             return (yield)
     default_loop_scope = request.config.getini("asyncio_default_fixture_loop_scope")
-    if not default_loop_scope and getattr(fixturedef.func, "_loop_scope", None) is None:
-        # The unset default only matters for asynchronous fixtures without an
-        # explicit loop scope, so warn lazily instead of unconditionally in
-        # pytest_configure. Warn only once per config.
-        already_warned = request.config.stash.get(
-            _UNSET_FIXTURE_LOOP_SCOPE_WARNING_EMITTED, False
-        )
-        if not already_warned:
-            request.config.stash[_UNSET_FIXTURE_LOOP_SCOPE_WARNING_EMITTED] = True
-            warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
     loop_scope = (
         getattr(fixturedef.func, "_loop_scope", None)
         or default_loop_scope
