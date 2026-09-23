@@ -23,4 +23,25 @@ pytest-asyncio can run asynchronous tests with custom event loop factories by im
 
 The hook receives the current pytest ``item``, so it can return different factory mappings for different tests. See :doc:`configure_loop_factories_per_test` for item-based factory configuration.
 
+Synchronous tests are not parametrized by the hook unless their statically
+resolved fixture closure contains a pytest-asyncio-managed fixture. This
+includes fixtures requested through test arguments, ``usefixtures``, autouse
+fixtures, and transitive fixture dependencies. Such a test runs once for each
+configured loop factory, ensuring the managed fixture is created and torn down
+on the corresponding event loop.
+
+Direct test parameters shadow fixtures with the same name and therefore do not
+trigger parametrization through those fixtures. Indirect parameters continue to
+use their fixture definitions normally.
+
+A managed fixture requested only dynamically through
+``request.getfixturevalue()`` is not known during collection and does not
+trigger loop factory parametrization for a synchronous test.
+
+pytest-asyncio relies on the static fixture closure supplied by pytest and does
+not perform additional fixture traversal. Dependencies introduced only by a
+dynamic ``pytest_generate_tests`` rewrite, or hidden behind an overridden
+same-name fixture definition that pytest does not include in that closure, do
+not trigger parametrization.
+
 To run a test with only some configured factories, see :doc:`run_test_with_specific_loop_factories`.
