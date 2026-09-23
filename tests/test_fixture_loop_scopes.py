@@ -126,3 +126,119 @@ def test_invalid_default_fixture_loop_scope_raises_error(pytester: Pytester):
             "function, class, module, package, session."
         ]
     )
+
+
+def test_unset_default_fixture_loop_scope_warns_when_async_fixture_is_used(
+    pytester: Pytester,
+):
+    pytester.makepyfile(dedent("""\
+        import pytest
+        import pytest_asyncio
+
+        @pytest_asyncio.fixture
+        async def async_fixture():
+            return 1
+
+        @pytest.mark.asyncio
+        async def test_uses_async_fixture(async_fixture):
+            assert async_fixture == 1
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestDeprecationWarning: The configuration option "
+            '"asyncio_default_fixture_loop_scope" is unset*'
+        ]
+    )
+
+
+def test_unset_default_fixture_loop_scope_warns_only_once(
+    pytester: Pytester,
+):
+    pytester.makepyfile(dedent("""\
+        import pytest
+        import pytest_asyncio
+
+        @pytest_asyncio.fixture
+        async def async_fixture_one():
+            return 1
+
+        @pytest_asyncio.fixture
+        async def async_fixture_two():
+            return 2
+
+        @pytest.mark.asyncio
+        async def test_uses_async_fixtures(async_fixture_one, async_fixture_two):
+            assert (async_fixture_one, async_fixture_two) == (1, 2)
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)
+    warning_lines = [
+        line
+        for line in result.stdout.lines
+        if 'asyncio_default_fixture_loop_scope" is unset' in line
+    ]
+    assert len(warning_lines) == 1
+
+
+def test_unset_default_fixture_loop_scope_does_not_warn_when_option_is_set(
+    pytester: Pytester,
+):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+        import pytest
+        import pytest_asyncio
+
+        @pytest_asyncio.fixture
+        async def async_fixture():
+            return 1
+
+        @pytest.mark.asyncio
+        async def test_uses_async_fixture(async_fixture):
+            assert async_fixture == 1
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)
+    assert 'asyncio_default_fixture_loop_scope" is unset' not in result.stdout.str()
+
+
+def test_unset_default_fixture_loop_scope_does_not_warn_without_async_fixtures(
+    pytester: Pytester,
+):
+    # The option only affects asynchronous fixtures, so a session that never
+    # sets one up (e.g. a nested pytest run picked up via another config file)
+    # must not warn. See https://github.com/pytest-dev/pytest-asyncio/issues/1033
+    pytester.makepyfile(dedent("""\
+        import pytest
+
+        @pytest.mark.asyncio
+        async def test_async_test_without_fixtures():
+            assert True
+
+        def test_sync_test():
+            assert True
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=2)
+    assert 'asyncio_default_fixture_loop_scope" is unset' not in result.stdout.str()
+
+
+def test_unset_default_fixture_loop_scope_does_not_warn_with_explicit_loop_scope(
+    pytester: Pytester,
+):
+    pytester.makepyfile(dedent("""\
+        import pytest
+        import pytest_asyncio
+
+        @pytest_asyncio.fixture(loop_scope="function")
+        async def async_fixture():
+            return 1
+
+        @pytest.mark.asyncio
+        async def test_uses_async_fixture(async_fixture):
+            assert async_fixture == 1
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)
+    assert 'asyncio_default_fixture_loop_scope" is unset' not in result.stdout.str()
