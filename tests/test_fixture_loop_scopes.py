@@ -113,6 +113,54 @@ def test_default_package_loop_scope_config_option_changes_fixture_loop_scope(
     result.assert_outcomes(passed=1)
 
 
+_UNSET_FIXTURE_LOOP_SCOPE_WARNING = (
+    "*PytestDeprecationWarning: The configuration option "
+    '"asyncio_default_fixture_loop_scope" is unset.*'
+)
+
+
+def test_unset_default_fixture_loop_scope_warning_appears_in_summary(
+    pytester: Pytester,
+):
+    """
+    The warning is emitted during configure, so it must still be recorded.
+
+    https://github.com/pytest-dev/pytest-asyncio/issues/1142
+    """
+    pytester.makepyfile("async def test_it(): pass")
+    result = pytester.runpytest("--asyncio-mode=auto")
+    result.assert_outcomes(passed=1, warnings=1)
+    result.stdout.fnmatch_lines(
+        ["*warnings summary*", _UNSET_FIXTURE_LOOP_SCOPE_WARNING]
+    )
+
+
+@pytest.mark.parametrize(
+    ("ini", "args"),
+    (
+        pytest.param(
+            "", ("-Wignore::pytest.PytestDeprecationWarning",), id="command-line-W"
+        ),
+        pytest.param(
+            "filterwarnings = ignore::pytest.PytestDeprecationWarning",
+            (),
+            id="filterwarnings-ini",
+        ),
+    ),
+)
+def test_unset_default_fixture_loop_scope_warning_is_filterable(
+    pytester: Pytester,
+    ini: str,
+    args: tuple[str, ...],
+):
+    """Being recorded properly also means users can silence it."""
+    pytester.makeini(f"[pytest]\n{ini}")
+    pytester.makepyfile("async def test_it(): pass")
+    result = pytester.runpytest("--asyncio-mode=auto", *args)
+    result.assert_outcomes(passed=1, warnings=0)
+    result.stdout.no_fnmatch_line(_UNSET_FIXTURE_LOOP_SCOPE_WARNING)
+
+
 def test_invalid_default_fixture_loop_scope_raises_error(pytester: Pytester):
     pytester.makeini("""\
         [pytest]
