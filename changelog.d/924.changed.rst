@@ -1,0 +1,1 @@
+The default value of ``asyncio_default_fixture_loop_scope`` is now ``function``. The deprecated unset behavior and warning have been removed.
