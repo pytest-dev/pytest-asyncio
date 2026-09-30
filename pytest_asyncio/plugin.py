@@ -685,6 +685,27 @@ def _resolve_asyncio_marker(item: Function) -> Mark | None:
     return None
 
 
+def _has_asyncio_mark_in_parametrization(metafunc: pytest.Metafunc) -> bool:
+    """Return whether a parametrization adds an asyncio mark to any parameter."""
+    for marker in metafunc.definition.iter_markers("parametrize"):
+        if len(marker.args) < 2:
+            continue
+        for parameter_set in marker.args[1]:
+            if any(mark.name == "asyncio" for mark in parameter_set.marks):
+                return True
+    for fixturedefs in metafunc._arg2fixturedefs.values():
+        for fixturedef in fixturedefs:
+            if fixturedef.params is None:
+                continue
+            for parameter_set in fixturedef.params:
+                if any(
+                    mark.name == "asyncio"
+                    for mark in getattr(parameter_set, "marks", ())
+                ):
+                    return True
+    return False
+
+
 # The function name needs to start with "pytest_"
 # see https://github.com/pytest-dev/pytest/issues/11307
 @pytest.hookimpl(specname="pytest_pycollect_makeitem", hookwrapper=True)
@@ -733,11 +754,15 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
         return
 
     asyncio_marker = _resolve_asyncio_marker(metafunc.definition)
-    if asyncio_marker is None:
+    if asyncio_marker is None and not _has_asyncio_mark_in_parametrization(metafunc):
         return
-    marker_loop_scope, marker_selected_factory_names = _parse_asyncio_marker(
-        asyncio_marker
-    )
+    if asyncio_marker is None:
+        marker_loop_scope = None
+        marker_selected_factory_names = None
+    else:
+        marker_loop_scope, marker_selected_factory_names = _parse_asyncio_marker(
+            asyncio_marker
+        )
 
     hook_factories = _collect_hook_loop_factories(metafunc.config, metafunc.definition)
     if hook_factories is None:
