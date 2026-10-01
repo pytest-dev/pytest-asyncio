@@ -9,6 +9,7 @@ Reference
   fixtures/index
   functions
   hooks
+  timeouts
   markers/index
   decorators/index
   changelog
