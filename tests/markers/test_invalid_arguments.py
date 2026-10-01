@@ -34,9 +34,7 @@ def test_error_when_scope_passed_as_positional_argument(
             """))
     result = pytester.runpytest("--assert=plain")
     result.assert_outcomes(errors=1)
-    result.stdout.fnmatch_lines(
-        ["*ValueError: mark.asyncio accepts only keyword arguments*"]
-    )
+    result.stdout.fnmatch_lines(["*mark.asyncio does not accept positional arguments*"])
 
 
 def test_error_when_wrong_keyword_argument_is_passed(
@@ -53,7 +51,7 @@ def test_error_when_wrong_keyword_argument_is_passed(
     result = pytester.runpytest("--assert=plain")
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
-        ["*ValueError: mark.asyncio accepts only keyword arguments*"]
+        ["*mark.asyncio received unexpected keyword argument(s): 'cope'*"]
     )
 
 
@@ -71,7 +69,25 @@ def test_error_when_additional_keyword_arguments_are_passed(
     result = pytester.runpytest("--assert=plain")
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
-        ["*ValueError: mark.asyncio accepts only keyword arguments*"]
+        ["*mark.asyncio received unexpected keyword argument(s): 'more'*"]
+    )
+
+
+def test_error_when_scope_keyword_argument_is_passed(
+    pytester: pytest.Pytester,
+):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+            import pytest
+
+            @pytest.mark.asyncio(scope="session")
+            async def test_anything():
+                pass
+            """))
+    result = pytester.runpytest("--assert=plain")
+    result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines(
+        ["*mark.asyncio received unexpected keyword argument(s): 'scope'*"]
     )
 
 

@@ -61,20 +61,7 @@ def test_raises_when_scope_and_loop_scope_arguments_are_present(pytester: Pytest
             """))
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(errors=1)
-
-
-def test_warns_when_scope_argument_is_present(pytester: Pytester):
-    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(dedent("""\
-            import pytest
-
-            @pytest.mark.asyncio(scope="function")
-            async def test_warns():
-                ...
-            """))
-    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
-    result.assert_outcomes(passed=1, warnings=1)
-    result.stdout.fnmatch_lines("*DeprecationWarning*")
+    result.stdout.fnmatch_lines("*unexpected keyword argument*'scope'*")
 
 
 def test_asyncio_mark_respects_the_loop_policy(
