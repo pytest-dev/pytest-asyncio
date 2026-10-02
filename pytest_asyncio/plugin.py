@@ -685,25 +685,12 @@ def _resolve_asyncio_marker(item: Function) -> Mark | None:
     return None
 
 
-def _has_asyncio_mark_in_parametrization(metafunc: pytest.Metafunc) -> bool:
-    """Return whether a parametrization adds an asyncio mark to any parameter."""
-    for marker in metafunc.definition.iter_markers("parametrize"):
-        if len(marker.args) < 2:
-            continue
-        for parameter_set in marker.args[1]:
-            if any(mark.name == "asyncio" for mark in parameter_set.marks):
-                return True
-    for fixturedefs in metafunc._arg2fixturedefs.values():
-        for fixturedef in fixturedefs:
-            if fixturedef.params is None:
-                continue
-            for parameter_set in fixturedef.params:
-                if any(
-                    mark.name == "asyncio"
-                    for mark in getattr(parameter_set, "marks", ())
-                ):
-                    return True
-    return False
+def _asyncio_mark_from_callspec(callspec: Any) -> Mark | None:
+    """Return the asyncio mark attached to a generated parameter set."""
+    return next(
+        (mark for mark in callspec.marks if mark.name == "asyncio"),
+        None,
+    )
 
 
 # The function name needs to start with "pytest_"
@@ -745,7 +732,7 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
     hook_result.force_result(updated_node_collection)
 
 
-@pytest.hookimpl(tryfirst=True)
+@pytest.hookimpl(trylast=True)
 def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     specialized_item_class = PytestAsyncioFunction.item_subclass_for(
         metafunc.definition
@@ -754,63 +741,99 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
         return
 
     asyncio_marker = _resolve_asyncio_marker(metafunc.definition)
-    if asyncio_marker is None and not _has_asyncio_mark_in_parametrization(metafunc):
+    if asyncio_marker is None and not any(
+        _asyncio_mark_from_callspec(callspec) is not None
+        for callspec in metafunc._calls
+    ):
         return
-    if asyncio_marker is None:
-        marker_loop_scope = None
-        marker_selected_factory_names = None
-    else:
-        marker_loop_scope, marker_selected_factory_names = _parse_asyncio_marker(
-            asyncio_marker
-        )
 
     hook_factories = _collect_hook_loop_factories(metafunc.config, metafunc.definition)
     if hook_factories is None:
-        if marker_selected_factory_names is not None:
+        markers = [
+            asyncio_marker,
+            *(_asyncio_mark_from_callspec(callspec) for callspec in metafunc._calls),
+        ]
+        if any(
+            marker is not None and _parse_asyncio_marker(marker)[1] is not None
+            for marker in markers
+        ):
             raise pytest.UsageError(
                 "mark.asyncio 'loop_factories' requires at least one "
                 "pytest_asyncio_loop_factories hook implementation."
             )
         return
 
-    factory_params: Collection[object]
-    factory_ids: Collection[str]
-    if marker_selected_factory_names is None:
-        factory_params = hook_factories.values()
-        factory_ids = hook_factories.keys()
-    else:
-        # Iterate in marker order to preserve explicit user selection
-        # order.
-        factory_ids = marker_selected_factory_names
-        factory_params = [
-            (
-                hook_factories[name]
-                if name in hook_factories
-                else pytest.param(
-                    None,
-                    marks=pytest.mark.skip(
-                        reason=(
-                            f"Loop factory {name!r} is not available."
-                            f" Available factories:"
-                            f" {', '.join(hook_factories)}."
+    def add_factory_params(
+        marker: Mark,
+        *,
+        hide_id: bool,
+    ) -> None:
+        marker_loop_scope, marker_selected_factory_names = _parse_asyncio_marker(marker)
+        factory_ids: Collection[str]
+        factory_params: Collection[object]
+        if marker_selected_factory_names is None:
+            factory_params = hook_factories.values()
+            factory_ids = hook_factories.keys()
+        else:
+            # Iterate in marker order to preserve explicit user selection order.
+            factory_ids = marker_selected_factory_names
+            factory_params = [
+                (
+                    hook_factories[name]
+                    if name in hook_factories
+                    else pytest.param(
+                        None,
+                        marks=pytest.mark.skip(
+                            reason=(
+                                f"Loop factory {name!r} is not available."
+                                f" Available factories:"
+                                f" {', '.join(hook_factories)}."
+                            ),
                         ),
-                    ),
+                    )
                 )
-            )
-            for name in marker_selected_factory_names
-        ]
+                for name in marker_selected_factory_names
+            ]
+        loop_scope = marker_loop_scope or _get_default_test_loop_scope(metafunc.config)
+        metafunc.parametrize(
+            _asyncio_loop_factory.__name__,
+            factory_params,
+            ids=(pytest.HIDDEN_PARAM,) if hide_id else factory_ids,
+            indirect=True,
+            scope=loop_scope,
+        )
+
     metafunc.fixturenames.append(_asyncio_loop_factory.__name__)
-    default_loop_scope = _get_default_test_loop_scope(metafunc.config)
-    loop_scope = marker_loop_scope or default_loop_scope
-    # pytest.HIDDEN_PARAM was added in pytest 8.4
-    hide_id = len(factory_ids) == 1 and hasattr(pytest, "HIDDEN_PARAM")
-    metafunc.parametrize(
-        _asyncio_loop_factory.__name__,
-        factory_params,
-        ids=(pytest.HIDDEN_PARAM,) if hide_id else factory_ids,
-        indirect=True,
-        scope=loop_scope,
-    )
+    if asyncio_marker is not None:
+        # A function-level marker applies to every generated parameter set.
+        # Keep the existing behavior of hiding the factory ID when there is only
+        # one available factory.
+        _, marker_selected_factory_names = _parse_asyncio_marker(asyncio_marker)
+        factory_count = len(
+            marker_selected_factory_names
+            if marker_selected_factory_names is not None
+            else hook_factories
+        )
+        add_factory_params(
+            asyncio_marker,
+            hide_id=factory_count == 1 and hasattr(pytest, "HIDDEN_PARAM"),
+        )
+        return
+
+    # Parametrization marks are already represented in metafunc._calls because
+    # this hook runs after pytest's built-in parametrization hook. Expand only
+    # calls carrying an asyncio mark; other backends (for example pytest-trio)
+    # must not be multiplied by asyncio loop factories.
+    expanded_calls = []
+    for callspec in metafunc._calls:
+        marker = _asyncio_mark_from_callspec(callspec)
+        if marker is None:
+            expanded_calls.append(callspec)
+            continue
+        metafunc._calls = [callspec]
+        add_factory_params(marker, hide_id=False)
+        expanded_calls.extend(metafunc._calls)
+    metafunc._calls = expanded_calls
 
 
 @contextlib.contextmanager
