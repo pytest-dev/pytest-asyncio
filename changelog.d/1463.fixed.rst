@@ -1,0 +1,2 @@
+Apply configured loop factories when ``pytest.mark.asyncio`` is attached to a
+parameter created by ``pytest.mark.parametrize`` or ``pytest.fixture``.
