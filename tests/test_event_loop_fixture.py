@@ -13,8 +13,6 @@ def test_event_loop_fixture_handles_unclosed_async_gen(
             import asyncio
             import pytest
 
-            pytest_plugins = 'pytest_asyncio'
-
             @pytest.mark.asyncio
             async def test_something():
                 async def generator_fn():
@@ -24,7 +22,9 @@ def test_event_loop_fixture_handles_unclosed_async_gen(
                 gen = generator_fn()
                 await gen.__anext__()
             """))
-    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
+    result = pytester.runpytest(
+        "--asyncio-mode=strict", "-W", "default", "--assert=plain"
+    )
     result.assert_outcomes(passed=1, warnings=0)
 
 
@@ -67,8 +67,6 @@ def test_event_loop_fixture_asyncgen_error(
             import asyncio
             import pytest
 
-            pytest_plugins = 'pytest_asyncio'
-
             @pytest.mark.asyncio
             async def test_something():
                 # mock shutdown_asyncgen failure
@@ -77,5 +75,7 @@ def test_event_loop_fixture_asyncgen_error(
                     raise RuntimeError("mock error cleaning up...")
                 loop.shutdown_asyncgens = fail
             """))
-    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
+    result = pytester.runpytest(
+        "--asyncio-mode=strict", "-W", "default", "--assert=plain"
+    )
     result.assert_outcomes(passed=1, warnings=1)
