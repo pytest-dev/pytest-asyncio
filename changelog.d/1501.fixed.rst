@@ -1,0 +1,5 @@
+Synchronous tests whose pytest-computed static fixture closure contains a
+pytest-asyncio-managed fixture are now parametrized over configured event loop
+factories, preventing shared fixtures from being torn down at
+synchronous/asynchronous test boundaries. Fixtures requested only dynamically
+through ``request.getfixturevalue()`` do not trigger this parametrization.
