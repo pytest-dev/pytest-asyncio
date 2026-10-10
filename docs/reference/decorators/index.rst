@@ -20,3 +20,5 @@ Examples:
     :code: python
 
 *auto* mode automatically converts coroutines and async generator functions declared with the standard ``@pytest.fixture`` decorator to pytest-asyncio fixtures.
+
+To keep a task group, timeout or cancel scope open across an async generator fixture's ``yield``, enable the experimental :ref:`asyncio_experimental_task_per_fixture <configuration/asyncio_experimental_task_per_fixture>` option.
