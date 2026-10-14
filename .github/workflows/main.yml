@@ -46,7 +46,7 @@ jobs:
       id: version
       run: python ./tools/get-version.py >> $GITHUB_OUTPUT
     - name: Upload artifacts
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
       with:
         name: dist
         path: dist
@@ -97,7 +97,7 @@ jobs:
       run: tox
 
     - name: Store coverage data
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
       if: "!endsWith(matrix.os, 'windows')"
       with:
         name: coverage-python-${{ matrix.python-version }}
@@ -206,7 +206,7 @@ jobs:
       run: |
         pandoc --wrap=preserve -o release-notes.md release-notes.rst
     - name: Upload artifacts
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
       with:
         name: release-notes.md
         path: release-notes.md
