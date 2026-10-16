@@ -54,6 +54,12 @@ from pytest import (
     PytestPluginManager,
 )
 
+from ._timeout import (
+    close as _close_with_timeout,
+    pytest_timeout_expired as pytest_timeout_expired,
+    run as _run_with_timeout,
+)
+
 if sys.version_info >= (3, 11):
     from asyncio import Runner
 else:
@@ -405,7 +411,9 @@ def _wrap_asyncgen_fixture(
             return res
 
         context = contextvars.copy_context()
-        result = runner.run(setup(), context=context)
+        result = _run_with_timeout(
+            runner, setup, context=context, config=request.config
+        )
 
         reset_contextvars = _apply_contextvar_changes(context)
 
@@ -422,7 +430,9 @@ def _wrap_asyncgen_fixture(
                     msg += "Yield only once."
                     raise ValueError(msg)
 
-            runner.run(async_finalizer(), context=context)
+            _run_with_timeout(
+                runner, async_finalizer, context=context, config=request.config
+            )
             if reset_contextvars is not None:
                 reset_contextvars()
 
@@ -453,7 +463,9 @@ def _wrap_async_fixture(
             return res
 
         context = contextvars.copy_context()
-        result = runner.run(setup(), context=context)
+        result = _run_with_timeout(
+            runner, setup, context=context, config=request.config
+        )
 
         # Copy the context vars modified by the setup task into the current
         # context, and (if needed) add a finalizer to reset them.
@@ -563,7 +575,7 @@ class PytestAsyncioFunction(Function):
         runner = self._request.getfixturevalue(runner_fixture_id)
         context = contextvars.copy_context()
         synchronized_obj = _synchronize_coroutine(
-            getattr(*self._synchronization_target_attr), runner, context
+            getattr(*self._synchronization_target_attr), runner, context, self.config
         )
         with MonkeyPatch.context() as c:
             c.setattr(*self._synchronization_target_attr, synchronized_obj)
@@ -890,10 +902,22 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
     return None
 
 
+def _is_native_coroutine_function(func: object) -> bool:
+    # Partial subclasses can override __call__; binding them can discard it.
+    if type(func) is functools.partial:
+        return _is_native_coroutine_function(func.func)
+    if inspect.ismethod(func):
+        return _is_native_coroutine_function(func.__func__)
+    return inspect.isfunction(func) and bool(
+        func.__code__.co_flags & inspect.CO_COROUTINE
+    )
+
+
 def _synchronize_coroutine(
     func: Callable[..., CoroutineType],
     runner: asyncio.Runner,
     context: contextvars.Context,
+    config: Config,
 ):
     """
     Return a sync wrapper around a coroutine executing it in the
@@ -902,8 +926,17 @@ def _synchronize_coroutine(
 
     @functools.wraps(func)
     def inner(*args, **kwargs):
-        coro = func(*args, **kwargs)
-        runner.run(coro, context=context)
+        if not _is_native_coroutine_function(func):
+            # Synchronous creators must run in the caller's context, even when
+            # inspect.markcoroutinefunction() marks them as coroutine functions.
+            runner.run(func(*args, **kwargs), context=context)
+            return
+        _run_with_timeout(
+            runner,
+            functools.partial(func, *args, **kwargs),
+            context=context,
+            config=config,
+        )
 
     return inner
 
@@ -1042,15 +1075,15 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
                 _set_event_loop(runner.get_loop())
             try:
                 yield runner
-            except Exception as e:
-                runner.__exit__(type(e), e, e.__traceback__)
+            except Exception:
+                _close_with_timeout(runner, config=request.config)
             else:
                 with warnings.catch_warnings():
                     warnings.filterwarnings(
                         "ignore", ".*BaseEventLoop.shutdown_asyncgens.*", RuntimeWarning
                     )
                     try:
-                        runner.__exit__(None, None, None)
+                        _close_with_timeout(runner, config=request.config)
                     except RuntimeError:
                         warnings.warn(
                             _RUNNER_TEARDOWN_WARNING % traceback.format_exc(),
