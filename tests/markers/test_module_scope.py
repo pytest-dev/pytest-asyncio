@@ -281,5 +281,5 @@ def test_standalone_test_does_not_trigger_warning_about_no_current_event_loop_be
             async def test_anything():
                 pass
             """))
-    result = pytester.runpytest("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict", "--assert=plain")
     result.assert_outcomes(warnings=0, passed=1)
