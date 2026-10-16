@@ -103,3 +103,39 @@ pytest-asyncio runs async tests sequentially, just like how pytest runs synchron
     :code: python
 
 This sequential execution is intentional and important for maintaining test isolation. Running tests concurrently could introduce race conditions and side effects where one test could interfere with another, making test results unreliable and difficult to debug.
+
+.. _concepts/tasks:
+
+Fixture tasks and cancellation
+==============================
+
+This section explains the experimental :ref:`asyncio_experimental_task_per_fixture <configuration/asyncio_experimental_task_per_fixture>` option.
+
+By default, pytest-asyncio runs the setup of an async generator fixture, the code before ``yield``, in one asyncio task, and its teardown, the code after ``yield``, in another.
+While tests use the fixture, no task runs it, so context managers around ``yield`` do not work as they do in ordinary asyncio code:
+
+* If a background task in an ``asyncio.TaskGroup`` fails, the test is not stopped, and the fixture's teardown can hang while it waits for the group's other tasks.
+* An ``asyncio.timeout()`` that expires does not stop the test, and no error is reported.
+
+With the option enabled, each async fixture runs in an asyncio task of its own, from setup to teardown.
+While tests use the fixture, its task waits at ``yield``, so context managers around ``yield`` are entered and exited in the same task, as in ordinary asyncio code.
+
+For example, this fixture sets a one-second deadline, counted from its setup, for each async test that uses it:
+
+.. include:: concepts_fixture_deadline_example.py
+    :code: python
+
+A task group or timeout stops the code inside it by *cancelling* the task that runs it: ``asyncio.CancelledError`` is raised where that task is waiting.
+While tests use a fixture, its task is waiting at ``yield``, so the error would be raised there.
+But the test and other fixtures are still using the fixture's value, and cleaning the fixture up immediately would close resources they depend on.
+So pytest-asyncio handles the cancellation in two steps:
+
+* It cancels the async test or fixture setup that is running, just as the task group or timeout would cancel code inside it.
+* It raises the cancellation at the fixture's ``yield`` later, when pytest tears the fixture down, after the fixtures that depend on it.
+  Context managers and ``finally`` blocks run, but other statements after ``yield`` are skipped unless the fixture handles the cancellation.
+  The task group's or timeout's error is reported as an error at the fixture's teardown.
+
+In the example, a test that takes longer than a second is cancelled, and pytest reports the timeout's ``TimeoutError`` at the fixture's teardown.
+By default, the timeout has no effect: a slow test passes, and a test that waits for something that never happens hangs.
+
+The :ref:`option's reference <configuration/asyncio_experimental_task_per_fixture>` gives the exact rules and limitations.

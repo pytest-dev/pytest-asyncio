@@ -51,8 +51,10 @@ optional-dependencies.docs = [
   "sphinx-tabs>=3.5",
 ]
 optional-dependencies.testing = [
+  "anyio>=4",
   "coverage>=6.2",
   "hypothesis>=5.7.1",
+  "pytest-timeout>=2.3",
 ]
 urls."Bug Tracker" = "https://github.com/pytest-dev/pytest-asyncio/issues"
 urls.Changelog = "https://pytest-asyncio.readthedocs.io/en/stable/reference/changelog.html"
@@ -70,8 +72,10 @@ dev = [
   { include-group = "typing" },
 ]
 test = [
+  "anyio>=4",
   "coverage>=6.2",
   "hypothesis>=5.7.1",
+  "pytest-timeout>=2.3",
 ]
 docs = [
   "sphinx>=5.3",

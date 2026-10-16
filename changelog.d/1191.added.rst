@@ -1,0 +1,1 @@
+Added the experimental :ref:`asyncio_experimental_task_per_fixture <configuration/asyncio_experimental_task_per_fixture>` option (Python 3.11 and later), which runs each async fixture in a single task from setup to teardown, so task groups, timeouts and cancel scopes can stay open across ``yield``.

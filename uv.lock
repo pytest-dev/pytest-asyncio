@@ -21,6 +21,20 @@ wheels = [
 ]
 
 [[package]]
+name = "anyio"
+version = "4.15.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "exceptiongroup", marker = "python_full_version < '3.11'" },
+    { name = "idna" },
+    { name = "typing-extensions", marker = "python_full_version < '3.15'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a9/d2/f4d173e22df740bc37b1db102b386ba719b66e95b0f0d751f556b387e6d2/anyio-4.15.1.tar.gz", hash = "sha256:9f28306018cbd6d329e64a36d58256edff76dd996fe423bc957326e578b82a94", size = 276966, upload-time = "2026-09-05T10:42:39.44Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/12/b8/4bd346e22b28902df4d651910f5242c28d84e4a5c2435ca5c3f797ed7e2e/anyio-4.15.1-py3-none-any.whl", hash = "sha256:6152fdbbf9a77fdec97731721bebf7c4c44f7c29b424b0065826173efc7ed101", size = 132079, upload-time = "2026-09-05T10:42:37.923Z" },
+]
+
+[[package]]
 name = "attrs"
 version = "26.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1138,8 +1152,10 @@ docs = [
     { name = "sphinx-tabs" },
 ]
 testing = [
+    { name = "anyio" },
     { name = "coverage" },
     { name = "hypothesis" },
+    { name = "pytest-timeout" },
 ]
 
 [package.dev-dependencies]
@@ -1149,6 +1165,7 @@ build = [
     { name = "twine" },
 ]
 dev = [
+    { name = "anyio" },
     { name = "build" },
     { name = "check-wheel-contents" },
     { name = "coverage" },
@@ -1156,6 +1173,7 @@ dev = [
     { name = "pre-commit" },
     { name = "pyright", extra = ["nodejs"] },
     { name = "pytest" },
+    { name = "pytest-timeout" },
     { name = "sphinx" },
     { name = "sphinx-rtd-theme" },
     { name = "sphinx-tabs" },
@@ -1167,8 +1185,10 @@ docs = [
     { name = "sphinx-tabs" },
 ]
 test = [
+    { name = "anyio" },
     { name = "coverage" },
     { name = "hypothesis" },
+    { name = "pytest-timeout" },
 ]
 typing = [
     { name = "pyright", extra = ["nodejs"] },
@@ -1177,10 +1197,12 @@ typing = [
 
 [package.metadata]
 requires-dist = [
+    { name = "anyio", marker = "extra == 'testing'", specifier = ">=4" },
     { name = "backports-asyncio-runner", marker = "python_full_version < '3.11'", specifier = ">=1.1,<2" },
     { name = "coverage", marker = "extra == 'testing'", specifier = ">=6.2" },
     { name = "hypothesis", marker = "extra == 'testing'", specifier = ">=5.7.1" },
     { name = "pytest", specifier = ">=8.4,<10" },
+    { name = "pytest-timeout", marker = "extra == 'testing'", specifier = ">=2.3" },
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=5.3" },
     { name = "sphinx-rtd-theme", marker = "extra == 'docs'", specifier = ">=1" },
     { name = "sphinx-tabs", marker = "extra == 'docs'", specifier = ">=3.5" },
@@ -1195,6 +1217,7 @@ build = [
     { name = "twine" },
 ]
 dev = [
+    { name = "anyio", specifier = ">=4" },
     { name = "build" },
     { name = "check-wheel-contents" },
     { name = "coverage", specifier = ">=6.2" },
@@ -1202,6 +1225,7 @@ dev = [
     { name = "pre-commit" },
     { name = "pyright", extras = ["nodejs"] },
     { name = "pytest" },
+    { name = "pytest-timeout", specifier = ">=2.3" },
     { name = "sphinx", specifier = ">=5.3" },
     { name = "sphinx-rtd-theme", specifier = ">=1" },
     { name = "sphinx-tabs", specifier = ">=3.5" },
@@ -1213,12 +1237,26 @@ docs = [
     { name = "sphinx-tabs", specifier = ">=3.5" },
 ]
 test = [
+    { name = "anyio", specifier = ">=4" },
     { name = "coverage", specifier = ">=6.2" },
     { name = "hypothesis", specifier = ">=5.7.1" },
+    { name = "pytest-timeout", specifier = ">=2.3" },
 ]
 typing = [
     { name = "pyright", extras = ["nodejs"] },
     { name = "pytest" },
+]
+
+[[package]]
+name = "pytest-timeout"
+version = "2.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ac/82/4c9ecabab13363e72d880f2fb504c5f750433b2b6f16e99f4ec21ada284c/pytest_timeout-2.4.0.tar.gz", hash = "sha256:7e68e90b01f9eff71332b25001f85c75495fc4e3a836701876183c4bcfd0540a", size = 17973, upload-time = "2025-05-05T19:44:34.99Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fa/b6/3127540ecdf1464a00e5a01ee60a1b09175f6913f0644ac748494d9c4b21/pytest_timeout-2.4.0-py3-none-any.whl", hash = "sha256:c42667e5cdadb151aeb5b26d114aff6bdf5a907f176a007a30b940d3d865b5c2", size = 14382, upload-time = "2025-05-05T19:44:33.502Z" },
 ]
 
 [[package]]
