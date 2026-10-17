@@ -149,7 +149,7 @@ def test_strict_mode_marked_test_unmarked_fixture_warning(pytester: Pytester):
                 "test_anything"
             ),
             (
-                "*/pytest_asyncio/plugin.py:*: PytestDeprecationWarning: "
+                "*/pytest_asyncio/_dispatch.py:*: PytestDeprecationWarning: "
                 "asyncio test 'test_anything' requested async "
                 "@pytest.fixture 'any_fixture' in strict mode. "
                 "You might want to use @pytest_asyncio.fixture or switch to "
@@ -196,7 +196,7 @@ def test_strict_mode_marked_test_unmarked_autouse_fixture_warning(pytester: Pyte
                 "test_anything"
             ),
             (
-                "*/pytest_asyncio/plugin.py:*: PytestDeprecationWarning: "
+                "*/pytest_asyncio/_dispatch.py:*: PytestDeprecationWarning: "
                 "*asyncio test 'test_anything' requested async "
                 "@pytest.fixture 'any_fixture' in strict mode. "
                 "You might want to use @pytest_asyncio.fixture or switch to "
