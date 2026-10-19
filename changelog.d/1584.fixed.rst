@@ -1,0 +1,1 @@
+Fixed an invalid ``loop_scope`` in the ``asyncio`` marker being reported as a bare ``AssertionError`` exposing a Python set repr, instead of a usage error that names the argument and lists the valid scopes.

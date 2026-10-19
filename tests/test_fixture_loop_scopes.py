@@ -126,3 +126,23 @@ def test_invalid_default_fixture_loop_scope_raises_error(pytester: Pytester):
             "function, class, module, package, session."
         ]
     )
+
+
+def test_invalid_marker_loop_scope_raises_error(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile("""\
+        import pytest
+
+        @pytest.mark.asyncio(loop_scope="invalid_scope")
+        async def test_invalid_loop_scope():
+            pass
+        """)
+    result = pytester.runpytest("--assert=plain")
+    # The exception class is rendered as pytest.UsageError on newer pytest and as
+    # _pytest.config.exceptions.UsageError on the oldest supported version.
+    result.stdout.fnmatch_lines(
+        [
+            "*UsageError: 'invalid_scope' is not a valid loop_scope. "
+            "Valid scopes are: function, class, module, package, session."
+        ]
+    )
