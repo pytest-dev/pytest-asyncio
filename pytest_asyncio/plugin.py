@@ -276,7 +276,7 @@ _MATCH_FIXTURE_SCOPE = "scope"
 
 _DEFAULT_FIXTURE_LOOP_SCOPE_UNSET = """\
 The configuration option "asyncio_default_fixture_loop_scope" is unset.
-The event loop scope for asynchronous fixtures will default to the "fixture" caching \
+The event loop scope for asynchronous fixtures will default to the fixture \
 scope. Future versions of pytest-asyncio will default the loop scope for asynchronous \
 fixtures to "function" scope. Set the default fixture loop scope explicitly in order \
 to avoid unexpected behavior in the future. Valid fixture loop scopes are: \

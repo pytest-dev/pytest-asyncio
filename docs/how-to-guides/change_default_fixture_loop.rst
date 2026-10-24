@@ -28,7 +28,7 @@ The :ref:`configuration/asyncio_default_fixture_loop_scope` configuration option
 
 Please refer to :ref:`configuration/asyncio_default_fixture_loop_scope` for other valid scopes.
 
-To make each asynchronous fixture use an event loop that matches the fixture's own caching scope, set the option to ``scope``:
+To make each asynchronous fixture use an event loop that matches the fixture's own scope, set the option to ``scope``:
 
 .. tabs::
 

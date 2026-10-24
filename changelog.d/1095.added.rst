@@ -1,1 +1,1 @@
-Added ``scope`` as a valid value for ``asyncio_default_fixture_loop_scope``, which makes each asynchronous fixture use an event loop matching its own caching scope.
+Added ``scope`` as a valid value for ``asyncio_default_fixture_loop_scope``, which makes each asynchronous fixture use an event loop matching its own fixture scope.

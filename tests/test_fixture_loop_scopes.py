@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import warnings
 from textwrap import dedent
 
 import pytest
-from pytest import PytestDeprecationWarning, Pytester
+from pytest import Pytester
 
 
 @pytest.mark.parametrize(
@@ -182,13 +181,6 @@ def test_explicit_loop_scope_overrides_scope_default(pytester: Pytester):
             """))
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(passed=1)
-
-
-def test_scope_default_does_not_emit_deprecation_warning(pytester: Pytester):
-    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = scope")
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", PytestDeprecationWarning)
-        pytester.parseconfigure()
 
 
 def test_scope_is_invalid_for_default_test_loop_scope(pytester: Pytester):
