@@ -89,58 +89,20 @@ def test_a_test_calling_sys_exit_fails_and_later_tests_use_its_loop(
 
     result.assert_outcomes(failed=1, passed=1)
     result.stdout.fnmatch_lines(["*_ test_exits _*", "*SystemExit: 3"])
-    assert "pytest-asyncio received" not in result.stdout.str()
+    assert "The interrupted test or fixture raised" not in result.stdout.str()
 
 
-def test_a_cleanup_error_after_ctrl_c_fails_the_test_and_the_session_continues(
-    pytester: Pytester,
+@pytest.mark.parametrize("error", ["ValueError('cleanup failed')", "SystemExit(3)"])
+def test_an_error_from_the_test_cleanup_after_ctrl_c_is_noted_and_the_session_stops(
+    pytester: Pytester, error: str
 ):
     pytester.makeini(
         "[pytest]\n"
         "asyncio_experimental_task_per_fixture = true\n"
         "asyncio_default_fixture_loop_scope = function"
     )
-    pytester.makepyfile(dedent("""\
+    pytester.makepyfile(dedent(f"""\
         import asyncio
-
-        import pytest
-
-        def ctrl_c():
-            raise KeyboardInterrupt
-
-        @pytest.mark.asyncio(loop_scope="module")
-        async def test_interrupted():
-            asyncio.get_running_loop().call_soon(ctrl_c)
-            try:
-                await asyncio.Event().wait()
-            finally:
-                raise ValueError("cleanup failed")
-
-        @pytest.mark.asyncio(loop_scope="module")
-        async def test_next():
-            pass
-        """))
-
-    result = pytester.runpytest_subprocess("--asyncio-mode=strict", timeout=30)
-
-    assert result.ret == pytest.ExitCode.TESTS_FAILED
-    result.assert_outcomes(failed=1, passed=1)
-    result.stdout.fnmatch_lines(
-        ["*_ test_interrupted _*", "*ValueError: cleanup failed", "*KeyboardInterrupt*"]
-    )
-
-
-def test_sys_exit_during_cleanup_after_ctrl_c_fails_the_test_and_names_the_ctrl_c(
-    pytester: Pytester,
-):
-    pytester.makeini(
-        "[pytest]\n"
-        "asyncio_experimental_task_per_fixture = true\n"
-        "asyncio_default_fixture_loop_scope = function"
-    )
-    pytester.makepyfile(dedent("""\
-        import asyncio
-        import sys
 
         import pytest
 
@@ -148,28 +110,23 @@ def test_sys_exit_during_cleanup_after_ctrl_c_fails_the_test_and_names_the_ctrl_
             raise KeyboardInterrupt
 
         @pytest.mark.asyncio
-        async def test_exits_during_cleanup():
+        async def test_interrupted():
             asyncio.get_running_loop().call_soon(ctrl_c)
             try:
                 await asyncio.Event().wait()
             finally:
-                sys.exit(3)
+                raise {error}
 
         def test_next():
-            pass
+            pytest.fail("the session should have stopped")
         """))
 
     result = pytester.runpytest_subprocess(
         "--asyncio-mode=strict", "-W", "error", timeout=30
     )
 
-    result.assert_outcomes(failed=1, passed=1)
-    result.stdout.fnmatch_lines(
-        [
-            "*SystemExit: 3",
-            "*Raised during cleanup after pytest-asyncio received: KeyboardInterrupt()",
-        ]
-    )
+    assert result.ret == pytest.ExitCode.INTERRUPTED
+    result.stdout.fnmatch_lines([f"*The interrupted test or fixture raised {error}*"])
     assert "never retrieved" not in result.stdout.str() + result.stderr.str()
 
 
@@ -207,11 +164,46 @@ def test_a_cleanup_error_after_pytest_timeout_is_reported_with_the_timeout(
 
     result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(
-        ["*_ test_hang _*", "*ConnectionError: cleanup failed", "*Timeout*"]
+        [
+            "*_ test_hang _*",
+            "*Failed: Timeout*",
+            "*The interrupted test or fixture raised ConnectionError('cleanup failed')",
+        ]
     )
 
 
-def test_a_cleanup_error_in_a_fixture_setup_after_ctrl_c_is_a_setup_error(
+def test_ctrl_c_just_after_the_test_failed_stops_the_session(pytester: Pytester):
+    pytester.makeini(
+        "[pytest]\n"
+        "asyncio_experimental_task_per_fixture = true\n"
+        "asyncio_default_fixture_loop_scope = function"
+    )
+    pytester.makepyfile(dedent("""\
+        import asyncio
+
+        import pytest
+
+        def ctrl_c():
+            raise KeyboardInterrupt
+
+        @pytest.mark.asyncio
+        async def test_fails():
+            asyncio.get_running_loop().call_soon(ctrl_c)
+            raise ValueError("test failed")
+
+        def test_next():
+            pytest.fail("the session should have stopped")
+        """))
+
+    result = pytester.runpytest_subprocess("--asyncio-mode=strict", timeout=30)
+
+    assert result.ret == pytest.ExitCode.INTERRUPTED
+    result.stdout.fnmatch_lines(
+        ["*The interrupted test or fixture raised ValueError('test failed')*"]
+    )
+
+
+def test_a_keyboard_interrupt_from_a_child_task_stops_the_session_cleanly(
     pytester: Pytester,
 ):
     pytester.makeini(
@@ -223,36 +215,22 @@ def test_a_cleanup_error_in_a_fixture_setup_after_ctrl_c_is_a_setup_error(
         import asyncio
 
         import pytest
-        import pytest_asyncio
 
-        def ctrl_c():
-            raise KeyboardInterrupt
-
-        @pytest_asyncio.fixture
-        async def resource():
-            asyncio.get_running_loop().call_soon(ctrl_c)
-            try:
-                await asyncio.Event().wait()
-                yield
-            finally:
-                raise ValueError("setup cleanup failed")
+        async def interrupt():
+            await asyncio.sleep(0)
+            raise KeyboardInterrupt("child")
 
         @pytest.mark.asyncio
-        async def test_uses_resource(resource):
-            pytest.fail("the fixture setup should have failed")
+        async def test_interrupted():
+            async with asyncio.TaskGroup() as group:
+                group.create_task(interrupt())
+                await asyncio.Event().wait()
         """))
 
     result = pytester.runpytest_subprocess("--asyncio-mode=strict", timeout=30)
 
-    assert result.ret == pytest.ExitCode.TESTS_FAILED
-    result.assert_outcomes(errors=1)
-    result.stdout.fnmatch_lines(
-        [
-            "*ERROR at setup of test_uses_resource*",
-            "*ValueError: setup cleanup failed",
-            "*KeyboardInterrupt*",
-        ]
-    )
+    assert result.ret == pytest.ExitCode.INTERRUPTED
+    assert "never retrieved" not in result.stdout.str() + result.stderr.str()
 
 
 def test_a_fixture_failing_during_the_test_cleanup_after_ctrl_c_cancels_that_cleanup(
