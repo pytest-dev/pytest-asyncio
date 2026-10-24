@@ -123,7 +123,7 @@ def test_invalid_default_fixture_loop_scope_raises_error(pytester: Pytester):
         [
             "ERROR: 'invalid_scope' is not a valid "
             "asyncio_default_fixture_loop_scope. Valid scopes are: "
-            "function, class, module, package, session, scope."
+            "function, class, module, package, session."
         ]
     )
 

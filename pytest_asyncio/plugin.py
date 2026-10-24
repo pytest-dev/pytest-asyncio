@@ -285,16 +285,10 @@ current behavior.
 """
 
 
-def _validate_scope(
-    scope: str | None,
-    option_name: str,
-    *,
-    extra_valid: Collection[str] = (),
-) -> None:
+def _validate_scope(scope: str | None, option_name: str) -> None:
     if scope is None:
         return
     valid_scopes = [s.value for s in Scope]
-    valid_scopes.extend(extra_valid)
     if scope not in valid_scopes:
         raise pytest.UsageError(
             f"{scope!r} is not a valid {option_name}. "
@@ -304,11 +298,10 @@ def _validate_scope(
 
 def pytest_configure(config: Config) -> None:
     default_fixture_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
-    _validate_scope(
-        default_fixture_loop_scope,
-        "asyncio_default_fixture_loop_scope",
-        extra_valid=(_MATCH_FIXTURE_SCOPE,),
-    )
+    if default_fixture_loop_scope != _MATCH_FIXTURE_SCOPE:
+        _validate_scope(
+            default_fixture_loop_scope, "asyncio_default_fixture_loop_scope"
+        )
     if not default_fixture_loop_scope:
         warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
 
