@@ -27,7 +27,6 @@ from collections.abc import (
 )
 from types import AsyncGeneratorType, CoroutineType
 from typing import (
-    TYPE_CHECKING,
     Any,
     Literal,
     ParamSpec,
@@ -63,11 +62,6 @@ if sys.version_info >= (3, 13):
     from typing import TypeIs
 else:
     from typing_extensions import TypeIs
-
-if TYPE_CHECKING:
-    # AbstractEventLoopPolicy is deprecated and scheduled for removal in Python 3.16
-    # Import it for type checking only to avoid raising a DeprecationWarning.
-    from asyncio import AbstractEventLoopPolicy
 
 _ScopeName = Literal["session", "package", "module", "class", "function"]
 _R = TypeVar("_R", bound=Awaitable | AsyncIterable | AsyncIterator)
@@ -828,15 +822,10 @@ else:
         yield
 
 
-def _get_event_loop_no_warn(
-    policy: AbstractEventLoopPolicy | None = None,
-) -> asyncio.AbstractEventLoop:
+def _get_event_loop_no_warn() -> asyncio.AbstractEventLoop:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
-        if policy is not None:
-            return policy.get_event_loop()
-        else:
-            return asyncio.get_event_loop()
+        return asyncio.get_event_loop()
 
 
 def _set_event_loop(loop: AbstractEventLoop | None) -> None:
