@@ -1131,17 +1131,6 @@ dependencies = [
     { name = "typing-extensions", marker = "python_full_version < '3.13'" },
 ]
 
-[package.optional-dependencies]
-docs = [
-    { name = "sphinx" },
-    { name = "sphinx-rtd-theme" },
-    { name = "sphinx-tabs" },
-]
-testing = [
-    { name = "coverage" },
-    { name = "hypothesis" },
-]
-
 [package.dev-dependencies]
 build = [
     { name = "build" },
@@ -1178,15 +1167,9 @@ typing = [
 [package.metadata]
 requires-dist = [
     { name = "backports-asyncio-runner", marker = "python_full_version < '3.11'", specifier = ">=1.1,<2" },
-    { name = "coverage", marker = "extra == 'testing'", specifier = ">=6.2" },
-    { name = "hypothesis", marker = "extra == 'testing'", specifier = ">=5.7.1" },
     { name = "pytest", specifier = ">=8.4,<10" },
-    { name = "sphinx", marker = "extra == 'docs'", specifier = ">=5.3" },
-    { name = "sphinx-rtd-theme", marker = "extra == 'docs'", specifier = ">=1" },
-    { name = "sphinx-tabs", marker = "extra == 'docs'", specifier = ">=3.5" },
     { name = "typing-extensions", marker = "python_full_version < '3.13'", specifier = ">=4.12" },
 ]
-provides-extras = ["docs", "testing"]
 
 [package.metadata.requires-dev]
 build = [
