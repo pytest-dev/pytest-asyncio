@@ -11,6 +11,7 @@ Reference
   hooks
   markers/index
   decorators/index
+  warnings
   changelog
 
 This section of the documentation provides descriptions of the individual parts provided by pytest-asyncio.

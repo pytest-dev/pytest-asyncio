@@ -28,5 +28,6 @@ def test_asyncio_mark_provides_package_scoped_loop_strict_mode(pytester: Pyteste
                 assert async_shared_module_fixture is True
             """),
     )
-    result = pytester.runpytest("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=2)
+    result.stdout.fnmatch_lines("*PytestAsyncioLoopScopeMismatchWarning*")
