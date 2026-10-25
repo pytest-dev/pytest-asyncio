@@ -804,17 +804,28 @@ def _temporary_event_loop(loop: AbstractEventLoop) -> Iterator[None]:
         _set_event_loop(old_loop)
 
 
-@contextlib.contextmanager
-def _restore_event_loop_policy() -> Iterator[None]:
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        old_loop_policy = asyncio.get_event_loop_policy()
-    try:
-        yield
-    finally:
+# _restore_event_loop_policy is required for Python versions before Python 3.16
+# In Python 3.16, the asyncio policy system is removed and this function degrades
+# to a no-op
+if sys.version_info < (3, 16):
+
+    @contextlib.contextmanager
+    def _restore_event_loop_policy() -> Iterator[None]:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
-            asyncio.set_event_loop_policy(old_loop_policy)
+            old_loop_policy = asyncio.get_event_loop_policy()
+        try:
+            yield
+        finally:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", DeprecationWarning)
+                asyncio.set_event_loop_policy(old_loop_policy)
+
+else:
+
+    @contextlib.contextmanager
+    def _restore_event_loop_policy() -> Iterator[None]:
+        yield
 
 
 def _get_event_loop_no_warn(
