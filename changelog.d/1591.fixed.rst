@@ -1,0 +1,1 @@
+Fixed cancelled async fixture setup and teardown being propagated as ``asyncio.CancelledError``, which could prevent fixture cleanup or break subsequent fixture setup. Also ensured ContextVars changed by async generator fixtures are restored when their teardown raises.
