@@ -806,17 +806,13 @@ def _temporary_event_loop(loop: AbstractEventLoop) -> Iterator[None]:
 
 @contextlib.contextmanager
 def _restore_event_loop_policy() -> Iterator[None]:
-    old_loop_policy = _get_event_loop_policy()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        old_loop_policy = asyncio.get_event_loop_policy()
     try:
         yield
     finally:
         _set_event_loop_policy(old_loop_policy)
-
-
-def _get_event_loop_policy() -> AbstractEventLoopPolicy:
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        return asyncio.get_event_loop_policy()
 
 
 def _set_event_loop_policy(policy: AbstractEventLoopPolicy) -> None:
