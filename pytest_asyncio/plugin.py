@@ -812,13 +812,9 @@ def _restore_event_loop_policy() -> Iterator[None]:
     try:
         yield
     finally:
-        _set_event_loop_policy(old_loop_policy)
-
-
-def _set_event_loop_policy(policy: AbstractEventLoopPolicy) -> None:
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        asyncio.set_event_loop_policy(policy)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            asyncio.set_event_loop_policy(old_loop_policy)
 
 
 def _get_event_loop_no_warn(
