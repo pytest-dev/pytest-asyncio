@@ -1,1 +1,0 @@
-Allow `AsyncIterable` as a return type for asynchronous generator fixtures decorated with `pytest_asyncio.fixture`

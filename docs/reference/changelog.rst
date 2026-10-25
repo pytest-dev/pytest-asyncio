@@ -10,6 +10,27 @@ This project uses `towncrier <https://towncrier.readthedocs.io/>`__ for changelo
 
 .. towncrier release notes start
 
+`1.4.1 <https://github.com/pytest-dev/pytest-asyncio/tree/1.4.1>`_ - 2026-10-25
+===============================================================================
+
+Added
+-----
+
+- Declared support for Python 3.15 (`#1588 <https://github.com/pytest-dev/pytest-asyncio/issues/1588>`_)
+
+
+Fixed
+-----
+
+- Allow `AsyncIterable` as a return type for asynchronous generator fixtures decorated with `pytest_asyncio.fixture` (`#1090 <https://github.com/pytest-dev/pytest-asyncio/issues/1090>`_)
+
+
+Notes for Downstream Packagers
+------------------------------
+
+- Source-tree development dependencies now use PEP 735 dependency groups and ``uv.lock``. (`#1518 <https://github.com/pytest-dev/pytest-asyncio/issues/1518>`_)
+
+
 `1.4.0 <https://github.com/pytest-dev/pytest-asyncio/tree/1.4.0>`_ - 2026-05-26
 ===============================================================================
 
