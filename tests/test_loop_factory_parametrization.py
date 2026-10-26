@@ -504,8 +504,8 @@ def test_asyncio_marker_loop_factories_without_hook_errors(
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
         [
-            "*mark.asyncio 'loop_factories' requires at least one "
-            "pytest_asyncio_loop_factories hook implementation.*",
+            "test_*::test_errors: mark.asyncio 'loop_factories' requires at least "
+            "one pytest_asyncio_loop_factories hook implementation.",
         ]
     )
 

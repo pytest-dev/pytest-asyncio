@@ -1,0 +1,1 @@
+Invalid arguments to the ``asyncio`` marker, including an invalid ``loop_scope``, are reported with a message that names the test instead of a traceback.

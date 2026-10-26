@@ -35,7 +35,7 @@ def test_error_when_scope_passed_as_positional_argument(
     result = pytester.runpytest("--assert=plain")
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
-        ["*ValueError: mark.asyncio accepts only keyword arguments*"]
+        ["test_*::test_anything: mark.asyncio accepts only keyword arguments*"]
     )
 
 
@@ -53,7 +53,7 @@ def test_error_when_wrong_keyword_argument_is_passed(
     result = pytester.runpytest("--assert=plain")
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
-        ["*ValueError: mark.asyncio accepts only keyword arguments*"]
+        ["test_*::test_anything: mark.asyncio accepts only keyword arguments*"]
     )
 
 
@@ -71,7 +71,29 @@ def test_error_when_additional_keyword_arguments_are_passed(
     result = pytester.runpytest("--assert=plain")
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
-        ["*ValueError: mark.asyncio accepts only keyword arguments*"]
+        ["test_*::test_anything: mark.asyncio accepts only keyword arguments*"]
+    )
+
+
+def test_error_when_loop_scope_is_invalid(
+    pytester: pytest.Pytester,
+):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+            import pytest
+
+            @pytest.mark.asyncio(loop_scope="invalid_scope")
+            async def test_anything():
+                pass
+            """))
+    result = pytester.runpytest("--assert=plain")
+    result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines(
+        [
+            "test_*::test_anything: "
+            "mark.asyncio got an unexpected loop scope value 'invalid_scope'. "
+            "Valid scopes are: function, class, module, package, session."
+        ]
     )
 
 
@@ -104,5 +126,8 @@ def test_error_when_loop_factories_marker_value_is_invalid(
     result = pytester.runpytest("--assert=plain")
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
-        ["*ValueError: mark.asyncio 'loop_factories' must be a non-empty sequence*"]
+        [
+            "test_*::test_anything: "
+            "mark.asyncio 'loop_factories' must be a non-empty sequence*"
+        ]
     )
