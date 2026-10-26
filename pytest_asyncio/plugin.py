@@ -933,7 +933,7 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
 
 _DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR = """\
 An asyncio pytest marker defines both "scope" and "loop_scope", \
-but it should only use "loop_scope".
+but it should only use "loop_scope".\
 """
 
 _MARKER_SCOPE_KWARG_DEPRECATION_WARNING = """\
@@ -942,7 +942,7 @@ Please use the "loop_scope" argument instead.
 """
 
 _INVALID_LOOP_FACTORIES_KWARG = """\
-mark.asyncio 'loop_factories' must be a non-empty sequence of strings.
+mark.asyncio 'loop_factories' must be a non-empty sequence of strings.\
 """
 
 
