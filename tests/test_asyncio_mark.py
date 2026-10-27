@@ -202,4 +202,6 @@ def test_asyncio_marker_invalid_loop_scope_raises_usage_error(pytester: Pytester
             """))
 
     result = pytester.runpytest()
-    result.stdout.fnmatch_lines(["*UsageError: 'invalid_scope' is not a valid loop_scope*"])
+    result.stdout.fnmatch_lines(
+        ["*UsageError: 'invalid_scope' is not a valid loop_scope*"]
+    )
