@@ -1,0 +1,1 @@
+Raise ``pytest.UsageError`` when an invalid ``loop_scope`` is provided to ``@pytest.mark.asyncio``.
