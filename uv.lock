@@ -1128,7 +1128,6 @@ source = { editable = "." }
 dependencies = [
     { name = "backports-asyncio-runner", marker = "python_full_version < '3.11'" },
     { name = "pytest" },
-    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
 ]
 
 [package.dev-dependencies]
@@ -1168,7 +1167,6 @@ typing = [
 requires-dist = [
     { name = "backports-asyncio-runner", marker = "python_full_version < '3.11'", specifier = ">=1.1,<2" },
     { name = "pytest", specifier = ">=8.4,<10" },
-    { name = "typing-extensions", marker = "python_full_version < '3.13'", specifier = ">=4.12" },
 ]
 
 [package.metadata.requires-dev]

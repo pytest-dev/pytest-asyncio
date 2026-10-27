@@ -59,11 +59,6 @@ if sys.version_info >= (3, 11):
 else:
     from backports.asyncio.runner import Runner
 
-if sys.version_info >= (3, 13):
-    from typing import TypeIs
-else:
-    from typing_extensions import TypeIs
-
 if TYPE_CHECKING:
     # AbstractEventLoopPolicy is deprecated and scheduled for removal in Python 3.16
     # Import it for type checking only to avoid raising a DeprecationWarning.
@@ -1047,7 +1042,7 @@ def _asyncio_loop_factory(request: FixtureRequest) -> LoopFactory | None:
     return getattr(request, "param", None)
 
 
-def is_async_test(item: Item) -> TypeIs[PytestAsyncioFunction]:
+def is_async_test(item: Item) -> bool:
     """Returns whether a test item is a pytest-asyncio test"""
     return isinstance(item, PytestAsyncioFunction)
 
