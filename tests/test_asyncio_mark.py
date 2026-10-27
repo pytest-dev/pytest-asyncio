@@ -186,3 +186,20 @@ def test_asyncio_marker_uses_marker_loop_scope_even_if_config_is_set(
 
     result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
+
+
+def test_asyncio_marker_invalid_loop_scope_raises_usage_error(pytester: Pytester):
+    pytester.makeini(dedent("""\
+            [pytest]
+            asyncio_default_fixture_loop_scope = function
+            """))
+    pytester.makepyfile(dedent("""\
+            import pytest
+
+            @pytest.mark.asyncio(loop_scope="invalid_scope")
+            async def test_x():
+                pass
+            """))
+
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(["*UsageError: 'invalid_scope' is not a valid loop_scope*"])

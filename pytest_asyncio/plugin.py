@@ -954,8 +954,7 @@ def _parse_asyncio_marker(
     scope = asyncio_marker.kwargs.get("loop_scope") or asyncio_marker.kwargs.get(
         "scope"
     )
-    if scope is not None:
-        assert scope in {"function", "class", "module", "package", "session"}
+    _validate_scope(scope, "loop_scope")
     marker_value = asyncio_marker.kwargs.get("loop_factories")
     if marker_value is None:
         return scope, None
