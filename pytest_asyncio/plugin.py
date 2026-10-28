@@ -777,8 +777,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     metafunc.fixturenames.append(_asyncio_loop_factory.__name__)
     default_loop_scope = _get_default_test_loop_scope(metafunc.config)
     loop_scope = marker_loop_scope or default_loop_scope
-    # pytest.HIDDEN_PARAM was added in pytest 8.4
-    hide_id = len(factory_ids) == 1 and hasattr(pytest, "HIDDEN_PARAM")
+    hide_id = len(factory_ids) == 1
     metafunc.parametrize(
         _asyncio_loop_factory.__name__,
         factory_params,
