@@ -41,7 +41,7 @@ repos:
   - id: yamlfmt
     args: [--mapping, '2', --sequence, '2', --offset, '0']
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.19.1
+  rev: v2.4.0
   hooks:
   - id: mypy
     exclude: ^docs/.*
