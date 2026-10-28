@@ -30,6 +30,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Literal,
+    NoReturn,
     ParamSpec,
     TypeAlias,
     TypeVar,
@@ -735,16 +736,19 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     asyncio_marker = _resolve_asyncio_marker(metafunc.definition)
     if asyncio_marker is None:
         return
+    nodeid = metafunc.definition.nodeid
     marker_loop_scope, marker_selected_factory_names = _parse_asyncio_marker(
-        asyncio_marker
+        asyncio_marker,
+        nodeid,
     )
 
     hook_factories = _collect_hook_loop_factories(metafunc.config, metafunc.definition)
     if hook_factories is None:
         if marker_selected_factory_names is not None:
-            raise pytest.UsageError(
+            _fail_invalid_asyncio_marker(
+                nodeid,
                 "mark.asyncio 'loop_factories' requires at least one "
-                "pytest_asyncio_loop_factories hook implementation."
+                "pytest_asyncio_loop_factories hook implementation.",
             )
         return
 
@@ -928,7 +932,7 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
 
 _DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR = """\
 An asyncio pytest marker defines both "scope" and "loop_scope", \
-but it should only use "loop_scope".
+but it should only use "loop_scope".\
 """
 
 _MARKER_SCOPE_KWARG_DEPRECATION_WARNING = """\
@@ -937,47 +941,60 @@ Please use the "loop_scope" argument instead.
 """
 
 _INVALID_LOOP_FACTORIES_KWARG = """\
-mark.asyncio 'loop_factories' must be a non-empty sequence of strings.
+mark.asyncio 'loop_factories' must be a non-empty sequence of strings.\
 """
+
+
+def _fail_invalid_asyncio_marker(nodeid: str, reason: str) -> NoReturn:
+    # A traceback would show pytest and pytest-asyncio internals rather than the
+    # marker, so report the test's node ID and the reason instead.
+    pytest.fail(f"{nodeid}: {reason}", pytrace=False)
 
 
 def _parse_asyncio_marker(
     asyncio_marker: Mark,
+    nodeid: str,
 ) -> tuple[_ScopeName | None, Sequence[str] | None]:
     assert asyncio_marker.name == "asyncio"
-    _validate_asyncio_marker(asyncio_marker)
+    _validate_asyncio_marker(asyncio_marker, nodeid)
     if "scope" in asyncio_marker.kwargs:
         if "loop_scope" in asyncio_marker.kwargs:
-            raise pytest.UsageError(_DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR)
+            _fail_invalid_asyncio_marker(nodeid, _DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR)
         warnings.warn(PytestDeprecationWarning(_MARKER_SCOPE_KWARG_DEPRECATION_WARNING))
     scope = asyncio_marker.kwargs.get("loop_scope") or asyncio_marker.kwargs.get(
         "scope"
     )
     if scope is not None:
-        assert scope in {"function", "class", "module", "package", "session"}
+        valid_scopes = [s.value for s in Scope]
+        if scope not in valid_scopes:
+            _fail_invalid_asyncio_marker(
+                nodeid,
+                f"mark.asyncio got an unexpected loop scope value {scope!r}. "
+                f"Valid scopes are: {', '.join(valid_scopes)}.",
+            )
     marker_value = asyncio_marker.kwargs.get("loop_factories")
     if marker_value is None:
         return scope, None
     if isinstance(marker_value, str) or not isinstance(marker_value, Sequence):
-        raise ValueError(_INVALID_LOOP_FACTORIES_KWARG)
+        _fail_invalid_asyncio_marker(nodeid, _INVALID_LOOP_FACTORIES_KWARG)
     if not marker_value or any(
         not isinstance(factory_name, str) or not factory_name
         for factory_name in marker_value
     ):
-        raise ValueError(_INVALID_LOOP_FACTORIES_KWARG)
+        _fail_invalid_asyncio_marker(nodeid, _INVALID_LOOP_FACTORIES_KWARG)
     return scope, marker_value
 
 
-def _validate_asyncio_marker(asyncio_marker: Mark) -> None:
+def _validate_asyncio_marker(asyncio_marker: Mark, nodeid: str) -> None:
     if asyncio_marker.args or (
         asyncio_marker.kwargs
         and set(asyncio_marker.kwargs) - {"loop_scope", "scope", "loop_factories"}
     ):
-        msg = (
+        _fail_invalid_asyncio_marker(
+            nodeid,
             "mark.asyncio accepts only keyword arguments 'loop_scope' and"
-            " 'loop_factories'."
+            " 'loop_factories'.",
         )
-        raise ValueError(msg)
 
 
 def _get_default_test_loop_scope(config: Config) -> Any:
