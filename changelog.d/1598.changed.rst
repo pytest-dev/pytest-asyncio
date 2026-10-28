@@ -1,0 +1,1 @@
+The return type of ``pytest_asyncio.is_async_test`` is now ``bool``, so type checkers no longer narrow the item to ``pytest.Function``.
