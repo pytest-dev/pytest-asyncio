@@ -583,7 +583,7 @@ class PytestAsyncioFunction(Function):
         marker = self.get_closest_marker("asyncio")
         assert marker is not None
         default_loop_scope = _get_default_test_loop_scope(self.config)
-        loop_scope = marker.kwargs.get("loop_scope") or marker.kwargs.get("scope")
+        loop_scope = marker.kwargs.get("loop_scope")
         if loop_scope is None:
             return default_loop_scope
         else:
@@ -931,16 +931,6 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
     return hook_result
 
 
-_DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR = """\
-An asyncio pytest marker defines both "scope" and "loop_scope", \
-but it should only use "loop_scope".\
-"""
-
-_MARKER_SCOPE_KWARG_DEPRECATION_WARNING = """\
-The "scope" keyword argument to the asyncio marker has been deprecated. \
-Please use the "loop_scope" argument instead.
-"""
-
 _INVALID_LOOP_FACTORIES_KWARG = """\
 mark.asyncio 'loop_factories' must be a non-empty sequence of strings.\
 """
@@ -958,13 +948,7 @@ def _parse_asyncio_marker(
 ) -> tuple[_ScopeName | None, Sequence[str] | None]:
     assert asyncio_marker.name == "asyncio"
     _validate_asyncio_marker(asyncio_marker, nodeid)
-    if "scope" in asyncio_marker.kwargs:
-        if "loop_scope" in asyncio_marker.kwargs:
-            _fail_invalid_asyncio_marker(nodeid, _DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR)
-        warnings.warn(PytestDeprecationWarning(_MARKER_SCOPE_KWARG_DEPRECATION_WARNING))
-    scope = asyncio_marker.kwargs.get("loop_scope") or asyncio_marker.kwargs.get(
-        "scope"
-    )
+    scope = asyncio_marker.kwargs.get("loop_scope")
     if scope is not None:
         valid_scopes = [s.value for s in Scope]
         if scope not in valid_scopes:
@@ -989,7 +973,7 @@ def _parse_asyncio_marker(
 def _validate_asyncio_marker(asyncio_marker: Mark, nodeid: str) -> None:
     if asyncio_marker.args or (
         asyncio_marker.kwargs
-        and set(asyncio_marker.kwargs) - {"loop_scope", "scope", "loop_factories"}
+        and set(asyncio_marker.kwargs) - {"loop_scope", "loop_factories"}
     ):
         _fail_invalid_asyncio_marker(
             nodeid,
