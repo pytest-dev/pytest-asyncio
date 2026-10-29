@@ -583,7 +583,7 @@ class PytestAsyncioFunction(Function):
         marker = self.get_closest_marker("asyncio")
         assert marker is not None
         default_loop_scope = _get_default_test_loop_scope(self.config)
-        loop_scope = marker.kwargs.get("loop_scope")
+        loop_scope, _ = _parse_asyncio_marker(marker, self.nodeid)
         if loop_scope is None:
             return default_loop_scope
         else:
