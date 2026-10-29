@@ -27,3 +27,28 @@ The :ref:`configuration/asyncio_default_fixture_loop_scope` configuration option
          asyncio_default_fixture_loop_scope = session
 
 Please refer to :ref:`configuration/asyncio_default_fixture_loop_scope` for other valid scopes.
+
+To make each asynchronous fixture use an event loop that matches the fixture's own scope, set the option to ``scope``:
+
+.. tabs::
+
+   .. tab:: pytest.ini
+
+      .. code-block:: ini
+
+         [pytest]
+         asyncio_default_fixture_loop_scope = scope
+
+   .. tab:: pyproject.toml
+
+      .. code-block:: toml
+
+         [tool.pytest.ini_options]
+         asyncio_default_fixture_loop_scope = "scope"
+
+   .. tab:: setup.cfg
+
+      .. code-block:: ini
+
+         [tool:pytest]
+         asyncio_default_fixture_loop_scope = scope

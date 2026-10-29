@@ -1,0 +1,1 @@
+A ``scope`` value for ``asyncio_default_fixture_loop_scope``. With it, an asynchronous fixture without ``loop_scope`` uses its ``scope`` as its loop scope. This is the behavior of an unset option in pytest-asyncio 1.x.

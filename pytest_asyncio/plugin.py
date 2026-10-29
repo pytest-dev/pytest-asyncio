@@ -272,13 +272,16 @@ def _collect_hook_loop_factories(
     return factories
 
 
+_MATCH_FIXTURE_SCOPE = "scope"
+
 _DEFAULT_FIXTURE_LOOP_SCOPE_UNSET = """\
 The configuration option "asyncio_default_fixture_loop_scope" is unset.
-The event loop scope for asynchronous fixtures will default to the "fixture" caching \
+The event loop scope for asynchronous fixtures will default to the fixture \
 scope. Future versions of pytest-asyncio will default the loop scope for asynchronous \
 fixtures to "function" scope. Set the default fixture loop scope explicitly in order \
 to avoid unexpected behavior in the future. Valid fixture loop scopes are: \
-"function", "class", "module", "package", "session"
+"function", "class", "module", "package", "session". Set it to "scope" to keep the \
+current behavior.
 """
 
 
@@ -295,7 +298,10 @@ def _validate_scope(scope: str | None, option_name: str) -> None:
 
 def pytest_configure(config: Config) -> None:
     default_fixture_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
-    _validate_scope(default_fixture_loop_scope, "asyncio_default_fixture_loop_scope")
+    if default_fixture_loop_scope != _MATCH_FIXTURE_SCOPE:
+        _validate_scope(
+            default_fixture_loop_scope, "asyncio_default_fixture_loop_scope"
+        )
     if not default_fixture_loop_scope:
         warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
 
@@ -906,6 +912,8 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
         if not _is_coroutine_or_asyncgen(fixturedef.func):
             return (yield)
     default_loop_scope = request.config.getini("asyncio_default_fixture_loop_scope")
+    if default_loop_scope == _MATCH_FIXTURE_SCOPE:
+        default_loop_scope = fixturedef.scope
     loop_scope = (
         getattr(fixturedef.func, "_loop_scope", None)
         or default_loop_scope
