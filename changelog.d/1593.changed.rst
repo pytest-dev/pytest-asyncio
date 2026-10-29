@@ -1,0 +1,1 @@
+Disable asyncio policy restoration between tests on Python 3.16 and newer, since the policy system was removed in Python 3.16

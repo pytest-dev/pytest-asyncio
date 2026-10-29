@@ -27,7 +27,6 @@ from collections.abc import (
 )
 from types import AsyncGeneratorType, CoroutineType
 from typing import (
-    TYPE_CHECKING,
     Any,
     Literal,
     ParamSpec,
@@ -63,11 +62,6 @@ if sys.version_info >= (3, 13):
     from typing import TypeIs
 else:
     from typing_extensions import TypeIs
-
-if TYPE_CHECKING:
-    # AbstractEventLoopPolicy is deprecated and scheduled for removal in Python 3.16
-    # Import it for type checking only to avoid raising a DeprecationWarning.
-    from asyncio import AbstractEventLoopPolicy
 
 _ScopeName = Literal["session", "package", "module", "class", "function"]
 _R = TypeVar("_R", bound=Awaitable | AsyncIterable | AsyncIterator)
@@ -803,36 +797,34 @@ def _temporary_event_loop(loop: AbstractEventLoop) -> Iterator[None]:
         _set_event_loop(old_loop)
 
 
-@contextlib.contextmanager
-def _restore_event_loop_policy() -> Iterator[None]:
-    old_loop_policy = _get_event_loop_policy()
-    try:
+# _restore_event_loop_policy is required for Python versions before Python 3.16
+# In Python 3.16, the asyncio policy system is removed and this function degrades
+# to a no-op
+if sys.version_info < (3, 16):
+
+    @contextlib.contextmanager
+    def _restore_event_loop_policy() -> Iterator[None]:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            old_loop_policy = asyncio.get_event_loop_policy()
+        try:
+            yield
+        finally:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", DeprecationWarning)
+                asyncio.set_event_loop_policy(old_loop_policy)
+
+else:
+
+    @contextlib.contextmanager
+    def _restore_event_loop_policy() -> Iterator[None]:
         yield
-    finally:
-        _set_event_loop_policy(old_loop_policy)
 
 
-def _get_event_loop_policy() -> AbstractEventLoopPolicy:
+def _get_event_loop_no_warn() -> asyncio.AbstractEventLoop:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
-        return asyncio.get_event_loop_policy()
-
-
-def _set_event_loop_policy(policy: AbstractEventLoopPolicy) -> None:
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        asyncio.set_event_loop_policy(policy)
-
-
-def _get_event_loop_no_warn(
-    policy: AbstractEventLoopPolicy | None = None,
-) -> asyncio.AbstractEventLoop:
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        if policy is not None:
-            return policy.get_event_loop()
-        else:
-            return asyncio.get_event_loop()
+        return asyncio.get_event_loop()
 
 
 def _set_event_loop(loop: AbstractEventLoop | None) -> None:
