@@ -75,6 +75,30 @@ def test_error_when_scope_keyword_argument_is_passed(
     )
 
 
+def test_error_when_wrong_keyword_argument_is_passed_through_param(
+    pytester: pytest.Pytester,
+):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+            import pytest
+
+            @pytest.mark.parametrize(
+                "n",
+                [
+                    pytest.param(1, marks=pytest.mark.asyncio(cope="module")),
+                    pytest.param(2, marks=pytest.mark.asyncio),
+                ],
+            )
+            async def test_anything(n):
+                pass
+            """))
+    result = pytester.runpytest("--assert=plain")
+    result.assert_outcomes(passed=1, errors=1)
+    result.stdout.fnmatch_lines(
+        ["test_*::test_anything?1?: mark.asyncio accepts only keyword arguments*"]
+    )
+
+
 def test_error_when_additional_keyword_arguments_are_passed(
     pytester: pytest.Pytester,
 ):
