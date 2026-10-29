@@ -57,6 +57,24 @@ def test_error_when_wrong_keyword_argument_is_passed(
     )
 
 
+def test_error_when_scope_keyword_argument_is_passed(
+    pytester: pytest.Pytester,
+):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+            import pytest
+
+            @pytest.mark.asyncio(scope="session")
+            async def test_anything():
+                pass
+            """))
+    result = pytester.runpytest("--assert=plain")
+    result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines(
+        ["test_*::test_anything: mark.asyncio accepts only keyword arguments*"]
+    )
+
+
 def test_error_when_additional_keyword_arguments_are_passed(
     pytester: pytest.Pytester,
 ):
@@ -94,6 +112,24 @@ def test_error_when_loop_scope_is_invalid(
             "mark.asyncio got an unexpected loop scope value 'invalid_scope'. "
             "Valid scopes are: function, class, module, package, session."
         ]
+    )
+
+
+def test_error_when_loop_scope_is_empty(
+    pytester: pytest.Pytester,
+):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+            import pytest
+
+            @pytest.mark.asyncio(loop_scope="")
+            async def test_anything():
+                pass
+            """))
+    result = pytester.runpytest("--assert=plain")
+    result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines(
+        ["test_*::test_anything: mark.asyncio got an unexpected loop scope value ''.*"]
     )
 
 
