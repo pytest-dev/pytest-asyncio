@@ -382,6 +382,22 @@ def _wrap_sync_fixture(
     return _sync_fixture_wrapper
 
 
+def _cancelled_fixture_error(
+    phase: Literal["setup", "teardown"],
+    request: FixtureRequest,
+) -> PytestAsyncioError:
+    """
+    Return the error to raise instead of a fixture's CancelledError.
+
+    CancelledError is a BaseException, so pytest does not handle it like other
+    fixture errors: it does not cache it as a setup error, and it does not run
+    a node's remaining finalizers after one is raised during teardown.
+    """
+    return PytestAsyncioError(
+        f"The {phase} of async fixture {request.fixturename!r} was cancelled."
+    )
+
+
 AsyncGenFixtureParams = ParamSpec("AsyncGenFixtureParams")
 AsyncGenFixtureYieldType = TypeVar("AsyncGenFixtureYieldType")
 
@@ -405,7 +421,10 @@ def _wrap_asyncgen_fixture(
             return res
 
         context = contextvars.copy_context()
-        result = runner.run(setup(), context=context)
+        try:
+            result = runner.run(setup(), context=context)
+        except asyncio.CancelledError as e:
+            raise _cancelled_fixture_error("setup", request) from e
 
         reset_contextvars = _apply_contextvar_changes(context)
 
@@ -422,9 +441,13 @@ def _wrap_asyncgen_fixture(
                     msg += "Yield only once."
                     raise ValueError(msg)
 
-            runner.run(async_finalizer(), context=context)
-            if reset_contextvars is not None:
-                reset_contextvars()
+            try:
+                runner.run(async_finalizer(), context=context)
+            except asyncio.CancelledError as e:
+                raise _cancelled_fixture_error("teardown", request) from e
+            finally:
+                if reset_contextvars is not None:
+                    reset_contextvars()
 
         request.addfinalizer(finalizer)
         return result
@@ -453,7 +476,10 @@ def _wrap_async_fixture(
             return res
 
         context = contextvars.copy_context()
-        result = runner.run(setup(), context=context)
+        try:
+            result = runner.run(setup(), context=context)
+        except asyncio.CancelledError as e:
+            raise _cancelled_fixture_error("setup", request) from e
 
         # Copy the context vars modified by the setup task into the current
         # context, and (if needed) add a finalizer to reset them.

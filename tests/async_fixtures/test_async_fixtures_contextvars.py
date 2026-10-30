@@ -159,6 +159,27 @@ def test_var_previous_value_restored_after_fixture(pytester: Pytester):
     result.assert_outcomes(passed=1)
 
 
+def test_var_from_async_generator_reset_when_teardown_fails(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(_prelude + dedent("""
+        @pytest_asyncio.fixture
+        async def var_fixture():
+            with context_var_manager("value"):
+                yield
+                raise RuntimeError("teardown failed")
+
+        @pytest.mark.asyncio
+        async def test(var_fixture):
+            assert _context_var.get() == "value"
+
+        def test_after_failed_teardown():
+            with pytest.raises(LookupError):
+                _context_var.get()
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=2, errors=1)
+
+
 def test_var_set_to_existing_value_ok(pytester: Pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(_prelude + dedent("""
