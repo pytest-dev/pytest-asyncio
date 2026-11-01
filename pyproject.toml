@@ -43,7 +43,7 @@ dynamic = [
 
 dependencies = [
   "backports-asyncio-runner>=1.1,<2; python_version<'3.11'",
-  "pytest>=8.4,<10",
+  "pytest>=8.4",
   "typing-extensions>=4.12; python_version<'3.13'",
 ]
 urls."Bug Tracker" = "https://github.com/pytest-dev/pytest-asyncio/issues"
