@@ -60,6 +60,12 @@ def test_raises_when_scope_and_loop_scope_arguments_are_present(pytester: Pytest
             """))
     result = pytester.runpytest("--asyncio-mode=strict")
     result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines(
+        [
+            "test_*::test_raises: An asyncio pytest marker defines both "
+            '"scope" and "loop_scope", but it should only use "loop_scope".'
+        ]
+    )
 
 
 def test_warns_when_scope_argument_is_present(pytester: Pytester):
