@@ -1180,7 +1180,7 @@ requires-dist = [
     { name = "backports-asyncio-runner", marker = "python_full_version < '3.11'", specifier = ">=1.1,<2" },
     { name = "coverage", marker = "extra == 'testing'", specifier = ">=6.2" },
     { name = "hypothesis", marker = "extra == 'testing'", specifier = ">=5.7.1" },
-    { name = "pytest", specifier = ">=8.4,<10" },
+    { name = "pytest", specifier = ">=8.4" },
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=5.3" },
     { name = "sphinx-rtd-theme", marker = "extra == 'docs'", specifier = ">=1" },
     { name = "sphinx-tabs", marker = "extra == 'docs'", specifier = ">=3.5" },
