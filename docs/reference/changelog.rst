@@ -10,6 +10,15 @@ This project uses `towncrier <https://towncrier.readthedocs.io/>`__ for changelo
 
 .. towncrier release notes start
 
+`1.4.1.post1 <https://github.com/pytest-dev/pytest-asyncio/tree/1.4.1.post1>`_ - 2026-11-01
+===========================================================================================
+
+Changed
+-------
+
+- Removed the upper version bound on the ``pytest`` dependency. (`#1605 <https://github.com/pytest-dev/pytest-asyncio/issues/1605>`_)
+
+
 `1.4.1 <https://github.com/pytest-dev/pytest-asyncio/tree/1.4.1>`_ - 2026-10-25
 ===============================================================================
 
