@@ -842,9 +842,7 @@ if sys.version_info < (3, 16):
 
 else:
 
-    @contextlib.contextmanager
-    def _restore_event_loop_policy() -> Iterator[None]:
-        yield
+    _restore_event_loop_policy = contextlib.nullcontext
 
 
 def _get_event_loop_no_warn() -> asyncio.AbstractEventLoop:
