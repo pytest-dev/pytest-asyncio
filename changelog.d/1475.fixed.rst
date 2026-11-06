@@ -1,0 +1,1 @@
+Arguments to *asyncio* marks applied with ``pytest.param`` are validated like those of other *asyncio* marks.
