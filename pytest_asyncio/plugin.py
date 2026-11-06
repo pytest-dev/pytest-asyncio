@@ -272,7 +272,7 @@ def _collect_hook_loop_factories(
     return factories
 
 
-_MATCH_FIXTURE_SCOPE = "scope"
+_MATCH_FIXTURE_SCOPE = "fixture-scope"
 
 _DEFAULT_FIXTURE_LOOP_SCOPE_UNSET = """\
 The configuration option "asyncio_default_fixture_loop_scope" is unset.
@@ -280,8 +280,8 @@ The event loop scope for asynchronous fixtures will default to the fixture \
 scope. Future versions of pytest-asyncio will default the loop scope for asynchronous \
 fixtures to "function" scope. Set the default fixture loop scope explicitly in order \
 to avoid unexpected behavior in the future. Valid fixture loop scopes are: \
-"function", "class", "module", "package", "session". Set it to "scope" to keep the \
-current behavior.
+"function", "class", "module", "package", "session". Set it to "fixture-scope" to \
+keep the current behavior.
 """
 
 

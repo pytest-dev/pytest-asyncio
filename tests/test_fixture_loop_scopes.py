@@ -128,12 +128,12 @@ def test_invalid_default_fixture_loop_scope_raises_error(pytester: Pytester):
     )
 
 
-def test_scope_default_runs_each_fixture_in_loop_of_its_own_scope(
+def test_fixture_scope_default_runs_each_fixture_in_loop_of_its_own_scope(
     pytester: Pytester,
 ):
     pytester.makeini(dedent("""\
             [pytest]
-            asyncio_default_fixture_loop_scope = scope
+            asyncio_default_fixture_loop_scope = fixture-scope
             asyncio_mode = auto
             """))
     pytester.makepyfile(dedent("""\
@@ -161,10 +161,10 @@ def test_scope_default_runs_each_fixture_in_loop_of_its_own_scope(
     result.assert_outcomes(passed=2)
 
 
-def test_explicit_loop_scope_overrides_scope_default(pytester: Pytester):
+def test_explicit_loop_scope_overrides_fixture_scope_default(pytester: Pytester):
     pytester.makeini(dedent("""\
             [pytest]
-            asyncio_default_fixture_loop_scope = scope
+            asyncio_default_fixture_loop_scope = fixture-scope
             """))
     pytester.makepyfile(dedent("""\
             import asyncio
@@ -183,16 +183,16 @@ def test_explicit_loop_scope_overrides_scope_default(pytester: Pytester):
     result.assert_outcomes(passed=1)
 
 
-def test_scope_is_invalid_for_default_test_loop_scope(pytester: Pytester):
+def test_fixture_scope_is_invalid_for_default_test_loop_scope(pytester: Pytester):
     pytester.makeini("""\
         [pytest]
         asyncio_default_fixture_loop_scope = function
-        asyncio_default_test_loop_scope = scope
+        asyncio_default_test_loop_scope = fixture-scope
         """)
     result = pytester.runpytest("--assert=plain")
     result.stderr.fnmatch_lines(
         [
-            "ERROR: 'scope' is not a valid "
+            "ERROR: 'fixture-scope' is not a valid "
             "asyncio_default_test_loop_scope. Valid scopes are: "
             "function, class, module, package, session."
         ]
