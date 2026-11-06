@@ -283,9 +283,7 @@ def _validate_scope(scope: str | None, option_name: str) -> None:
         )
 
 
-_WARNED_DEFAULT_FIXTURE_LOOP_SCOPE = (
-    "_pytest_asyncio_default_fixture_loop_scope_warned"
-)
+_WARNED_DEFAULT_FIXTURE_LOOP_SCOPE = "_pytest_asyncio_default_fixture_loop_scope_warned"
 
 
 def _warn_default_fixture_loop_scope_unset(config: Config) -> None:
