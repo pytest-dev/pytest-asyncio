@@ -283,11 +283,21 @@ def _validate_scope(scope: str | None, option_name: str) -> None:
         )
 
 
+_WARNED_DEFAULT_FIXTURE_LOOP_SCOPE = (
+    "_pytest_asyncio_default_fixture_loop_scope_warned"
+)
+
+
+def _warn_default_fixture_loop_scope_unset(config: Config) -> None:
+    if getattr(config, _WARNED_DEFAULT_FIXTURE_LOOP_SCOPE, False):
+        return
+    warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+    setattr(config, _WARNED_DEFAULT_FIXTURE_LOOP_SCOPE, True)
+
+
 def pytest_configure(config: Config) -> None:
     default_fixture_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
     _validate_scope(default_fixture_loop_scope, "asyncio_default_fixture_loop_scope")
-    if not default_fixture_loop_scope:
-        warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
 
     default_test_loop_scope = config.getini("asyncio_default_test_loop_scope")
     _validate_scope(default_test_loop_scope, "asyncio_default_test_loop_scope")
@@ -922,6 +932,8 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
         if not _is_coroutine_or_asyncgen(fixturedef.func):
             return (yield)
     default_loop_scope = request.config.getini("asyncio_default_fixture_loop_scope")
+    if not default_loop_scope and getattr(fixturedef.func, "_loop_scope", None) is None:
+        _warn_default_fixture_loop_scope_unset(request.config)
     loop_scope = (
         getattr(fixturedef.func, "_loop_scope", None)
         or default_loop_scope

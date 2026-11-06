@@ -1,0 +1,1 @@
+The ``asyncio_default_fixture_loop_scope`` deprecation warning is now emitted only when an async fixture relies on the unset default, avoiding false positives for synchronous suites and nested pytest configurations.
