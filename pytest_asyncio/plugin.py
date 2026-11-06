@@ -272,13 +272,16 @@ def _collect_hook_loop_factories(
     return factories
 
 
+_MATCH_FIXTURE_SCOPE = "fixture-scope"
+
 _DEFAULT_FIXTURE_LOOP_SCOPE_UNSET = """\
 The configuration option "asyncio_default_fixture_loop_scope" is unset.
-The event loop scope for asynchronous fixtures will default to the "fixture" caching \
+The event loop scope for asynchronous fixtures will default to the fixture \
 scope. Future versions of pytest-asyncio will default the loop scope for asynchronous \
 fixtures to "function" scope. Set the default fixture loop scope explicitly in order \
 to avoid unexpected behavior in the future. Valid fixture loop scopes are: \
-"function", "class", "module", "package", "session"
+"function", "class", "module", "package", "session". Set it to "fixture-scope" to \
+keep the current behavior.
 """
 
 
@@ -295,7 +298,10 @@ def _validate_scope(scope: str | None, option_name: str) -> None:
 
 def pytest_configure(config: Config) -> None:
     default_fixture_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
-    _validate_scope(default_fixture_loop_scope, "asyncio_default_fixture_loop_scope")
+    if default_fixture_loop_scope != _MATCH_FIXTURE_SCOPE:
+        _validate_scope(
+            default_fixture_loop_scope, "asyncio_default_fixture_loop_scope"
+        )
     if not default_fixture_loop_scope:
         warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
 
@@ -735,17 +741,20 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     asyncio_marker = _resolve_asyncio_marker(metafunc.definition)
     if asyncio_marker is None:
         return
+    nodeid = metafunc.definition.nodeid
     marker_loop_scope, marker_selected_factory_names = _parse_asyncio_marker(
-        asyncio_marker
+        asyncio_marker,
+        nodeid,
     )
 
     hook_factories = _collect_hook_loop_factories(metafunc.config, metafunc.definition)
     if hook_factories is None:
         if marker_selected_factory_names is not None:
-            raise pytest.UsageError(
-                "mark.asyncio 'loop_factories' requires at least one "
+            msg = (
+                f"{nodeid}: mark.asyncio 'loop_factories' requires at least one "
                 "pytest_asyncio_loop_factories hook implementation."
             )
+            pytest.fail(msg, pytrace=False)
         return
 
     factory_params: Collection[object]
@@ -926,6 +935,8 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
         if not _is_coroutine_or_asyncgen(fixturedef.func):
             return (yield)
     default_loop_scope = request.config.getini("asyncio_default_fixture_loop_scope")
+    if default_loop_scope == _MATCH_FIXTURE_SCOPE:
+        default_loop_scope = fixturedef.scope
     loop_scope = (
         getattr(fixturedef.func, "_loop_scope", None)
         or default_loop_scope
@@ -948,7 +959,7 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
 
 _DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR = """\
 An asyncio pytest marker defines both "scope" and "loop_scope", \
-but it should only use "loop_scope".
+but it should only use "loop_scope".\
 """
 
 _MARKER_SCOPE_KWARG_DEPRECATION_WARNING = """\
@@ -957,7 +968,7 @@ Please use the "loop_scope" argument instead.
 """
 
 _INVALID_LOOP_FACTORIES_KWARG = """\
-mark.asyncio 'loop_factories' must be a non-empty sequence of strings.
+mark.asyncio 'loop_factories' must be a non-empty sequence of strings.\
 """
 
 _EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING = """\
@@ -969,41 +980,51 @@ Use the "pytest_asyncio_loop_factories" hook to customize event loop creation.\
 
 def _parse_asyncio_marker(
     asyncio_marker: Mark,
+    nodeid: str,
 ) -> tuple[_ScopeName | None, Sequence[str] | None]:
     assert asyncio_marker.name == "asyncio"
-    _validate_asyncio_marker(asyncio_marker)
+    _validate_asyncio_marker(asyncio_marker, nodeid)
     if "scope" in asyncio_marker.kwargs:
         if "loop_scope" in asyncio_marker.kwargs:
-            raise pytest.UsageError(_DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR)
+            pytest.fail(
+                f"{nodeid}: {_DUPLICATE_LOOP_SCOPE_DEFINITION_ERROR}",
+                pytrace=False,
+            )
         warnings.warn(PytestDeprecationWarning(_MARKER_SCOPE_KWARG_DEPRECATION_WARNING))
     scope = asyncio_marker.kwargs.get("loop_scope") or asyncio_marker.kwargs.get(
         "scope"
     )
     if scope is not None:
-        assert scope in {"function", "class", "module", "package", "session"}
+        valid_scopes = [s.value for s in Scope]
+        if scope not in valid_scopes:
+            msg = (
+                f"{nodeid}: mark.asyncio got an unexpected loop scope value {scope!r}. "
+                f"Valid scopes are: {', '.join(valid_scopes)}."
+            )
+            pytest.fail(msg, pytrace=False)
     marker_value = asyncio_marker.kwargs.get("loop_factories")
     if marker_value is None:
         return scope, None
     if isinstance(marker_value, str) or not isinstance(marker_value, Sequence):
-        raise ValueError(_INVALID_LOOP_FACTORIES_KWARG)
+        pytest.fail(f"{nodeid}: {_INVALID_LOOP_FACTORIES_KWARG}", pytrace=False)
     if not marker_value or any(
         not isinstance(factory_name, str) or not factory_name
         for factory_name in marker_value
     ):
-        raise ValueError(_INVALID_LOOP_FACTORIES_KWARG)
+        pytest.fail(f"{nodeid}: {_INVALID_LOOP_FACTORIES_KWARG}", pytrace=False)
     return scope, marker_value
 
 
-def _validate_asyncio_marker(asyncio_marker: Mark) -> None:
+def _validate_asyncio_marker(asyncio_marker: Mark, nodeid: str) -> None:
     if asyncio_marker.args or (
         asyncio_marker.kwargs
         and set(asyncio_marker.kwargs) - {"loop_scope", "scope", "loop_factories"}
     ):
         msg = (
-            "mark.asyncio accepts only keyword arguments 'loop_scope' and"
+            f"{nodeid}: mark.asyncio accepts only keyword arguments 'loop_scope' and"
             " 'loop_factories'."
         )
-        raise ValueError(msg)
+        pytest.fail(msg, pytrace=False)
 
 
 def _get_default_test_loop_scope(config: Config) -> Any:
