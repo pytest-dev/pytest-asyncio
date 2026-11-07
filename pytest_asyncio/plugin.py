@@ -886,15 +886,32 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
                         "to auto mode. "
                     )
         else:
-            pyfuncitem.warn(
-                pytest.PytestWarning(
-                    f"The test {pyfuncitem} is marked with '@pytest.mark.asyncio' "
-                    "but it is not an async function. "
-                    "Please remove the asyncio mark. "
-                    "If the test is not marked explicitly, "
-                    "check for global marks applied via 'pytestmark'."
+            if inspect.iscoroutinefunction(pyfuncitem.function):
+                # A coroutine function that is not a PytestAsyncioFunction was
+                # marked after pytest-asyncio's collection-time conversion ran
+                # (e.g. via pytest_collection_modifyitems), so the item never
+                # received the specialized handling that the marker promises.
+                pyfuncitem.warn(
+                    pytest.PytestWarning(
+                        f"The test {pyfuncitem} is marked with '@pytest.mark.asyncio', "
+                        "but the marker was applied after pytest-asyncio specialized "
+                        "the item during collection "
+                        "(e.g. from pytest_collection_modifyitems). "
+                        "Apply the marker in pytest_pycollect_makeitem instead. "
+                        "See the how-to guide on applying the asyncio marker "
+                        "from a plugin."
+                    )
                 )
-            )
+            else:
+                pyfuncitem.warn(
+                    pytest.PytestWarning(
+                        f"The test {pyfuncitem} is marked with '@pytest.mark.asyncio' "
+                        "but it is not an async function. "
+                        "Please remove the asyncio mark. "
+                        "If the test is not marked explicitly, "
+                        "check for global marks applied via 'pytestmark'."
+                    )
+                )
     yield
     return None
 

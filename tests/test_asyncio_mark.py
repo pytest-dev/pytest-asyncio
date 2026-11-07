@@ -186,3 +186,67 @@ def test_asyncio_marker_uses_marker_loop_scope_even_if_config_is_set(
 
     result = pytester.runpytest("--asyncio-mode=auto")
     result.assert_outcomes(passed=1)
+
+
+def test_asyncio_marker_applied_in_pycollect_makeitem_runs_in_strict_mode(
+    pytester: Pytester,
+):
+    """
+    Applying the asyncio marker in pytest_pycollect_makeitem, before
+    pytest-asyncio's collection-time conversion runs, produces a working
+    asyncio test (see issue #810)."""
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makeconftest(dedent("""\
+            import inspect
+
+            import pytest
+
+
+            def pytest_pycollect_makeitem(collector, name, obj):
+                if inspect.iscoroutinefunction(obj) and name.startswith("test"):
+                    pytest.mark.asyncio(obj)
+                return None
+            """))
+    pytester.makepyfile(dedent("""\
+            import pytest
+
+
+            @pytest.mark.asyncio
+            async def test_a():
+                assert True
+            """))
+    result = pytester.runpytest("--asyncio-mode=strict", "-W default")
+    result.assert_outcomes(passed=1, warnings=0)
+
+
+def test_asyncio_marker_applied_after_collection_emits_actionable_warning(
+    pytester: Pytester,
+):
+    """
+    A marker applied via pytest_collection_modifyitems arrives after the
+    collection-time conversion, so the warning must point to the supported
+    pytest_pycollect_makeitem path instead of telling the user to remove the
+    marker (see issue #810)."""
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makeconftest(dedent("""\
+            import inspect
+
+            import pytest
+
+
+            def pytest_collection_modifyitems(config, items):
+                for item in items:
+                    function = getattr(item, "function", None)
+                    if function is not None and inspect.iscoroutinefunction(function):
+                        item.add_marker(pytest.mark.asyncio)
+            """))
+    pytester.makepyfile(dedent("""\
+            async def test_a():
+                assert True
+            """))
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
+    result.assert_outcomes(passed=0, failed=1)
+    result.stdout.fnmatch_lines(
+        ["*is marked with '@pytest.mark.asyncio', but the marker was applied*"]
+    )
+    result.stdout.fnmatch_lines(["*pytest_pycollect_makeitem*"])
