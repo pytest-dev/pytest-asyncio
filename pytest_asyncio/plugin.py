@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import contextvars
+import dataclasses
 import enum
 import functools
 import inspect
@@ -40,6 +41,7 @@ import pytest
 from _pytest.fixtures import resolve_fixture_function
 from _pytest.scope import Scope
 from pytest import (
+    Collector,
     Config,
     FixtureDef,
     FixtureRequest,
@@ -917,6 +919,128 @@ def _synchronize_coroutine(
     return inner
 
 
+@dataclasses.dataclass
+class _ActiveFixture:
+    fixturedef: FixtureDef[Any]
+    loop_scope: _ScopeName | None
+
+
+_ACTIVE_FIXTURES = pytest.StashKey[dict[str, _ActiveFixture]]()
+
+
+def _register_active_fixture(
+    node: Collector | Item,
+    fixturedef: FixtureDef[Any],
+    loop_scope: _ScopeName | None,
+) -> None:
+    node_fixtures = node.stash.setdefault(_ACTIVE_FIXTURES, {})
+    node_fixtures[fixturedef.argname] = _ActiveFixture(
+        fixturedef=fixturedef,
+        loop_scope=loop_scope,
+    )
+    cleanup = functools.partial(_remove_active_fixture, node, fixturedef)
+    fixturedef.addfinalizer(cleanup)
+    node.addfinalizer(cleanup)
+
+
+def _remove_active_fixture(node: Collector | Item, fixturedef: FixtureDef[Any]) -> None:
+    node.stash[_ACTIVE_FIXTURES].pop(fixturedef.argname, None)
+
+
+def _resolve_active_fixture(item: Item, argname: str) -> _ActiveFixture | None:
+    for node in reversed(item.listchain()):
+        if (record := node.stash.get(_ACTIVE_FIXTURES, {}).get(argname)) is not None:
+            return record
+    return None
+
+
+def _iter_effective_asyncio_fixtures(
+    item: Item,
+    argnames: Iterable[str],
+) -> Iterator[_ActiveFixture]:
+    queue = list(argnames)
+    seen: set[str] = set()
+    while queue:
+        argname = queue.pop(0)
+        if argname in seen:
+            continue
+        seen.add(argname)
+        record = _resolve_active_fixture(item, argname)
+        if record is None:
+            continue
+        if record.loop_scope is not None:
+            yield record
+        else:
+            queue.extend(record.fixturedef.argnames)
+
+
+def _warn_loop_scope_mismatch(
+    item: Function,
+    requester_label: str,
+    requester_loop_scope: _ScopeName,
+    requested_fixturedef: FixtureDef[Any],
+    requested_loop_scope: _ScopeName,
+) -> None:
+    if requester_loop_scope == requested_loop_scope:
+        return
+    item.warn(
+        pytest.PytestWarning(
+            f"Async fixture {requested_fixturedef.argname!r} with "
+            f"loop_scope={requested_loop_scope!r} is requested by "
+            f"{requester_label} with loop_scope={requester_loop_scope!r}. "
+            "Fixtures with different loop scopes may cause unexpected behavior."
+        )
+    )
+
+
+def _check_item_fixture_loop_scopes(item: Function) -> None:
+    for name in item.fixturenames:
+        record = _resolve_active_fixture(item, name)
+        if record is not None and record.loop_scope is not None:
+            for dep_record in _iter_effective_asyncio_fixtures(
+                item, record.fixturedef.argnames
+            ):
+                assert dep_record.loop_scope is not None
+                _warn_loop_scope_mismatch(
+                    item,
+                    f"fixture {record.fixturedef.argname!r}",
+                    record.loop_scope,
+                    dep_record.fixturedef,
+                    dep_record.loop_scope,
+                )
+
+    if isinstance(item, PytestAsyncioFunction):
+        func_params = inspect.signature(item.obj).parameters
+        requested_by_fixtures = {
+            dep
+            for name in item.fixturenames
+            if (record := _resolve_active_fixture(item, name)) is not None
+            for dep in record.fixturedef.argnames
+        }
+        direct_names = [
+            name
+            for name in item.fixturenames
+            if name in func_params or name not in requested_by_fixtures
+        ]
+        for dep_record in _iter_effective_asyncio_fixtures(item, direct_names):
+            assert dep_record.loop_scope is not None
+            _warn_loop_scope_mismatch(
+                item,
+                f"test {item.name!r}",
+                item._loop_scope,
+                dep_record.fixturedef,
+                dep_record.loop_scope,
+            )
+
+
+@pytest.hookimpl(wrapper=True)
+def pytest_runtest_setup(item: Item) -> Generator[None, object, object]:
+    result = yield
+    if isinstance(item, Function):
+        _check_item_fixture_loop_scopes(item)
+    return result
+
+
 @pytest.hookimpl(wrapper=True)
 def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
     asyncio_mode = _get_asyncio_mode(request.config)
@@ -924,8 +1048,10 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
         if asyncio_mode == Mode.STRICT:
             # Ignore async fixtures without explicit asyncio mark in strict mode
             # This applies to pytest_trio fixtures, for example
+            _register_active_fixture(request.node, fixturedef, None)
             return (yield)
         if not _is_coroutine_or_asyncgen(fixturedef.func):
+            _register_active_fixture(request.node, fixturedef, None)
             return (yield)
     default_loop_scope = request.config.getini("asyncio_default_fixture_loop_scope")
     if default_loop_scope == _MATCH_FIXTURE_SCOPE:
@@ -935,6 +1061,7 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
         or default_loop_scope
         or fixturedef.scope
     )
+    _register_active_fixture(request.node, fixturedef, loop_scope)
     runner_fixture_id = f"_{loop_scope}_scoped_runner"
     runner = request.getfixturevalue(runner_fixture_id)
     # Prevent the runner closing before the fixture's async teardown.
