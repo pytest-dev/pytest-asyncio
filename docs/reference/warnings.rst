@@ -3,7 +3,7 @@ Warnings
 ========
 
 Unhandled event loop exceptions
-==============================
+===============================
 
 ``pytest_asyncio.PytestAsyncioUnhandledExceptionWarning`` reports exceptions that
 an event loop would otherwise send to its default exception handler. For example,
