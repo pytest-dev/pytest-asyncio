@@ -2,6 +2,12 @@
 Fixtures
 ========
 
+.. warning::
+
+   The unused port fixtures are deprecated because the returned port can be
+   claimed before the test binds it. See
+   :doc:`../../how-to-guides/avoid_unused_port_fixtures`.
+
 unused_tcp_port
 ===============
 Finds and yields a single unused TCP port on the localhost interface. Useful for

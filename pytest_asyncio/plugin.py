@@ -1073,19 +1073,32 @@ def _unused_port(socket_type: int) -> int:
         return sock.getsockname()[1]
 
 
+def _warn_deprecated_port_fixture(name: str) -> None:
+    warnings.warn(
+        f"The {name} fixture is deprecated because its port can be "
+        "claimed before the test binds it. Bind to port 0 and read the "
+        "assigned port from the server instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
+
 @pytest.fixture
 def unused_tcp_port() -> int:
+    _warn_deprecated_port_fixture("unused_tcp_port")
     return _unused_port(socket.SOCK_STREAM)
 
 
 @pytest.fixture
 def unused_udp_port() -> int:
+    _warn_deprecated_port_fixture("unused_udp_port")
     return _unused_port(socket.SOCK_DGRAM)
 
 
 @pytest.fixture(scope="session")
 def unused_tcp_port_factory() -> Callable[[], int]:
     """A factory function, producing different unused TCP ports."""
+    _warn_deprecated_port_fixture("unused_tcp_port_factory")
     produced = set()
 
     def factory():
@@ -1105,6 +1118,7 @@ def unused_tcp_port_factory() -> Callable[[], int]:
 @pytest.fixture(scope="session")
 def unused_udp_port_factory() -> Callable[[], int]:
     """A factory function, producing different unused UDP ports."""
+    _warn_deprecated_port_fixture("unused_udp_port_factory")
     produced = set()
 
     def factory():

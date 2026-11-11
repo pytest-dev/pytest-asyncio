@@ -1,0 +1,1 @@
+The ``unused_tcp_port``, ``unused_tcp_port_factory``, ``unused_udp_port``, and ``unused_udp_port_factory`` fixtures are deprecated because the returned port can be claimed by another process before the test binds it. Bind to port 0 and read the assigned port from the server instead.

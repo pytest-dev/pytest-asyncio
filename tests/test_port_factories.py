@@ -2,9 +2,14 @@ from __future__ import annotations
 
 from textwrap import dedent
 
+import pytest
 from pytest import Pytester
 
 import pytest_asyncio.plugin
+
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:The unused_.* fixture is deprecated:DeprecationWarning"
+)
 
 
 def test_unused_tcp_port_selects_unused_port(pytester: Pytester):
@@ -31,9 +36,16 @@ def test_unused_tcp_port_selects_unused_port(pytester: Pytester):
                 await server1.wait_closed()
             """))
 
+    result = pytester.runpytest("-W", "ignore:The unused_:DeprecationWarning")
+    result.assert_outcomes(passed=1)
+
 
 def test_unused_udp_port_selects_unused_port(pytester: Pytester):
     pytester.makepyfile(dedent("""\
+            import asyncio
+
+            import pytest
+
             @pytest.mark.asyncio
             async def test_unused_udp_port_fixture(unused_udp_port):
                 class Closer:
@@ -60,9 +72,16 @@ def test_unused_udp_port_selects_unused_port(pytester: Pytester):
                 transport1.abort()
             """))
 
+    result = pytester.runpytest("-W", "ignore:The unused_:DeprecationWarning")
+    result.assert_outcomes(passed=1)
+
 
 def test_unused_tcp_port_factory_selects_unused_port(pytester: Pytester):
     pytester.makepyfile(dedent("""\
+            import asyncio
+
+            import pytest
+
             @pytest.mark.asyncio
             async def test_unused_port_factory_fixture(unused_tcp_port_factory):
                 async def closer(_, writer):
@@ -96,9 +115,16 @@ def test_unused_tcp_port_factory_selects_unused_port(pytester: Pytester):
                 await server3.wait_closed()
             """))
 
+    result = pytester.runpytest("-W", "ignore:The unused_:DeprecationWarning")
+    result.assert_outcomes(passed=1)
+
 
 def test_unused_udp_port_factory_selects_unused_port(pytester: Pytester):
     pytester.makepyfile(dedent("""\
+            import asyncio
+
+            import pytest
+
             @pytest.mark.asyncio
             async def test_unused_udp_port_factory_fixture(unused_udp_port_factory):
                 class Closer:
@@ -143,6 +169,9 @@ def test_unused_udp_port_factory_selects_unused_port(pytester: Pytester):
                 transport2.abort()
                 transport3.abort()
             """))
+
+    result = pytester.runpytest("-W", "ignore:The unused_:DeprecationWarning")
+    result.assert_outcomes(passed=1)
 
 
 def test_unused_port_factory_duplicate(unused_tcp_port_factory, monkeypatch):
