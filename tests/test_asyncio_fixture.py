@@ -62,3 +62,22 @@ def test_sync_function_uses_async_fixture(pytester: Pytester, mode):
         """))
     result = pytester.runpytest(f"--asyncio-mode={mode}")
     result.assert_outcomes(passed=1)
+
+
+@pytest.mark.parametrize("mode", ("auto", "strict"))
+def test_sync_fixture_does_not_request_asyncio_runner(pytester: Pytester, mode):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+        import pytest_asyncio
+
+        pytest_plugins = 'pytest_asyncio'
+
+        @pytest_asyncio.fixture(scope="session")
+        def sync_fixture():
+            return True
+
+        def test_sync_fixture(sync_fixture):
+            assert sync_fixture is True
+        """))
+    result = pytester.runpytest(f"--asyncio-mode={mode}")
+    result.assert_outcomes(passed=1)

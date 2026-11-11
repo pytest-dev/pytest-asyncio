@@ -920,12 +920,12 @@ def _synchronize_coroutine(
 @pytest.hookimpl(wrapper=True)
 def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
     asyncio_mode = _get_asyncio_mode(request.config)
+    if not _is_coroutine_or_asyncgen(fixturedef.func):
+        return (yield)
     if not _is_asyncio_fixture_function(fixturedef.func):
         if asyncio_mode == Mode.STRICT:
             # Ignore async fixtures without explicit asyncio mark in strict mode
             # This applies to pytest_trio fixtures, for example
-            return (yield)
-        if not _is_coroutine_or_asyncgen(fixturedef.func):
             return (yield)
     default_loop_scope = request.config.getini("asyncio_default_fixture_loop_scope")
     if default_loop_scope == _MATCH_FIXTURE_SCOPE:

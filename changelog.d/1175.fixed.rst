@@ -1,0 +1,2 @@
+Do not request an asyncio runner for synchronous fixtures decorated with
+``pytest_asyncio.fixture``.
