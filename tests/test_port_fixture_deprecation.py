@@ -16,6 +16,7 @@ from pytest import Pytester
     ],
 )
 def test_port_fixtures_are_deprecated(pytester: Pytester, fixture_name: str) -> None:
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(dedent(f"""\
             import pytest
 

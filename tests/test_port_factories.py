@@ -13,6 +13,7 @@ pytestmark = pytest.mark.filterwarnings(
 
 
 def test_unused_tcp_port_selects_unused_port(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(dedent("""\
             import asyncio
 
@@ -41,6 +42,7 @@ def test_unused_tcp_port_selects_unused_port(pytester: Pytester):
 
 
 def test_unused_udp_port_selects_unused_port(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(dedent("""\
             import asyncio
 
@@ -77,6 +79,7 @@ def test_unused_udp_port_selects_unused_port(pytester: Pytester):
 
 
 def test_unused_tcp_port_factory_selects_unused_port(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(dedent("""\
             import asyncio
 
@@ -120,6 +123,7 @@ def test_unused_tcp_port_factory_selects_unused_port(pytester: Pytester):
 
 
 def test_unused_udp_port_factory_selects_unused_port(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makepyfile(dedent("""\
             import asyncio
 
