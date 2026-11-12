@@ -22,5 +22,15 @@ def test_task_is_cancelled_when_abandoned_by_test(pytester: Pytester):
 
             asyncio.create_task(coroutine())
         """))
-    result = pytester.runpytest("--asyncio-mode=strict")
-    result.assert_outcomes(passed=1)
+    result = pytester.runpytest(
+        "--asyncio-mode=strict",
+        "-W",
+        "default::pytest_asyncio.PytestAsyncioUnhandledExceptionWarning",
+    )
+    result.assert_outcomes(passed=1, warnings=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestAsyncioUnhandledExceptionWarning*",
+            "*The task should be cancelled at this point.*",
+        ]
+    )

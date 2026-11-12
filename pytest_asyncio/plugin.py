@@ -13,6 +13,7 @@ import sys
 import traceback
 import warnings
 from asyncio import AbstractEventLoop
+from collections import deque
 from collections.abc import (
     AsyncIterable,
     AsyncIterator,
@@ -57,6 +58,7 @@ if sys.version_info >= (3, 11):
     from asyncio import Runner
 else:
     from backports.asyncio.runner import Runner
+    from exceptiongroup import BaseExceptionGroup, ExceptionGroup
 
 
 _ScopeName = Literal["session", "package", "module", "class", "function"]
@@ -68,6 +70,106 @@ LoopFactory: TypeAlias = Callable[[], AbstractEventLoop]
 
 class PytestAsyncioError(Exception):
     """Base class for exceptions raised by pytest-asyncio"""
+
+
+class PytestAsyncioUnhandledExceptionWarning(pytest.PytestWarning):
+    """An unhandled exception was reported by a pytest-asyncio event loop."""
+
+
+_loop_exception_warnings = pytest.StashKey[
+    deque[PytestAsyncioUnhandledExceptionWarning]
+]()
+
+
+def _collect_loop_exceptions(config: Config) -> None:
+    pending = config.stash.get(_loop_exception_warnings, deque())
+    errors: list[PytestAsyncioUnhandledExceptionWarning] = []
+    while pending:
+        warning = pending.popleft()
+        try:
+            warnings.warn(warning)
+        except PytestAsyncioUnhandledExceptionWarning as error:
+            errors.append(error)
+    if len(errors) == 1:
+        raise errors[0]
+    if errors:
+        raise ExceptionGroup("Multiple unhandled asyncio exceptions", errors)
+
+
+@contextlib.contextmanager
+def _report_loop_exceptions_after(config: Config) -> Iterator[None]:
+    try:
+        yield
+    except BaseException as error:
+        try:
+            _collect_loop_exceptions(config)
+        except Exception as warning_error:
+            raise BaseExceptionGroup(
+                "Test phase failed and reported unhandled asyncio exceptions",
+                [error, warning_error],
+            ) from None
+        raise
+    else:
+        _collect_loop_exceptions(config)
+
+
+@pytest.hookimpl(wrapper=True, tryfirst=True)
+def pytest_runtest_setup(item: Item) -> Iterator[None]:
+    with _report_loop_exceptions_after(item.config):
+        return (yield)
+
+
+@pytest.hookimpl(wrapper=True, tryfirst=True)
+def pytest_runtest_call(item: Item) -> Iterator[None]:
+    with _report_loop_exceptions_after(item.config):
+        return (yield)
+
+
+@pytest.hookimpl(wrapper=True, tryfirst=True)
+def pytest_runtest_teardown(item: Item) -> Iterator[None]:
+    with _report_loop_exceptions_after(item.config):
+        return (yield)
+
+
+@contextlib.contextmanager
+def _warn_unhandled_loop_exceptions(
+    loop: AbstractEventLoop, config: Config
+) -> Iterator[None]:
+    original_handler = loop.get_exception_handler()
+    if original_handler is not None:
+        yield
+        return
+    if _loop_exception_warnings not in config.stash:
+        config.stash[_loop_exception_warnings] = deque()
+    pending = config.stash[_loop_exception_warnings]
+
+    def exception_handler(loop: AbstractEventLoop, context: dict[str, Any]) -> None:
+        # Warning filters may raise. Emit warnings from pytest hooks instead of
+        # this callback, where asyncio would catch and merely log the error.
+        message = context.get("message", "Unhandled exception in asyncio event loop")
+        exception = context.get("exception")
+        if isinstance(exception, asyncio.CancelledError):
+            return
+        details = [message]
+        for key in ("task", "future", "handle"):
+            if key in context:
+                details.append(f"{key}: {context[key]!r}")
+        if exception is not None:
+            details.append(
+                "".join(
+                    traceback.format_exception(
+                        type(exception), exception, exception.__traceback__
+                    )
+                )
+            )
+        pending.append(PytestAsyncioUnhandledExceptionWarning("\n".join(details)))
+
+    loop.set_exception_handler(exception_handler)
+    try:
+        yield
+    finally:
+        if loop.get_exception_handler() is exception_handler:
+            loop.set_exception_handler(original_handler)
 
 
 class Mode(str, enum.Enum):
@@ -847,7 +949,6 @@ if sys.version_info < (3, 16):
                 asyncio.set_event_loop_policy(old_loop_policy)
 
 else:
-
     _restore_event_loop_policy = contextlib.nullcontext
 
 
@@ -1027,25 +1128,28 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
             ).__enter__()
             if _asyncio_loop_factory is not None:
                 _set_event_loop(runner.get_loop())
-            try:
-                yield runner
-            except Exception as e:
-                runner.__exit__(type(e), e, e.__traceback__)
-            else:
-                with warnings.catch_warnings():
-                    warnings.filterwarnings(
-                        "ignore", ".*BaseEventLoop.shutdown_asyncgens.*", RuntimeWarning
-                    )
-                    try:
-                        runner.__exit__(None, None, None)
-                    except RuntimeError:
-                        warnings.warn(
-                            _RUNNER_TEARDOWN_WARNING % traceback.format_exc(),
+            with _warn_unhandled_loop_exceptions(runner.get_loop(), request.config):
+                try:
+                    yield runner
+                except Exception as e:
+                    runner.__exit__(type(e), e, e.__traceback__)
+                else:
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings(
+                            "ignore",
+                            ".*BaseEventLoop.shutdown_asyncgens.*",
                             RuntimeWarning,
                         )
-            finally:
-                if _asyncio_loop_factory is not None:
-                    _set_event_loop(None)
+                        try:
+                            runner.__exit__(None, None, None)
+                        except RuntimeError:
+                            warnings.warn(
+                                _RUNNER_TEARDOWN_WARNING % traceback.format_exc(),
+                                RuntimeWarning,
+                            )
+                finally:
+                    if _asyncio_loop_factory is not None:
+                        _set_event_loop(None)
 
     return _scoped_runner
 

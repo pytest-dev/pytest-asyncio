@@ -1,0 +1,1 @@
+Report otherwise-unhandled exceptions from pytest-asyncio event loops with ``PytestAsyncioUnhandledExceptionWarning``. Preserve custom exception handlers and emit warnings outside loop callbacks so pytest warning filters work normally.
