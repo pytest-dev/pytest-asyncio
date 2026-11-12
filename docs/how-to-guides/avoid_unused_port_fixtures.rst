@@ -7,6 +7,26 @@ return can be claimed by another process before the test binds it.
 
 Bind to port 0 instead and read the port assigned by the operating system.
 
+Migration
+---------
+
+Replace the fixtures with the patterns below:
+
+- ``unused_tcp_port`` / ``unused_udp_port``: bind the server or datagram
+  endpoint to port 0 and read the port assigned by the operating system.
+  The examples below show the full pattern for TCP and UDP.
+- ``unused_tcp_port_factory`` / ``unused_udp_port_factory``: create each
+  server or datagram endpoint on port 0 and read its assigned port. If the
+  port must be passed to another process before the server starts, bind the
+  socket in the test and pass the listening socket (or use a
+  ``socketpair``/pipe) instead of a bare port number; a bare port can always
+  be claimed before the other process binds it.
+
+The deprecated fixtures remain available and keep working, but they emit a
+``DeprecationWarning``. The warning and this guide describe the same
+migration; the guide exists because the fixtures are public API and the
+warning alone does not show the replacement pattern.
+
 TCP
 ---
 
