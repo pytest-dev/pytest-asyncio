@@ -1,0 +1,1 @@
+Report a descriptive error when an asynchronous fixture's event loop scope is narrower than its caching scope.

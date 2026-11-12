@@ -183,6 +183,31 @@ def test_explicit_loop_scope_overrides_fixture_scope_default(pytester: Pytester)
     result.assert_outcomes(passed=1)
 
 
+def test_loop_scope_narrower_than_fixture_scope_has_helpful_error(
+    pytester: Pytester,
+):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+            import pytest
+            import pytest_asyncio
+
+            @pytest_asyncio.fixture(scope="session")
+            async def foo():
+                return True
+
+            @pytest.mark.asyncio
+            async def test_foo(foo):
+                assert foo is True
+            """))
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines(
+        "*pytest.UsageError: Async fixture 'foo' has caching scope 'session' but "
+        "event loop scope 'function'.*Set loop_scope='session' on the fixture or "
+        "configure asyncio_default_fixture_loop_scope=session.*"
+    )
+
+
 def test_fixture_scope_is_invalid_for_default_test_loop_scope(pytester: Pytester):
     pytester.makeini("""\
         [pytest]

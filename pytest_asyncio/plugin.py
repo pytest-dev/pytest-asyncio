@@ -263,6 +263,13 @@ def _collect_hook_loop_factories(
 
 
 _MATCH_FIXTURE_SCOPE = "fixture-scope"
+_LOOP_SCOPE_ORDER = {
+    "function": 0,
+    "class": 1,
+    "module": 2,
+    "package": 3,
+    "session": 4,
+}
 
 _DEFAULT_FIXTURE_LOOP_SCOPE_UNSET = """\
 The configuration option "asyncio_default_fixture_loop_scope" is unset.
@@ -935,6 +942,18 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
         or default_loop_scope
         or fixturedef.scope
     )
+    if (
+        loop_scope in _LOOP_SCOPE_ORDER
+        and fixturedef.scope in _LOOP_SCOPE_ORDER
+        and _LOOP_SCOPE_ORDER[loop_scope] < _LOOP_SCOPE_ORDER[fixturedef.scope]
+    ):
+        raise pytest.UsageError(
+            f"Async fixture {fixturedef.argname!r} has caching scope "
+            f"{fixturedef.scope!r} but event loop scope {loop_scope!r}. "
+            "The event loop scope must be at least as broad as the fixture scope. "
+            f"Set loop_scope={fixturedef.scope!r} on the fixture or configure "
+            f"asyncio_default_fixture_loop_scope={fixturedef.scope}."
+        )
     runner_fixture_id = f"_{loop_scope}_scoped_runner"
     runner = request.getfixturevalue(runner_fixture_id)
     # Prevent the runner closing before the fixture's async teardown.
