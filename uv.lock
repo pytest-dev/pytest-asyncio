@@ -1070,10 +1070,7 @@ typing = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "backports-asyncio-runner", marker = "python_full_version < '3.11'", specifier = ">=1.1,<2" },
-    { name = "pytest", specifier = ">=8.4" },
-]
+requires-dist = [{ name = "pytest", specifier = ">=8.4" }]
 
 [package.metadata.requires-dev]
 build = [
