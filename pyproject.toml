@@ -59,7 +59,7 @@ dev = [
   { include-group = "typing" },
 ]
 test = [
-  "coverage>=6.2",
+  "coverage[toml]>=6.3",
   "hypothesis>=5.7.1",
 ]
 docs = [
