@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from textwrap import dedent
 
+import pytest
 from pytest import Pytester
 
 import pytest_asyncio.plugin
@@ -145,6 +146,7 @@ def test_unused_udp_port_factory_selects_unused_port(pytester: Pytester):
             """))
 
 
+@pytest.mark.filterwarnings("ignore::pytest.PytestDeprecationWarning")
 def test_unused_port_factory_duplicate(unused_tcp_port_factory, monkeypatch):
     """Test correct avoidance of duplicate ports."""
     counter = 0
@@ -164,6 +166,7 @@ def test_unused_port_factory_duplicate(unused_tcp_port_factory, monkeypatch):
     assert unused_tcp_port_factory() > 10000
 
 
+@pytest.mark.filterwarnings("ignore::pytest.PytestDeprecationWarning")
 def test_unused_udp_port_factory_duplicate(unused_udp_port_factory, monkeypatch):
     """Test correct avoidance of duplicate UDP ports."""
     counter = 0
@@ -181,3 +184,71 @@ def test_unused_udp_port_factory_duplicate(unused_udp_port_factory, monkeypatch)
 
     assert unused_udp_port_factory() == 10000
     assert unused_udp_port_factory() > 10000
+
+
+def test_unused_tcp_port_deprecated(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+            def test_port(unused_tcp_port):
+                assert isinstance(unused_tcp_port, int)
+            """))
+    result = pytester.runpytest(
+        "-W", "default", "-W", "ignore::pytest.PytestAssertRewriteWarning"
+    )
+    result.assert_outcomes(passed=1, warnings=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestDeprecationWarning: The unused_tcp_port fixture is deprecated*",
+        ]
+    )
+
+
+def test_unused_udp_port_deprecated(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+            def test_port(unused_udp_port):
+                assert isinstance(unused_udp_port, int)
+            """))
+    result = pytester.runpytest(
+        "-W", "default", "-W", "ignore::pytest.PytestAssertRewriteWarning"
+    )
+    result.assert_outcomes(passed=1, warnings=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestDeprecationWarning: The unused_udp_port fixture is deprecated*",
+        ]
+    )
+
+
+def test_unused_tcp_port_factory_deprecated(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+            def test_port(unused_tcp_port_factory):
+                assert isinstance(unused_tcp_port_factory(), int)
+            """))
+    result = pytester.runpytest(
+        "-W", "default", "-W", "ignore::pytest.PytestAssertRewriteWarning"
+    )
+    result.assert_outcomes(passed=1, warnings=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*The unused_tcp_port_factory fixture is deprecated*",
+        ]
+    )
+
+
+def test_unused_udp_port_factory_deprecated(pytester: Pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(dedent("""\
+            def test_port(unused_udp_port_factory):
+                assert isinstance(unused_udp_port_factory(), int)
+            """))
+    result = pytester.runpytest(
+        "-W", "default", "-W", "ignore::pytest.PytestAssertRewriteWarning"
+    )
+    result.assert_outcomes(passed=1, warnings=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*The unused_udp_port_factory fixture is deprecated*",
+        ]
+    )

@@ -1,0 +1,1 @@
+Deprecated the ``unused_tcp_port``, ``unused_tcp_port_factory``, ``unused_udp_port``, and ``unused_udp_port_factory`` fixtures due to inherent race conditions. Callers should bind directly to port 0 instead and retrieve the assigned port from the socket.

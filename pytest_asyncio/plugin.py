@@ -847,7 +847,6 @@ if sys.version_info < (3, 16):
                 asyncio.set_event_loop_policy(old_loop_policy)
 
 else:
-
     _restore_event_loop_policy = contextlib.nullcontext
 
 
@@ -1066,6 +1065,16 @@ def is_async_test(item: Item) -> bool:
     return isinstance(item, PytestAsyncioFunction)
 
 
+_UNUSED_PORT_DEPRECATED_TEMPLATE = """\
+The {fixture_name} fixture is deprecated and will be removed in a future version \
+of pytest-asyncio. The port returned by {fixture_name} is not reserved and can \
+be claimed by another process before it is bound. To avoid race conditions, bind \
+directly to port 0 (e.g. using asyncio.start_server(..., port=0) or \
+configuring the server/socket to bind to port 0) and query the socket \
+for its assigned port.\
+"""
+
+
 def _unused_port(socket_type: int) -> int:
     """Find an unused localhost port from 1024-65535 and return it."""
     with contextlib.closing(socket.socket(type=socket_type)) as sock:
@@ -1075,17 +1084,37 @@ def _unused_port(socket_type: int) -> int:
 
 @pytest.fixture
 def unused_tcp_port() -> int:
+    warnings.warn(
+        PytestDeprecationWarning(
+            _UNUSED_PORT_DEPRECATED_TEMPLATE.format(fixture_name="unused_tcp_port")
+        ),
+        stacklevel=2,
+    )
     return _unused_port(socket.SOCK_STREAM)
 
 
 @pytest.fixture
 def unused_udp_port() -> int:
+    warnings.warn(
+        PytestDeprecationWarning(
+            _UNUSED_PORT_DEPRECATED_TEMPLATE.format(fixture_name="unused_udp_port")
+        ),
+        stacklevel=2,
+    )
     return _unused_port(socket.SOCK_DGRAM)
 
 
 @pytest.fixture(scope="session")
 def unused_tcp_port_factory() -> Callable[[], int]:
     """A factory function, producing different unused TCP ports."""
+    warnings.warn(
+        PytestDeprecationWarning(
+            _UNUSED_PORT_DEPRECATED_TEMPLATE.format(
+                fixture_name="unused_tcp_port_factory"
+            )
+        ),
+        stacklevel=2,
+    )
     produced = set()
 
     def factory():
@@ -1105,6 +1134,14 @@ def unused_tcp_port_factory() -> Callable[[], int]:
 @pytest.fixture(scope="session")
 def unused_udp_port_factory() -> Callable[[], int]:
     """A factory function, producing different unused UDP ports."""
+    warnings.warn(
+        PytestDeprecationWarning(
+            _UNUSED_PORT_DEPRECATED_TEMPLATE.format(
+                fixture_name="unused_udp_port_factory"
+            )
+        ),
+        stacklevel=2,
+    )
     produced = set()
 
     def factory():
