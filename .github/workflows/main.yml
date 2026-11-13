@@ -170,7 +170,7 @@ jobs:
 
   create-github-release:
     name: Create GitHub release
-    needs: [check]
+    needs: [build, check]  # build dependency is needed for env variables
     runs-on: ubuntu-latest
     permissions:
       contents: write
