@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 from textwrap import dedent
 
 import pytest
@@ -18,10 +17,6 @@ from pytest import Pytester
         "asyncio.run(asyncio.sleep(0))",
         pytest.param(
             "with asyncio.Runner(): pass",
-            marks=pytest.mark.skipif(
-                sys.version_info < (3, 11),
-                reason="asyncio.Runner requires Python 3.11+",
-            ),
         ),
     ],
 )
@@ -63,10 +58,6 @@ def test_set_event_loop_none(
         "asyncio.run(asyncio.sleep(0))",
         pytest.param(
             "with asyncio.Runner(): pass",
-            marks=pytest.mark.skipif(
-                sys.version_info < (3, 11),
-                reason="asyncio.Runner requires Python 3.11+",
-            ),
         ),
     ],
 )
@@ -141,10 +132,6 @@ def test_asyncio_run_after_async_fixture_does_not_leak_loop(
         "asyncio.run(asyncio.sleep(0))",
         pytest.param(
             "with asyncio.Runner(): pass",
-            marks=pytest.mark.skipif(
-                sys.version_info < (3, 11),
-                reason="asyncio.Runner requires Python 3.11+",
-            ),
         ),
     ],
 )
@@ -195,10 +182,6 @@ def test_original_shared_loop_is_reinstated_not_fresh_loop(
         "asyncio.run(asyncio.sleep(0))",
         pytest.param(
             "with asyncio.Runner(): pass",
-            marks=pytest.mark.skipif(
-                sys.version_info < (3, 11),
-                reason="asyncio.Runner requires Python 3.11+",
-            ),
         ),
     ],
 )
@@ -276,10 +259,6 @@ def test_shared_loop_with_fixture_preservation(
         "asyncio.run(asyncio.sleep(0))",
         pytest.param(
             "with asyncio.Runner(): pass",
-            marks=pytest.mark.skipif(
-                sys.version_info < (3, 11),
-                reason="asyncio.Runner requires Python 3.11+",
-            ),
         ),
     ],
 )
@@ -373,10 +352,6 @@ def test_shared_loop_with_multiple_fixtures_preservation(
         "asyncio.run(asyncio.sleep(0))",
         pytest.param(
             "with asyncio.Runner(): pass",
-            marks=pytest.mark.skipif(
-                sys.version_info < (3, 11),
-                reason="asyncio.Runner requires Python 3.11+",
-            ),
         ),
     ],
 )

@@ -12,7 +12,7 @@ import socket
 import sys
 import traceback
 import warnings
-from asyncio import AbstractEventLoop
+from asyncio import AbstractEventLoop, Runner
 from collections.abc import (
     AsyncIterable,
     AsyncIterator,
@@ -52,12 +52,6 @@ from pytest import (
     PytestDeprecationWarning,
     PytestPluginManager,
 )
-
-if sys.version_info >= (3, 11):
-    from asyncio import Runner
-else:
-    from backports.asyncio.runner import Runner
-
 
 _ScopeName = Literal["session", "package", "module", "class", "function"]
 _R = TypeVar("_R", bound=Awaitable | AsyncIterable | AsyncIterator)
