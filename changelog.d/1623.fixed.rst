@@ -1,0 +1,1 @@
+Fix function name in "How to tell if a test function is async" guide to refer to ``pytest_asyncio.is_async_test`` instead of ``pytest_asyncio.is_async_item``.
