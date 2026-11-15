@@ -85,7 +85,7 @@ def test_asyncio_mark_allows_combining_module_scoped_fixture_with_class_scoped_t
 
             """),
     )
-    result = pytester.runpytest("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1)
 
 
@@ -114,7 +114,7 @@ def test_asyncio_mark_allows_combining_module_scoped_fixture_with_function_scope
                 assert asyncio.get_running_loop() is not loop
             """),
     )
-    result = pytester.runpytest("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1)
 
 
@@ -143,7 +143,7 @@ def test_allows_combining_module_scoped_asyncgen_fixture_with_function_scoped_te
                 assert asyncio.get_running_loop() is not loop
             """),
     )
-    result = pytester.runpytest("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1)
 
 

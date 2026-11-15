@@ -783,7 +783,7 @@ def test_sync_fixture_sees_its_own_loop_when_wider_scoped_loop_active(
         async def test_sync_fixture_and_test_see_same_loop(sync_fixture_captures_loop):
             assert sync_fixture_captures_loop == id(asyncio.get_running_loop())
         """))
-    result = pytester.runpytest("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1)
 
 
@@ -840,7 +840,7 @@ def test_sync_generator_fixture_teardown_sees_own_loop(
         async def test_generator_fixture_sees_correct_loop(sync_generator_fixture):
             assert sync_generator_fixture == id(asyncio.get_running_loop())
         """))
-    result = pytester.runpytest("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1)
 
 

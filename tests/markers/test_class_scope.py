@@ -149,7 +149,7 @@ def test_asyncio_mark_allows_combining_class_scoped_fixture_with_function_scoped
 
             """),
     )
-    result = pytester.runpytest("--asyncio-mode=strict")
+    result = pytester.runpytest("--asyncio-mode=strict", "-W", "default")
     result.assert_outcomes(passed=1)
 
 
