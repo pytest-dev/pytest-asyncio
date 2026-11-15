@@ -19,5 +19,6 @@ How-To Guides
   parametrize_with_asyncio
   uvloop
   test_item_is_async
+  apply_asyncio_marker_from_plugin
 
 This section of the documentation provides code snippets and recipes to accomplish specific tasks with pytest-asyncio.
