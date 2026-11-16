@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import sys
 from textwrap import dedent
 
 import pytest
 from pytest import Pytester
 
 
+@pytest.mark.skipif(
+    sys.version_info >= (3, 16),
+    reason="The asyncio event loop policy system was removed in Python 3.16",
+)
 def test_runner_works_with_policy_that_rejects_setting_loop(pytester: Pytester):
     pytester.makeconftest(dedent("""\
             import asyncio
