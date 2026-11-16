@@ -174,6 +174,7 @@ def fixture(
     FixtureFunction[_P, _R]
     | Callable[[FixtureFunction[_P, _R]], FixtureFunction[_P, _R]]
 ):
+    _validate_scope(loop_scope, "loop_scope")
     if fixture_function is not None:
         _make_asyncio_fixture_function(fixture_function, loop_scope)
         return pytest.fixture(fixture_function, **kwargs)
