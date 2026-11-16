@@ -170,7 +170,7 @@ jobs:
 
   create-github-release:
     name: Create GitHub release
-    needs: [check]
+    needs: [build, check]  # build dependency is needed for env variables
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -222,6 +222,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PRERELEASE: ${{ needs.build.outputs.prerelease }}
       run: |
+        set -u
         set +e
         TAG_NAME="${GITHUB_REF#refs/tags/}"
         gh release view "${TAG_NAME}" >/dev/null && echo "Release already exists. Exiting." && exit 0
