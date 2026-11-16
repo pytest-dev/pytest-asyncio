@@ -6,6 +6,40 @@ import pytest
 from pytest import Pytester
 
 
+def test_runner_works_with_policy_that_rejects_setting_loop(pytester: Pytester):
+    pytester.makeconftest(dedent("""\
+            import asyncio
+            import warnings
+
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", DeprecationWarning)
+
+                class MainContextPolicy(asyncio.DefaultEventLoopPolicy):
+                    def set_event_loop(self, loop):
+                        if loop is not None:
+                            raise RuntimeError("Thread already has a main context")
+                        super().set_event_loop(loop)
+
+                asyncio.set_event_loop_policy(MainContextPolicy())
+            """))
+    pytester.makepyfile(dedent("""\
+            import asyncio
+            import pytest
+
+            @pytest.mark.asyncio
+            async def test_first():
+                assert asyncio.get_running_loop().is_running()
+
+            @pytest.mark.asyncio
+            async def test_second():
+                assert asyncio.get_running_loop().is_running()
+            """))
+
+    result = pytester.runpytest_subprocess()
+
+    result.assert_outcomes(passed=2)
+
+
 @pytest.mark.parametrize(
     "test_loop_scope",
     ("function", "module", "package", "session"),

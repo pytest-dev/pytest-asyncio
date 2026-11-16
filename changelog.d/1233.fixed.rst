@@ -1,0 +1,1 @@
+Allow event loop policies that reject setting a loop on the current thread to run async tests.
