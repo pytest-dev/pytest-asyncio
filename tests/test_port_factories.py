@@ -213,6 +213,10 @@ def test_unused_port_fixtures_are_deprecated(request, fixture_name):
 
 def test_unused_port_fixtures_warn_on_use(pytester: Pytester):
     """Requesting any unused port fixture emits a deprecation warning."""
+    pytester.makeini("""
+        [pytest]
+        asyncio_default_fixture_loop_scope = function
+    """)
     pytester.makepyfile(dedent("""\
         import pytest
 
