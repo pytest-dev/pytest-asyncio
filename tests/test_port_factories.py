@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from textwrap import dedent
 
-from pytest import Pytester
+import pytest
+from pytest import PytestDeprecationWarning, Pytester
 
 import pytest_asyncio.plugin
 
@@ -145,7 +146,7 @@ def test_unused_udp_port_factory_selects_unused_port(pytester: Pytester):
             """))
 
 
-def test_unused_port_factory_duplicate(unused_tcp_port_factory, monkeypatch):
+def test_unused_port_factory_duplicate(request, monkeypatch):
     """Test correct avoidance of duplicate ports."""
     counter = 0
 
@@ -160,11 +161,16 @@ def test_unused_port_factory_duplicate(unused_tcp_port_factory, monkeypatch):
 
     monkeypatch.setattr(pytest_asyncio.plugin, "_unused_port", mock_unused_tcp_port)
 
+    with pytest.warns(
+        PytestDeprecationWarning, match="unused_tcp_port_factory fixture is deprecated"
+    ):
+        unused_tcp_port_factory = request.getfixturevalue("unused_tcp_port_factory")
+
     assert unused_tcp_port_factory() == 10000
     assert unused_tcp_port_factory() > 10000
 
 
-def test_unused_udp_port_factory_duplicate(unused_udp_port_factory, monkeypatch):
+def test_unused_udp_port_factory_duplicate(request, monkeypatch):
     """Test correct avoidance of duplicate UDP ports."""
     counter = 0
 
@@ -179,5 +185,58 @@ def test_unused_udp_port_factory_duplicate(unused_udp_port_factory, monkeypatch)
 
     monkeypatch.setattr(pytest_asyncio.plugin, "_unused_port", mock_unused_udp_port)
 
+    with pytest.warns(
+        PytestDeprecationWarning, match="unused_udp_port_factory fixture is deprecated"
+    ):
+        unused_udp_port_factory = request.getfixturevalue("unused_udp_port_factory")
+
     assert unused_udp_port_factory() == 10000
     assert unused_udp_port_factory() > 10000
+
+
+@pytest.mark.parametrize(
+    "fixture_name",
+    [
+        "unused_tcp_port",
+        "unused_udp_port",
+    ],
+)
+def test_unused_port_fixtures_are_deprecated(request, fixture_name):
+    """Requesting an unused port fixture emits a deprecation warning."""
+    with pytest.warns(
+        PytestDeprecationWarning, match=f"{fixture_name} fixture is deprecated"
+    ):
+        fixture = request.getfixturevalue(fixture_name)
+    # The fixture still works while it is deprecated.
+    assert isinstance(fixture, int)
+
+
+def test_unused_port_fixtures_warn_on_use(pytester: Pytester):
+    """Requesting any unused port fixture emits a deprecation warning."""
+    pytester.makepyfile(dedent("""\
+        import pytest
+
+
+        @pytest.mark.parametrize(
+            "fixture_name",
+            [
+                "unused_tcp_port",
+                "unused_udp_port",
+                "unused_tcp_port_factory",
+                "unused_udp_port_factory",
+            ],
+        )
+        def test_fixture_emits_deprecation_warning(request, fixture_name):
+            with pytest.warns(
+                pytest.PytestDeprecationWarning,
+                match=f"{fixture_name} fixture is deprecated",
+            ):
+                fixture = request.getfixturevalue(fixture_name)
+            # The fixture still works while it is deprecated.
+            if callable(fixture):
+                assert isinstance(fixture(), int)
+            else:
+                assert isinstance(fixture, int)
+        """))
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=4)
