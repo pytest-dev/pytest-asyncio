@@ -1,0 +1,1 @@
+A ``RuntimeWarning`` that lists the tasks still pending when the scope of an event loop ends. Use pytest's warning filters to turn it into an error.

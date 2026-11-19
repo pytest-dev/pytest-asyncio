@@ -1003,6 +1003,22 @@ Here is the traceback of the exception triggered during teardown:
 %s
 """
 
+_PENDING_TASKS_WARNING = """\
+Tasks were still pending when the %s-scoped event loop was closed. \
+Make sure your tests and fixtures await or cancel the tasks they create:
+%s
+"""
+
+
+def _pending_tasks(loop: AbstractEventLoop) -> list[str]:
+    return [
+        repr(task)
+        for task in asyncio.all_tasks(loop)
+        # The loop closes abandoned async generators in tasks of its own.
+        # Those are not tasks the tests created.
+        if type(task.get_coro()).__name__ != "async_generator_athrow"
+    ]
+
 
 def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
     @pytest.fixture(
@@ -1026,6 +1042,7 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
             except Exception as e:
                 runner.__exit__(type(e), e, e.__traceback__)
             else:
+                pending_tasks = _pending_tasks(runner.get_loop())
                 with warnings.catch_warnings():
                     warnings.filterwarnings(
                         "ignore", ".*BaseEventLoop.shutdown_asyncgens.*", RuntimeWarning
@@ -1037,6 +1054,14 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
                             _RUNNER_TEARDOWN_WARNING % traceback.format_exc(),
                             RuntimeWarning,
                         )
+                # Warn only after the runner is closed, so that the tasks are
+                # still cancelled when the warning is turned into an error.
+                if pending_tasks:
+                    warnings.warn(
+                        _PENDING_TASKS_WARNING
+                        % (scope, "\n".join(f"  {task}" for task in pending_tasks)),
+                        RuntimeWarning,
+                    )
             finally:
                 if _asyncio_loop_factory is not None:
                     _set_event_loop(None)

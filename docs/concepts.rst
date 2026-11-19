@@ -44,6 +44,16 @@ It's highly recommended for neighboring tests to use the same event loop scope.
 For example, all tests in a class or module should use the same scope.
 Assigning neighboring tests to different event loop scopes is discouraged as it can make test code hard to follow.
 
+When the scope of an event loop ends, pytest-asyncio closes the loop and cancels any tasks that are still pending.
+It also emits a ``RuntimeWarning`` that lists those tasks, because a task that outlives its scope usually means that a test or fixture forgot to await or cancel it.
+If pending tasks should fail your tests, turn the warning into an error with pytest's `filterwarnings <https://docs.pytest.org/en/stable/how-to/capture-warnings.html#controlling-warnings>`__ option:
+
+.. code-block:: ini
+
+    [pytest]
+    filterwarnings =
+        error:Tasks were still pending:RuntimeWarning
+
 Test discovery modes
 ====================
 
