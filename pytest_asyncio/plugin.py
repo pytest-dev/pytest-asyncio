@@ -1067,19 +1067,49 @@ def _unused_port(socket_type: int) -> int:
         return sock.getsockname()[1]
 
 
+def _warn_unused_port_fixture_deprecated(fixture_name: str, alternative: str) -> None:
+    warnings.warn(
+        PytestDeprecationWarning(
+            f"The {fixture_name} fixture is deprecated: the returned port is "
+            "released before the test runs, so another process can claim it "
+            "before the test server starts. "
+            f"{alternative}"
+        )
+    )
+
+
 @pytest.fixture
 def unused_tcp_port() -> int:
+    _warn_unused_port_fixture_deprecated(
+        "unused_tcp_port",
+        "Bind port 0 instead and read the assigned port from the server "
+        "socket, for example pass port=0 to asyncio.start_server() and read "
+        "server.sockets[0].getsockname().",
+    )
     return _unused_port(socket.SOCK_STREAM)
 
 
 @pytest.fixture
 def unused_udp_port() -> int:
+    _warn_unused_port_fixture_deprecated(
+        "unused_udp_port",
+        "Bind port 0 instead and read the assigned port from the transport, "
+        "for example pass local_addr=('127.0.0.1', 0) to "
+        "loop.create_datagram_endpoint() and read "
+        "transport.get_extra_info('sockname').",
+    )
     return _unused_port(socket.SOCK_DGRAM)
 
 
 @pytest.fixture(scope="session")
 def unused_tcp_port_factory() -> Callable[[], int]:
     """A factory function, producing different unused TCP ports."""
+    _warn_unused_port_fixture_deprecated(
+        "unused_tcp_port_factory",
+        "Bind port 0 instead and read the assigned port from the server "
+        "socket, for example pass port=0 to asyncio.start_server() and read "
+        "server.sockets[0].getsockname().",
+    )
     produced = set()
 
     def factory():
@@ -1099,6 +1129,13 @@ def unused_tcp_port_factory() -> Callable[[], int]:
 @pytest.fixture(scope="session")
 def unused_udp_port_factory() -> Callable[[], int]:
     """A factory function, producing different unused UDP ports."""
+    _warn_unused_port_fixture_deprecated(
+        "unused_udp_port_factory",
+        "Bind port 0 instead and read the assigned port from the transport, "
+        "for example pass local_addr=('127.0.0.1', 0) to "
+        "loop.create_datagram_endpoint() and read "
+        "transport.get_extra_info('sockname').",
+    )
     produced = set()
 
     def factory():

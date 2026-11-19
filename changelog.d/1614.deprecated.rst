@@ -1,0 +1,1 @@
+Deprecated the ``unused_tcp_port``, ``unused_tcp_port_factory``, ``unused_udp_port`` and ``unused_udp_port_factory`` fixtures. The returned port is released before the test runs, so another process can claim it before the test server starts. Bind port 0 instead and read the assigned port from the server socket or transport.
