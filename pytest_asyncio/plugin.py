@@ -38,6 +38,7 @@ from typing import (
 import pluggy
 import pytest
 from _pytest.fixtures import resolve_fixture_function
+from _pytest.outcomes import Failed
 from _pytest.scope import Scope
 from pytest import (
     Config,
@@ -768,6 +769,142 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
             pytest.fail(msg, pytrace=False)
         return
 
+    metafunc.fixturenames.append(_asyncio_loop_factory.__name__)
+    _parametrize_loop_factories(
+        metafunc,
+        marker_loop_scope,
+        marker_selected_factory_names,
+        hook_factories,
+    )
+
+
+@pytest.hookimpl(specname="pytest_generate_tests", wrapper=True)
+def pytest_generate_tests_handle_parametrized_asyncio_markers(
+    metafunc: pytest.Metafunc,
+) -> Generator[None]:
+    """
+    Apply loop factories to tests whose asyncio marker comes from parametrization.
+
+    When ``pytest.mark.asyncio`` is attached to individual parameter sets --
+    via ``pytest.param(..., marks=pytest.mark.asyncio)`` or via
+    ``pytest.fixture(params=[pytest.param(..., marks=pytest.mark.asyncio)])`` --
+    it is not present on the test definition, so
+    :func:`pytest_generate_tests` above cannot see it. The marker only shows up
+    on the individual callspecs once pytest has processed the parametrization,
+    i.e. after the other ``pytest_generate_tests`` implementations have run.
+    This wrapper therefore runs after them and parametrizes the loop factory
+    fixture for exactly the calls carrying the asyncio marker, leaving the
+    other calls (e.g. ones run by pytest-trio) untouched.
+
+    This is a workaround for the lack of a public pytest API for dependent
+    parametrization (pytest-dev/pytest#13233): ``metafunc.parametrize`` can
+    only multiply *all* calls of a test function, so the loop factory
+    parametrization is applied to a temporarily narrowed-down call list and
+    the results are spliced back into the full list.
+    """
+    yield
+    specialized_item_class = PytestAsyncioFunction.item_subclass_for(
+        metafunc.definition
+    )
+    if specialized_item_class is None:
+        return
+    # If the marker is on the definition, the tryfirst hook above already
+    # parametrized the loop factories (in auto mode it also adds the marker).
+    if metafunc.definition.get_closest_marker("asyncio") is not None:
+        return
+    calls = getattr(metafunc, "_calls", None)
+    if not calls:
+        return
+    marked_calls: list[tuple[Any, Mark]] = []
+    for call in calls:
+        for mark in getattr(call, "marks", []):
+            if mark.name == "asyncio":
+                marked_calls.append((call, mark))
+                break
+    if not marked_calls:
+        return
+
+    nodeid = metafunc.definition.nodeid
+    # Parse the markers of the marked calls. A marker that fails to parse
+    # (e.g. an unknown keyword argument) is left alone: the per-item
+    # validation in PytestAsyncioFunction reports it for that item at setup
+    # time, as it did before this wrapper existed. Failing the whole
+    # collection here would also discard the valid parameter sets.
+    parsed_calls: list[tuple[Any, _ScopeName | None, Sequence[str] | None]] = []
+    for call, mark in marked_calls:
+        try:
+            marker_loop_scope, marker_selected_factory_names = _parse_asyncio_marker(
+                mark, nodeid
+            )
+        except Failed:
+            continue
+        parsed_calls.append((call, marker_loop_scope, marker_selected_factory_names))
+    if not parsed_calls:
+        return
+
+    hook_factories = _collect_hook_loop_factories(metafunc.config, metafunc.definition)
+    if hook_factories is None:
+        if any(
+            selected_factory_names is not None
+            for _, _, selected_factory_names in parsed_calls
+        ):
+            msg = (
+                f"{nodeid}: mark.asyncio 'loop_factories' requires at least one "
+                "pytest_asyncio_loop_factories hook implementation."
+            )
+            pytest.fail(msg, pytrace=False)
+        return
+
+    # Group the marked calls by the marker options they carry, so that calls
+    # selecting different loop scopes or factory subsets are parametrized
+    # with their own settings.
+    groups: dict[tuple[_ScopeName | None, tuple[str, ...] | None], list[Any]] = {}
+    for call, marker_loop_scope, marker_selected_factory_names in parsed_calls:
+        key = (
+            marker_loop_scope,
+            (
+                tuple(marker_selected_factory_names)
+                if marker_selected_factory_names is not None
+                else None
+            ),
+        )
+        groups.setdefault(key, []).append(call)
+
+    factory_fixture_name = _asyncio_loop_factory.__name__
+    if factory_fixture_name not in metafunc.fixturenames:
+        metafunc.fixturenames.append(factory_fixture_name)
+    replacements: dict[int, list[Any]] = {}
+    for (loop_scope, selected_factory_names), group_calls in groups.items():
+        saved_calls = metafunc._calls
+        metafunc._calls = list(group_calls)
+        try:
+            _parametrize_loop_factories(
+                metafunc,
+                loop_scope,
+                selected_factory_names,
+                hook_factories,
+            )
+        finally:
+            group_result = metafunc._calls
+            metafunc._calls = saved_calls
+        # The parametrization multiplies each original call by the number of
+        # factories, in order, so chunk the result back per original call.
+        factory_count = len(group_result) // len(group_calls)
+        for index, call in enumerate(group_calls):
+            replacements[id(call)] = group_result[
+                index * factory_count : (index + 1) * factory_count
+            ]
+    metafunc._calls = [
+        new_call for call in calls for new_call in replacements.get(id(call), [call])
+    ]
+
+
+def _parametrize_loop_factories(
+    metafunc: pytest.Metafunc,
+    marker_loop_scope: _ScopeName | None,
+    marker_selected_factory_names: Sequence[str] | None,
+    hook_factories: dict[str, LoopFactory],
+) -> None:
     factory_params: Collection[object]
     factory_ids: Collection[str]
     if marker_selected_factory_names is None:
@@ -794,7 +931,6 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
             )
             for name in marker_selected_factory_names
         ]
-    metafunc.fixturenames.append(_asyncio_loop_factory.__name__)
     default_loop_scope = _get_default_test_loop_scope(metafunc.config)
     loop_scope = marker_loop_scope or default_loop_scope
     hide_id = len(factory_ids) == 1
