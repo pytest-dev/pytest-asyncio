@@ -35,6 +35,198 @@ def test_single_factory_does_not_add_suffix_to_test_name(
     )
 
 
+def test_loop_factories_apply_when_asyncio_mark_comes_from_parametrization(
+    pytester: Pytester,
+) -> None:
+    """
+    https://github.com/pytest-dev/pytest-asyncio/issues/1463
+
+    When ``pytest.mark.asyncio`` is attached to individual parameter sets
+    instead of the test definition, the configured loop factories must still
+    apply to the asyncio parameter sets, while the other parameter sets are
+    left alone (here they are skipped instead of being run by another
+    async framework).
+    """
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makeconftest(dedent("""\
+        import asyncio
+
+        class CustomEventLoop(asyncio.SelectorEventLoop):
+            pass
+
+        def pytest_asyncio_loop_factories(config, item):
+            return {"custom": CustomEventLoop}
+        """))
+    pytester.makepyfile(dedent("""\
+        import asyncio
+        import pytest
+
+        pytest_plugins = "pytest_asyncio"
+
+        @pytest.mark.parametrize(
+            "backend",
+            [
+                pytest.param("asyncio", marks=pytest.mark.asyncio),
+                pytest.param(
+                    "other", marks=pytest.mark.skip(reason="not asyncio")
+                ),
+            ],
+        )
+        async def test_async(backend):
+            assert type(asyncio.get_running_loop()).__name__ == "CustomEventLoop"
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1, skipped=1)
+
+
+def test_loop_factories_parametrize_only_asyncio_marked_params(
+    pytester: Pytester,
+) -> None:
+    """
+    https://github.com/pytest-dev/pytest-asyncio/issues/1463
+
+    With several loop factories, only the parameter sets carrying the
+    asyncio marker are run once per factory; the other parameter sets are
+    not duplicated.
+    """
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makeconftest(dedent("""\
+        import asyncio
+
+        class CustomEventLoopA(asyncio.SelectorEventLoop):
+            pass
+
+        class CustomEventLoopB(asyncio.SelectorEventLoop):
+            pass
+
+        def pytest_asyncio_loop_factories(config, item):
+            return {
+                "factory_a": CustomEventLoopA,
+                "factory_b": CustomEventLoopB,
+            }
+        """))
+    pytester.makepyfile(dedent("""\
+        import asyncio
+        import pytest
+
+        pytest_plugins = "pytest_asyncio"
+
+        @pytest.mark.parametrize(
+            "backend",
+            [
+                pytest.param("asyncio", marks=pytest.mark.asyncio),
+                pytest.param(
+                    "other", marks=pytest.mark.skip(reason="not asyncio")
+                ),
+            ],
+        )
+        async def test_async(backend):
+            loop_name = type(asyncio.get_running_loop()).__name__
+            assert loop_name in ("CustomEventLoopA", "CustomEventLoopB")
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict", "--collect-only", "-q")
+    result.stdout.fnmatch_lines(
+        [
+            "*test_async[[]asyncio-factory_a[]]",
+            "*test_async[[]asyncio-factory_b[]]",
+            "*test_async[[]other[]]",
+        ]
+    )
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=2, skipped=1)
+
+
+def test_loop_factories_apply_when_asyncio_mark_comes_from_fixture_params(
+    pytester: Pytester,
+) -> None:
+    """
+    https://github.com/pytest-dev/pytest-asyncio/issues/1463
+
+    The same applies when the asyncio marker reaches the test via a
+    parametrized fixture (``pytest.fixture(params=[pytest.param(...,
+    marks=pytest.mark.asyncio)])``).
+    """
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makeconftest(dedent("""\
+        import asyncio
+
+        class CustomEventLoop(asyncio.SelectorEventLoop):
+            pass
+
+        def pytest_asyncio_loop_factories(config, item):
+            return {"custom": CustomEventLoop}
+        """))
+    pytester.makepyfile(dedent("""\
+        import asyncio
+        import pytest
+
+        pytest_plugins = "pytest_asyncio"
+
+        @pytest.fixture(
+            params=[pytest.param("x", marks=pytest.mark.asyncio)]
+        )
+        def backend(request):
+            return request.param
+
+        async def test_async(backend):
+            assert type(asyncio.get_running_loop()).__name__ == "CustomEventLoop"
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1)
+
+
+def test_loop_factories_selected_by_asyncio_mark_from_parametrization(
+    pytester: Pytester,
+) -> None:
+    """
+    https://github.com/pytest-dev/pytest-asyncio/issues/1463
+
+    A ``loop_factories`` selection carried by a parametrized asyncio marker
+    is honored, too.
+    """
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makeconftest(dedent("""\
+        import asyncio
+
+        class CustomEventLoopA(asyncio.SelectorEventLoop):
+            pass
+
+        class CustomEventLoopB(asyncio.SelectorEventLoop):
+            pass
+
+        def pytest_asyncio_loop_factories(config, item):
+            return {
+                "factory_a": CustomEventLoopA,
+                "factory_b": CustomEventLoopB,
+            }
+        """))
+    pytester.makepyfile(dedent("""\
+        import asyncio
+        import pytest
+
+        pytest_plugins = "pytest_asyncio"
+
+        @pytest.mark.parametrize(
+            "backend",
+            [
+                pytest.param(
+                    "asyncio",
+                    marks=pytest.mark.asyncio(loop_factories=["factory_b"]),
+                ),
+                pytest.param(
+                    "other", marks=pytest.mark.skip(reason="not asyncio")
+                ),
+            ],
+        )
+        async def test_async(backend):
+            assert (
+                type(asyncio.get_running_loop()).__name__ == "CustomEventLoopB"
+            )
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=1, skipped=1)
+
+
 def test_named_hook_factories_apply_to_async_tests(pytester: Pytester) -> None:
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     pytester.makeconftest(dedent("""\

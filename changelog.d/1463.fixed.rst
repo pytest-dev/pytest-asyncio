@@ -1,0 +1,6 @@
+Fixed :func:`pytest_asyncio_loop_factories` being ignored when
+``pytest.mark.asyncio`` is attached to individual parameter sets (via
+``pytest.param(..., marks=pytest.mark.asyncio)`` or via a parametrized
+fixture) instead of the test definition: the loop factory is now applied
+to exactly the parameter sets carrying the asyncio marker, while other
+parameter sets (e.g. ones run by pytest-trio) are left untouched.
