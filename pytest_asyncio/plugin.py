@@ -781,7 +781,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
 @pytest.hookimpl(specname="pytest_generate_tests", wrapper=True)
 def pytest_generate_tests_handle_parametrized_asyncio_markers(
     metafunc: pytest.Metafunc,
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     """
     Apply loop factories to tests whose asyncio marker comes from parametrization.
 
@@ -833,8 +833,8 @@ def pytest_generate_tests_handle_parametrized_asyncio_markers(
     parsed_calls: list[tuple[Any, _ScopeName | None, Sequence[str] | None]] = []
     for call, mark in marked_calls:
         try:
-            marker_loop_scope, marker_selected_factory_names = (
-                _parse_asyncio_marker(mark, nodeid)
+            marker_loop_scope, marker_selected_factory_names = _parse_asyncio_marker(
+                mark, nodeid
             )
         except Failed:
             continue
@@ -862,9 +862,11 @@ def pytest_generate_tests_handle_parametrized_asyncio_markers(
     for call, marker_loop_scope, marker_selected_factory_names in parsed_calls:
         key = (
             marker_loop_scope,
-            tuple(marker_selected_factory_names)
-            if marker_selected_factory_names is not None
-            else None,
+            (
+                tuple(marker_selected_factory_names)
+                if marker_selected_factory_names is not None
+                else None
+            ),
         )
         groups.setdefault(key, []).append(call)
 
@@ -893,9 +895,7 @@ def pytest_generate_tests_handle_parametrized_asyncio_markers(
                 index * factory_count : (index + 1) * factory_count
             ]
     metafunc._calls = [
-        new_call
-        for call in calls
-        for new_call in replacements.get(id(call), [call])
+        new_call for call in calls for new_call in replacements.get(id(call), [call])
     ]
 
 
