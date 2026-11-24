@@ -99,3 +99,14 @@ def test_invalid_asyncio_mode(pytester):
     result.stderr.fnmatch_lines(
         "ERROR: 'True' is not a valid asyncio_mode. Valid modes: auto, strict."
     )
+
+
+def test_invalid_asyncio_mode_quiet(pytester):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile("def test_sync(): pass")
+    result = pytester.runpytest("-q", "-o", "asyncio_mode=bogus")
+    assert result.ret == pytest.ExitCode.USAGE_ERROR
+    result.stderr.no_fnmatch_line("INTERNALERROR> *")
+    result.stderr.fnmatch_lines(
+        "ERROR: 'bogus' is not a valid asyncio_mode. Valid modes: auto, strict."
+    )

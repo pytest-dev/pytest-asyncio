@@ -281,6 +281,7 @@ def _validate_scope(scope: str | None, option_name: str) -> None:
 
 
 def pytest_configure(config: Config) -> None:
+    _get_asyncio_mode(config)
     default_fixture_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
     if default_fixture_loop_scope != _MATCH_FIXTURE_SCOPE:
         _validate_scope(
