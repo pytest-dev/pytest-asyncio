@@ -741,22 +741,60 @@ def pytest_pycollect_makeitem_convert_async_functions_to_subclass(
     hook_result.force_result(updated_node_collection)
 
 
+_SCOPE_ORDER: dict[str, int] = {
+    "session": 0,
+    "package": 1,
+    "module": 2,
+    "class": 3,
+    "function": 4,
+}
+
+
+def _sync_test_async_fixture_loop_scope(metafunc: pytest.Metafunc) -> _ScopeName | None:
+    asyncio_mode = _get_asyncio_mode(metafunc.config)
+    default_fixture_loop_scope = metafunc.config.getini(
+        "asyncio_default_fixture_loop_scope"
+    )
+    scopes: list[_ScopeName] = []
+    for fixtures in metafunc.definition._fixtureinfo.name2fixturedefs.values():
+        fixturedef = fixtures[-1]
+        if _is_asyncio_fixture_function(fixturedef.func) or (
+            asyncio_mode == Mode.AUTO and _is_coroutine_or_asyncgen(fixturedef.func)
+        ):
+            fallback = (
+                fixturedef.scope
+                if default_fixture_loop_scope == _MATCH_FIXTURE_SCOPE
+                else (default_fixture_loop_scope or fixturedef.scope)
+            )
+            scopes.append(getattr(fixturedef.func, "_loop_scope", None) or fallback)
+    if not scopes:
+        return None
+    return min(scopes, key=lambda s: _SCOPE_ORDER.get(s, 4))
+
+
 @pytest.hookimpl(tryfirst=True)
 def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     specialized_item_class = PytestAsyncioFunction.item_subclass_for(
         metafunc.definition
     )
+    sync_fixture_loop_scope: _ScopeName | None = None
     if specialized_item_class is None:
-        return
+        sync_fixture_loop_scope = _sync_test_async_fixture_loop_scope(metafunc)
+        if sync_fixture_loop_scope is None:
+            return
+        marker_loop_scope = None
+        marker_selected_factory_names = None
+    else:
+        asyncio_marker = _resolve_asyncio_marker(metafunc.definition)
+        if asyncio_marker is None:
+            return
+        nodeid = metafunc.definition.nodeid
+        marker_loop_scope, marker_selected_factory_names = _parse_asyncio_marker(
+            asyncio_marker,
+            nodeid,
+        )
 
-    asyncio_marker = _resolve_asyncio_marker(metafunc.definition)
-    if asyncio_marker is None:
-        return
     nodeid = metafunc.definition.nodeid
-    marker_loop_scope, marker_selected_factory_names = _parse_asyncio_marker(
-        asyncio_marker,
-        nodeid,
-    )
 
     hook_factories = _collect_hook_loop_factories(metafunc.config, metafunc.definition)
     if hook_factories is None:
@@ -796,7 +834,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
         ]
     metafunc.fixturenames.append(_asyncio_loop_factory.__name__)
     default_loop_scope = _get_default_test_loop_scope(metafunc.config)
-    loop_scope = marker_loop_scope or default_loop_scope
+    loop_scope = sync_fixture_loop_scope or marker_loop_scope or default_loop_scope
     hide_id = len(factory_ids) == 1
     metafunc.parametrize(
         _asyncio_loop_factory.__name__,

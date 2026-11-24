@@ -917,3 +917,36 @@ def test_async_fixture_recreated_per_loop_factory_variant(
         """))
     result = pytester.runpytest("--asyncio-mode=strict", "-v")
     result.assert_outcomes(passed=2)
+
+
+def test_sync_test_with_shared_async_fixture_and_loop_factories(
+    pytester: Pytester,
+) -> None:
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = session")
+    pytester.makeconftest(dedent("""\
+        import asyncio
+
+        def pytest_asyncio_loop_factories(config, item):
+            return {"default": asyncio.new_event_loop}
+        """))
+    pytester.makepyfile(dedent("""\
+        import pytest
+        import pytest_asyncio
+
+        @pytest_asyncio.fixture(scope="session")
+        async def parent():
+            yield "parent"
+
+        @pytest_asyncio.fixture(scope="session")
+        async def child(parent):
+            yield "child"
+
+        @pytest.mark.asyncio(loop_scope="session")
+        async def test_async(parent):
+            assert parent == "parent"
+
+        def test_sync(child):
+            assert child == "child"
+        """))
+    result = pytester.runpytest("--asyncio-mode=strict")
+    result.assert_outcomes(passed=2)
