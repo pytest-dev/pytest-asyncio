@@ -92,6 +92,17 @@ class TestEventLoopStartedBeforeFixtures:
         assert await loop.run_in_executor(None, self.foo) == 1
 
 
+@pytest.mark.parametrize("quiet", [[], ["-q"]], ids=["verbose", "quiet"])
+def test_invalid_asyncio_mode_is_a_config_error(pytester, quiet):
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    result = pytester.runpytest(*quiet, "-o", "asyncio_mode=True")
+    result.stderr.no_fnmatch_line("INTERNALERROR> *")
+    result.stderr.fnmatch_lines(
+        "ERROR: 'True' is not a valid asyncio_mode. Valid modes: auto, strict."
+    )
+    assert result.ret == pytest.ExitCode.USAGE_ERROR
+
+
 def test_invalid_asyncio_mode(pytester):
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
     result = pytester.runpytest("-o", "asyncio_mode=True")
