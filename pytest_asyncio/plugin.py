@@ -280,14 +280,24 @@ def _validate_scope(scope: str | None, option_name: str) -> None:
         )
 
 
+_warned_default_fixture_loop_scope_unset_key = pytest.StashKey[bool]()
+
+
+def _warn_if_default_fixture_loop_scope_unset(config: Config) -> None:
+    if (
+        not config.getini("asyncio_default_fixture_loop_scope")
+        and not config.stash.get(_warned_default_fixture_loop_scope_unset_key, False)
+    ):
+        config.stash[_warned_default_fixture_loop_scope_unset_key] = True
+        warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+
+
 def pytest_configure(config: Config) -> None:
     default_fixture_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
     if default_fixture_loop_scope != _MATCH_FIXTURE_SCOPE:
         _validate_scope(
             default_fixture_loop_scope, "asyncio_default_fixture_loop_scope"
         )
-    if not default_fixture_loop_scope:
-        warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
 
     default_test_loop_scope = config.getini("asyncio_default_test_loop_scope")
     _validate_scope(default_test_loop_scope, "asyncio_default_test_loop_scope")
@@ -861,6 +871,7 @@ def _set_event_loop(loop: AbstractEventLoop | None) -> None:
 def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
     """Pytest hook called before a test case is run."""
     if pyfuncitem.get_closest_marker("asyncio") is not None:
+        _warn_if_default_fixture_loop_scope_unset(pyfuncitem.config)
         if is_async_test(pyfuncitem):
             asyncio_mode = _get_asyncio_mode(pyfuncitem.config)
             for fixname, fixtures in pyfuncitem._fixtureinfo.name2fixturedefs.items():
@@ -921,6 +932,7 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
             return (yield)
         if not _is_coroutine_or_asyncgen(fixturedef.func):
             return (yield)
+    _warn_if_default_fixture_loop_scope_unset(request.config)
     default_loop_scope = request.config.getini("asyncio_default_fixture_loop_scope")
     if default_loop_scope == _MATCH_FIXTURE_SCOPE:
         default_loop_scope = fixturedef.scope

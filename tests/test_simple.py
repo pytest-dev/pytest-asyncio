@@ -99,3 +99,29 @@ def test_invalid_asyncio_mode(pytester):
     result.stderr.fnmatch_lines(
         "ERROR: 'True' is not a valid asyncio_mode. Valid modes: auto, strict."
     )
+
+
+def test_unset_default_fixture_loop_scope_no_warning_for_sync_suite(pytester):
+    pytester.makeini("[pytest]\n")
+    pytester.makepyfile("def test_sync(): pass")
+    result = pytester.runpytest_inprocess("-Werror")
+    assert result.ret == pytest.ExitCode.OK
+    result.assert_outcomes(passed=1)
+
+
+def test_unset_default_fixture_loop_scope_warns_for_async_suite(pytester):
+    pytester.makeini("[pytest]\n")
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.asyncio
+        async def test_async():
+            pass
+        """
+    )
+    result = pytester.runpytest_inprocess("-Werror")
+    assert result.ret != pytest.ExitCode.OK
+    result.stdout.fnmatch_lines(
+        "*asyncio_default_fixture_loop_scope*is unset*"
+    )
