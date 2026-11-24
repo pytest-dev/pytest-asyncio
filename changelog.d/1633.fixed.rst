@@ -1,0 +1,1 @@
+Validate ``asyncio_mode`` in ``pytest_configure`` so invalid values raise a usage error consistently even when no test report header is printed.
