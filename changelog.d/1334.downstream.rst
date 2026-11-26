@@ -1,0 +1,1 @@
+Fixed six tests that failed with ``PytestAssertRewriteWarning`` when the test suite is run from an unpacked sdist using the ``pytest`` command.
