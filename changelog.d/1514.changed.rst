@@ -1,0 +1,1 @@
+Emitted a ``PytestWarning`` when a test or fixture requests an asynchronous fixture with a different ``loop_scope``.
