@@ -10,6 +10,30 @@ This project uses `towncrier <https://towncrier.readthedocs.io/>`__ for changelo
 
 .. towncrier release notes start
 
+`1.5.0 <https://github.com/pytest-dev/pytest-asyncio/tree/1.5.0>`_ - 2026-11-12
+===============================================================================
+
+Added
+-----
+
+- A ``fixture-scope`` value for ``asyncio_default_fixture_loop_scope``. With it, an asynchronous fixture without ``loop_scope`` uses its ``scope`` as its loop scope. This is the behavior of an unset option in pytest-asyncio 1.x. (`#1095 <https://github.com/pytest-dev/pytest-asyncio/issues/1095>`_)
+
+
+Fixed
+-----
+
+- Invalid arguments to the ``asyncio`` marker, including an invalid ``loop_scope``, are reported with a message that names the test instead of a traceback. (`#1584 <https://github.com/pytest-dev/pytest-asyncio/issues/1584>`_)
+
+
+`1.4.1.post1 <https://github.com/pytest-dev/pytest-asyncio/tree/1.4.1.post1>`_ - 2026-11-01
+===========================================================================================
+
+Changed
+-------
+
+- Removed the upper version bound on the ``pytest`` dependency. (`#1605 <https://github.com/pytest-dev/pytest-asyncio/issues/1605>`_)
+
+
 `1.4.1 <https://github.com/pytest-dev/pytest-asyncio/tree/1.4.1>`_ - 2026-10-25
 ===============================================================================
 

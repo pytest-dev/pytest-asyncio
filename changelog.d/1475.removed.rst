@@ -1,0 +1,1 @@
+Deprecated *scope* keyword argument of the *asyncio* marker. Use *loop_scope* instead.

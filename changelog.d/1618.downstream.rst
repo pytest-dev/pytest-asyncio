@@ -1,0 +1,1 @@
+Removed dependency on backports-asyncio-runner, which was needed to support Python <= 3.10
