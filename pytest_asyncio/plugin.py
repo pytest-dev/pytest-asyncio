@@ -1015,12 +1015,24 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
     ) -> Iterator[Runner]:
         debug_mode = _get_asyncio_debug(request.config)
         with _restore_event_loop_policy():
+            # Always hand the runner an explicit factory. Without one, the runner
+            # calls asyncio.set_event_loop() itself, which fails for event loop
+            # policies that manage the loop of the main thread on their own.
+            loop_factory = _asyncio_loop_factory or asyncio.new_event_loop
             runner = Runner(
                 debug=debug_mode,
-                loop_factory=_asyncio_loop_factory,
+                loop_factory=loop_factory,
             ).__enter__()
-            if _asyncio_loop_factory is not None:
+            loop_is_set = False
+            try:
                 _set_event_loop(runner.get_loop())
+                loop_is_set = True
+            except RuntimeError:
+                # Some event loop policies manage their loop outside of
+                # asyncio.set_event_loop(). The runner can still execute the
+                # loop because it is available through asyncio.get_running_loop()
+                # while a coroutine is running.
+                pass
             try:
                 yield runner
             except Exception as e:
@@ -1038,7 +1050,7 @@ def _create_scoped_runner_fixture(scope: _ScopeName) -> Callable:
                             RuntimeWarning,
                         )
             finally:
-                if _asyncio_loop_factory is not None:
+                if loop_is_set:
                     _set_event_loop(None)
 
     return _scoped_runner
