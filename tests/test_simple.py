@@ -99,3 +99,47 @@ def test_invalid_asyncio_mode(pytester):
     result.stderr.fnmatch_lines(
         "ERROR: 'True' is not a valid asyncio_mode. Valid modes: auto, strict."
     )
+
+
+@pytest.mark.parametrize(
+    "mode_args",
+    [
+        ["-o", "asyncio_mode=bogus"],
+        ["--asyncio-mode=bogus"],
+    ],
+)
+def test_invalid_asyncio_mode_quiet(pytester, mode_args):
+    """
+    Invalid asyncio_mode errors in quiet mode with sync-only tests.
+
+    With `-q` the report header is suppressed, so the mode used to be
+    silently accepted when no async test was collected.
+    """
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile("def test_sync():\n    pass\n")
+    result = pytester.runpytest("-q", *mode_args)
+    assert result.ret == 4
+    result.stderr.no_fnmatch_line("INTERNALERROR> *")
+    result.stderr.fnmatch_lines(
+        "ERROR: 'bogus' is not a valid asyncio_mode. Valid modes: auto, strict."
+    )
+
+
+def test_invalid_asyncio_mode_quiet_with_async_test(pytester):
+    """Invalid asyncio_mode fails at configuration time, not per test."""
+    pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
+    pytester.makepyfile(
+        dedent("""\
+                import pytest
+
+                @pytest.mark.asyncio
+                async def test_async():
+                    pass
+            """)
+    )
+    result = pytester.runpytest("-q", "-o", "asyncio_mode=bogus")
+    assert result.ret == 4
+    result.stderr.no_fnmatch_line("INTERNALERROR> *")
+    result.stderr.fnmatch_lines(
+        "ERROR: 'bogus' is not a valid asyncio_mode. Valid modes: auto, strict."
+    )
