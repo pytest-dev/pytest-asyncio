@@ -128,15 +128,13 @@ def test_invalid_asyncio_mode_quiet(pytester, mode_args):
 def test_invalid_asyncio_mode_quiet_with_async_test(pytester):
     """Invalid asyncio_mode fails at configuration time, not per test."""
     pytester.makeini("[pytest]\nasyncio_default_fixture_loop_scope = function")
-    pytester.makepyfile(
-        dedent("""\
+    pytester.makepyfile(dedent("""\
                 import pytest
 
                 @pytest.mark.asyncio
                 async def test_async():
                     pass
-            """)
-    )
+            """))
     result = pytester.runpytest("-q", "-o", "asyncio_mode=bogus")
     assert result.ret == 4
     result.stderr.no_fnmatch_line("INTERNALERROR> *")
