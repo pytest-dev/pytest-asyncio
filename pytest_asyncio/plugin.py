@@ -281,6 +281,10 @@ def _validate_scope(scope: str | None, option_name: str) -> None:
 
 
 def pytest_configure(config: Config) -> None:
+    # Validate the mode eagerly so that an invalid value fails here,
+    # even when `-q` suppresses the report header (where the mode
+    # would otherwise first be read).
+    _get_asyncio_mode(config)
     default_fixture_loop_scope = config.getini("asyncio_default_fixture_loop_scope")
     if default_fixture_loop_scope != _MATCH_FIXTURE_SCOPE:
         _validate_scope(

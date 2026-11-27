@@ -1,0 +1,1 @@
+An invalid ``asyncio_mode`` is now reported during configuration, instead of being silently accepted when pytest runs with ``-q``.
